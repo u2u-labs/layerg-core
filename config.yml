@@ -1,0 +1,9 @@
+name: "nakama"
+data_dir: "./data"
+logger:
+  level: "debug"
+  stdout: true
+  file: ""
+database:
+  address: ["root@localhost:26257"]
+  database: "nakama"

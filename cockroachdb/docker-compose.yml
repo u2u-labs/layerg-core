@@ -1,0 +1,12 @@
+version: '3.5'
+
+services:
+
+ crdb:
+   image: cockroachdb/cockroach:latest-v23.1
+   ports:
+     - "26257:26257"
+     - "8080:8080"
+   command: start-single-node --insecure
+   volumes:
+     - "~/.data/crdb:/cockroach/cockroach-data"
