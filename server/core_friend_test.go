@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama-common/api"
 	"github.com/stretchr/testify/assert"
+	"github.com/u2u-labs/go-layerg-common/api"
 	"testing"
 )
 

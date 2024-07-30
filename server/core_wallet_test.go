@@ -22,8 +22,8 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/stretchr/testify/assert"
+	"github.com/u2u-labs/go-layerg-common/runtime"
 )
 
 func TestUpdateWalletSingleUser(t *testing.T) {

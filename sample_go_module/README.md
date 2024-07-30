@@ -17,10 +17,10 @@ import (
   "context"
   "database/sql"
 
-  "github.com/heroiclabs/nakama-common/runtime"
+  "github.com/u2u-labs/go-layerg-common/runtime"
 )
 
-func InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, initializer runtime.Initializer) error {
+func InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, initializer runtime.Initializer) error {
   logger.Info("module loaded")
   return nil
 }
@@ -43,7 +43,7 @@ To setup your own project to build modules for the game server you can follow th
 
     ```bash
     go mod init "plugin_code"
-    go get -u "github.com/heroiclabs/nakama-common@v1.23.0"
+    go get -u "github.com/u2u-labs/go-layerg-common@v1.23.0"
     ```
 
    ⚠️ __NOTE__: If you're working on Nakama's master branch drop the `@v1.23.0` from the above snippet.

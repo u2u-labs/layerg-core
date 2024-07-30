@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama-common/rtapi"
-	"github.com/heroiclabs/nakama-common/runtime"
+	"github.com/u2u-labs/go-layerg-common/rtapi"
+	"github.com/u2u-labs/go-layerg-common/runtime"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -81,11 +81,11 @@ type testMatchState struct {
 // testMatch is a minimal implementation of runtime.Match for testing purposes
 type testMatch struct{}
 
-func newTestMatch(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule) (m runtime.Match, err error) {
+func newTestMatch(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule) (m runtime.Match, err error) {
 	return &testMatch{}, nil
 }
 
-func (m *testMatch) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, params map[string]interface{}) (interface{}, int, string) {
+func (m *testMatch) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, params map[string]interface{}) (interface{}, int, string) {
 	state := &testMatchState{
 		presences: make(map[string]runtime.Presence),
 	}
@@ -101,12 +101,12 @@ func (m *testMatch) MatchInit(ctx context.Context, logger runtime.Logger, db *sq
 	return state, tickRate, label
 }
 
-func (m *testMatch) MatchJoinAttempt(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, presence runtime.Presence, metadata map[string]string) (interface{}, bool, string) {
+func (m *testMatch) MatchJoinAttempt(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, presence runtime.Presence, metadata map[string]string) (interface{}, bool, string) {
 	acceptUser := true
 	return state, acceptUser, ""
 }
 
-func (m *testMatch) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, presences []runtime.Presence) interface{} {
+func (m *testMatch) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, presences []runtime.Presence) interface{} {
 	mState, _ := state.(*testMatchState)
 	for _, p := range presences {
 		mState.presences[p.GetUserId()] = p
@@ -114,7 +114,7 @@ func (m *testMatch) MatchJoin(ctx context.Context, logger runtime.Logger, db *sq
 	return mState
 }
 
-func (m *testMatch) MatchLeave(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, presences []runtime.Presence) interface{} {
+func (m *testMatch) MatchLeave(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, presences []runtime.Presence) interface{} {
 	mState, _ := state.(*testMatchState)
 	for _, p := range presences {
 		delete(mState.presences, p.GetUserId())
@@ -122,7 +122,7 @@ func (m *testMatch) MatchLeave(ctx context.Context, logger runtime.Logger, db *s
 	return mState
 }
 
-func (m *testMatch) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) interface{} {
+func (m *testMatch) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) interface{} {
 	mState, _ := state.(*testMatchState)
 	for _, presence := range mState.presences {
 		logger.Info("Presence %v named %v", presence.GetUserId(), presence.GetUsername())
@@ -137,7 +137,7 @@ func (m *testMatch) MatchLoop(ctx context.Context, logger runtime.Logger, db *sq
 	return mState
 }
 
-func (m *testMatch) MatchTerminate(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, graceSeconds int) interface{} {
+func (m *testMatch) MatchTerminate(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, graceSeconds int) interface{} {
 	message := "Server shutting down in " + strconv.Itoa(graceSeconds) + " seconds."
 	reliable := true
 	if err := dispatcher.BroadcastMessage(2, []byte(message), []runtime.Presence{}, nil, reliable); err != nil {
@@ -146,7 +146,7 @@ func (m *testMatch) MatchTerminate(ctx context.Context, logger runtime.Logger, d
 	return state
 }
 
-func (m *testMatch) MatchSignal(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, data string) (interface{}, string) {
+func (m *testMatch) MatchSignal(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, data string) (interface{}, string) {
 	return state, "signal received: " + data
 }
 

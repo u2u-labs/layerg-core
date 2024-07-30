@@ -18,7 +18,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/heroiclabs/nakama/v3/console"
+	"github.com/u2u-labs/layerg-core/console"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

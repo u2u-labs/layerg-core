@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama/v3/social"
+	"github.com/u2u-labs/layerg-core/social"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

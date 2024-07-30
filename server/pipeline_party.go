@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama-common/rtapi"
+	"github.com/u2u-labs/go-layerg-common/rtapi"
 	"go.uber.org/zap"
 )
 

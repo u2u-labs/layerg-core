@@ -19,7 +19,7 @@ import (
 	"math"
 	"runtime"
 
-	"github.com/heroiclabs/nakama/v3/console"
+	"github.com/u2u-labs/layerg-core/console"
 	"go.uber.org/zap"
 )
 

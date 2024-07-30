@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama-common/api"
-	"github.com/heroiclabs/nakama/v3/apigrpc"
 	"github.com/stretchr/testify/require"
+	"github.com/u2u-labs/go-layerg-common/api"
+	"github.com/u2u-labs/layerg-core/apigrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )

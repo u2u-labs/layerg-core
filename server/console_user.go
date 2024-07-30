@@ -26,7 +26,7 @@ import (
 	"unicode"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama/v3/console"
+	"github.com/u2u-labs/layerg-core/console"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"

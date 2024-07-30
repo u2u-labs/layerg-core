@@ -18,7 +18,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/heroiclabs/nakama/v3/internal/cronexpr"
+	"github.com/u2u-labs/layerg-core/internal/cronexpr"
 )
 
 /******************************************************************************/

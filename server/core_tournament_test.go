@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heroiclabs/nakama/v3/internal/cronexpr"
 	"github.com/stretchr/testify/require"
+	"github.com/u2u-labs/layerg-core/internal/cronexpr"
 )
 
 func TestTournamentEveryFourteenDaysFromFirst(t *testing.T) {

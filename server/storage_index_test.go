@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama-common/api"
 	"github.com/stretchr/testify/assert"
+	"github.com/u2u-labs/go-layerg-common/api"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

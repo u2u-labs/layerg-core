@@ -18,9 +18,9 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/heroiclabs/nakama-common/api"
-	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/jackc/pgx/v5"
+	"github.com/u2u-labs/go-layerg-common/api"
+	"github.com/u2u-labs/go-layerg-common/runtime"
 	"go.uber.org/zap"
 )
 

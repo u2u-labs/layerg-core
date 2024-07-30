@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama-common/api"
-	"github.com/heroiclabs/nakama/v3/iap"
+	"github.com/u2u-labs/go-layerg-common/api"
+	"github.com/u2u-labs/layerg-core/iap"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"

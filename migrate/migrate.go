@@ -19,9 +19,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/heroiclabs/nakama/v3/server"
 	sqlmigrate "github.com/heroiclabs/sql-migrate"
 	"github.com/jackc/pgx/v5"
+	"github.com/u2u-labs/layerg-core/server"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 

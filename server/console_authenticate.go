@@ -24,8 +24,8 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	jwt "github.com/golang-jwt/jwt/v4"
-	"github.com/heroiclabs/nakama/v3/console"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/u2u-labs/layerg-core/console"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"

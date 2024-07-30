@@ -17,7 +17,7 @@ package server
 import (
 	"context"
 
-	"github.com/heroiclabs/nakama-common/runtime"
+	"github.com/u2u-labs/go-layerg-common/runtime"
 )
 
 // ignore warnings about strings being used as ctx keys

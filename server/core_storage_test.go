@@ -23,9 +23,9 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama-common/api"
-	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/stretchr/testify/assert"
+	"github.com/u2u-labs/go-layerg-common/api"
+	"github.com/u2u-labs/go-layerg-common/runtime"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )

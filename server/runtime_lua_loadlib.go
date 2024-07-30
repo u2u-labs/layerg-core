@@ -29,7 +29,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	lua "github.com/heroiclabs/nakama/v3/internal/gopher-lua"
+	lua "github.com/u2u-labs/layerg-core/internal/gopher-lua"
 )
 
 const emptyLString lua.LString = lua.LString("")

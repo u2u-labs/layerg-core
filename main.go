@@ -29,13 +29,13 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/heroiclabs/nakama/v3/console"
-	"github.com/heroiclabs/nakama/v3/migrate"
-	"github.com/heroiclabs/nakama/v3/se"
-	"github.com/heroiclabs/nakama/v3/server"
-	"github.com/heroiclabs/nakama/v3/social"
 	"github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/jackc/pgx/v5/stdlib" // Blank import to register SQL driver
+	"github.com/u2u-labs/layerg-core/console"
+	"github.com/u2u-labs/layerg-core/migrate"
+	"github.com/u2u-labs/layerg-core/se"
+	"github.com/u2u-labs/layerg-core/server"
+	"github.com/u2u-labs/layerg-core/social"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/encoding/protojson"
