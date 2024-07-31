@@ -1,17 +1,17 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Nakama API v2",
-    "version": "2.0",
+    "title": "LayerG API v1",
+    "version": "1.0",
     "contact": {
-      "name": "The Nakama Authors \u0026 Contributors",
-      "url": "https://github.com/heroiclabs/nakama",
-      "email": "hello@heroiclabs.com"
+      "name": "The LayerG Authors \u0026 Contributors",
+      "url": "https://github.com/u2u-labs/layerg-core",
+      "email": "hello@uniultra.xyz"
     }
   },
   "tags": [
     {
-      "name": "Nakama"
+      "name": "LayerG"
     }
   ],
   "host": "127.0.0.1:7350",
@@ -28,7 +28,7 @@
     "/healthcheck": {
       "get": {
         "summary": "A healthcheck which load balancers can use to check the service.",
-        "operationId": "Nakama_Healthcheck",
+        "operationId": "LayerG_Healthcheck",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -45,14 +45,14 @@
           }
         },
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account": {
       "get": {
         "summary": "Fetch the current user's account.",
-        "operationId": "Nakama_GetAccount",
+        "operationId": "LayerG_GetAccount",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -68,12 +68,12 @@
           }
         },
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "delete": {
         "summary": "Delete the current user's account.",
-        "operationId": "Nakama_DeleteAccount",
+        "operationId": "LayerG_DeleteAccount",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -90,12 +90,12 @@
           }
         },
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "put": {
         "summary": "Update fields in the current user's account.",
-        "operationId": "Nakama_UpdateAccount",
+        "operationId": "LayerG_UpdateAccount",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -123,14 +123,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/authenticate/apple": {
       "post": {
         "summary": "Authenticate a user with an Apple ID against the server.",
-        "operationId": "Nakama_AuthenticateApple",
+        "operationId": "LayerG_AuthenticateApple",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -171,7 +171,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -183,7 +183,7 @@
     "/v2/account/authenticate/custom": {
       "post": {
         "summary": "Authenticate a user with a custom id against the server.",
-        "operationId": "Nakama_AuthenticateCustom",
+        "operationId": "LayerG_AuthenticateCustom",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -224,7 +224,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -236,7 +236,7 @@
     "/v2/account/authenticate/device": {
       "post": {
         "summary": "Authenticate a user with a device id against the server.",
-        "operationId": "Nakama_AuthenticateDevice",
+        "operationId": "LayerG_AuthenticateDevice",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -277,7 +277,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -289,7 +289,7 @@
     "/v2/account/authenticate/email": {
       "post": {
         "summary": "Authenticate a user with an email+password against the server.",
-        "operationId": "Nakama_AuthenticateEmail",
+        "operationId": "LayerG_AuthenticateEmail",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -330,7 +330,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -342,7 +342,7 @@
     "/v2/account/authenticate/facebook": {
       "post": {
         "summary": "Authenticate a user with a Facebook OAuth token against the server.",
-        "operationId": "Nakama_AuthenticateFacebook",
+        "operationId": "LayerG_AuthenticateFacebook",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -390,7 +390,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -402,7 +402,7 @@
     "/v2/account/authenticate/facebookinstantgame": {
       "post": {
         "summary": "Authenticate a user with a Facebook Instant Game token against the server.",
-        "operationId": "Nakama_AuthenticateFacebookInstantGame",
+        "operationId": "LayerG_AuthenticateFacebookInstantGame",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -443,7 +443,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -455,7 +455,7 @@
     "/v2/account/authenticate/gamecenter": {
       "post": {
         "summary": "Authenticate a user with Apple's GameCenter against the server.",
-        "operationId": "Nakama_AuthenticateGameCenter",
+        "operationId": "LayerG_AuthenticateGameCenter",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -496,7 +496,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -508,7 +508,7 @@
     "/v2/account/authenticate/google": {
       "post": {
         "summary": "Authenticate a user with Google against the server.",
-        "operationId": "Nakama_AuthenticateGoogle",
+        "operationId": "LayerG_AuthenticateGoogle",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -549,7 +549,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -561,7 +561,7 @@
     "/v2/account/authenticate/steam": {
       "post": {
         "summary": "Authenticate a user with Steam against the server.",
-        "operationId": "Nakama_AuthenticateSteam",
+        "operationId": "LayerG_AuthenticateSteam",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -609,7 +609,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -621,7 +621,7 @@
     "/v2/account/link/apple": {
       "post": {
         "summary": "Add an Apple ID to the social profiles on the current user's account.",
-        "operationId": "Nakama_LinkApple",
+        "operationId": "LayerG_LinkApple",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -649,14 +649,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/link/custom": {
       "post": {
         "summary": "Add a custom ID to the social profiles on the current user's account.",
-        "operationId": "Nakama_LinkCustom",
+        "operationId": "LayerG_LinkCustom",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -684,14 +684,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/link/device": {
       "post": {
         "summary": "Add a device ID to the social profiles on the current user's account.",
-        "operationId": "Nakama_LinkDevice",
+        "operationId": "LayerG_LinkDevice",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -719,14 +719,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/link/email": {
       "post": {
         "summary": "Add an email+password to the social profiles on the current user's account.",
-        "operationId": "Nakama_LinkEmail",
+        "operationId": "LayerG_LinkEmail",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -754,14 +754,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/link/facebook": {
       "post": {
         "summary": "Add Facebook to the social profiles on the current user's account.",
-        "operationId": "Nakama_LinkFacebook",
+        "operationId": "LayerG_LinkFacebook",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -796,14 +796,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/link/facebookinstantgame": {
       "post": {
         "summary": "Add Facebook Instant Game to the social profiles on the current user's account.",
-        "operationId": "Nakama_LinkFacebookInstantGame",
+        "operationId": "LayerG_LinkFacebookInstantGame",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -831,14 +831,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/link/gamecenter": {
       "post": {
         "summary": "Add Apple's GameCenter to the social profiles on the current user's account.",
-        "operationId": "Nakama_LinkGameCenter",
+        "operationId": "LayerG_LinkGameCenter",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -866,14 +866,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/link/google": {
       "post": {
         "summary": "Add Google to the social profiles on the current user's account.",
-        "operationId": "Nakama_LinkGoogle",
+        "operationId": "LayerG_LinkGoogle",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -901,14 +901,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/link/steam": {
       "post": {
         "summary": "Add Steam to the social profiles on the current user's account.",
-        "operationId": "Nakama_LinkSteam",
+        "operationId": "LayerG_LinkSteam",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -936,14 +936,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/session/refresh": {
       "post": {
         "summary": "Refresh a user's session using a refresh token retrieved from a previous authentication request.",
-        "operationId": "Nakama_SessionRefresh",
+        "operationId": "LayerG_SessionRefresh",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -970,7 +970,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -982,7 +982,7 @@
     "/v2/account/unlink/apple": {
       "post": {
         "summary": "Remove the Apple ID from the social profiles on the current user's account.",
-        "operationId": "Nakama_UnlinkApple",
+        "operationId": "LayerG_UnlinkApple",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1010,14 +1010,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/unlink/custom": {
       "post": {
         "summary": "Remove the custom ID from the social profiles on the current user's account.",
-        "operationId": "Nakama_UnlinkCustom",
+        "operationId": "LayerG_UnlinkCustom",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1045,14 +1045,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/unlink/device": {
       "post": {
         "summary": "Remove the device ID from the social profiles on the current user's account.",
-        "operationId": "Nakama_UnlinkDevice",
+        "operationId": "LayerG_UnlinkDevice",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1080,14 +1080,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/unlink/email": {
       "post": {
         "summary": "Remove the email+password from the social profiles on the current user's account.",
-        "operationId": "Nakama_UnlinkEmail",
+        "operationId": "LayerG_UnlinkEmail",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1115,14 +1115,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/unlink/facebook": {
       "post": {
         "summary": "Remove Facebook from the social profiles on the current user's account.",
-        "operationId": "Nakama_UnlinkFacebook",
+        "operationId": "LayerG_UnlinkFacebook",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1150,14 +1150,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/unlink/facebookinstantgame": {
       "post": {
         "summary": "Remove Facebook Instant Game profile from the social profiles on the current user's account.",
-        "operationId": "Nakama_UnlinkFacebookInstantGame",
+        "operationId": "LayerG_UnlinkFacebookInstantGame",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1185,14 +1185,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/unlink/gamecenter": {
       "post": {
         "summary": "Remove Apple's GameCenter from the social profiles on the current user's account.",
-        "operationId": "Nakama_UnlinkGameCenter",
+        "operationId": "LayerG_UnlinkGameCenter",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1220,14 +1220,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/unlink/google": {
       "post": {
         "summary": "Remove Google from the social profiles on the current user's account.",
-        "operationId": "Nakama_UnlinkGoogle",
+        "operationId": "LayerG_UnlinkGoogle",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1255,14 +1255,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/account/unlink/steam": {
       "post": {
         "summary": "Remove Steam from the social profiles on the current user's account.",
-        "operationId": "Nakama_UnlinkSteam",
+        "operationId": "LayerG_UnlinkSteam",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1290,14 +1290,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/channel/{channelId}": {
       "get": {
         "summary": "List a channel's message history.",
-        "operationId": "Nakama_ListChannelMessages",
+        "operationId": "LayerG_ListChannelMessages",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1344,14 +1344,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/event": {
       "post": {
         "summary": "Submit an event for processing in the server's registered runtime custom events handler.",
-        "operationId": "Nakama_Event",
+        "operationId": "LayerG_Event",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1374,19 +1374,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/apiEvent"
+              "$ref": "#/definitions/layergapiEvent"
             }
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/friend": {
       "get": {
         "summary": "List all friends for the current user.",
-        "operationId": "Nakama_ListFriends",
+        "operationId": "LayerG_ListFriends",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1427,12 +1427,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "delete": {
         "summary": "Delete one or more users by ID or username.",
-        "operationId": "Nakama_DeleteFriends",
+        "operationId": "LayerG_DeleteFriends",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1473,12 +1473,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "post": {
         "summary": "Add friends by ID or username to a user's account.",
-        "operationId": "Nakama_AddFriends",
+        "operationId": "LayerG_AddFriends",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1519,14 +1519,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/friend/block": {
       "post": {
         "summary": "Block one or more users by ID or username.",
-        "operationId": "Nakama_BlockFriends",
+        "operationId": "LayerG_BlockFriends",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1567,14 +1567,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/friend/facebook": {
       "post": {
         "summary": "Import Facebook friends and add them to a user's account.",
-        "operationId": "Nakama_ImportFacebookFriends",
+        "operationId": "LayerG_ImportFacebookFriends",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1609,14 +1609,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/friend/friends": {
       "get": {
         "summary": "List friends of friends for the current user.",
-        "operationId": "Nakama_ListFriendsOfFriends",
+        "operationId": "LayerG_ListFriendsOfFriends",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1649,14 +1649,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/friend/steam": {
       "post": {
         "summary": "Import Steam friends and add them to a user's account.",
-        "operationId": "Nakama_ImportSteamFriends",
+        "operationId": "LayerG_ImportSteamFriends",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1691,14 +1691,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/group": {
       "get": {
         "summary": "List groups based on given filters.",
-        "operationId": "Nakama_ListGroups",
+        "operationId": "LayerG_ListGroups",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1760,12 +1760,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "post": {
         "summary": "Create a new group with the current user as the owner.",
-        "operationId": "Nakama_CreateGroup",
+        "operationId": "LayerG_CreateGroup",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1792,14 +1792,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/group/{groupId}": {
       "delete": {
         "summary": "Delete a group by ID.",
-        "operationId": "Nakama_DeleteGroup",
+        "operationId": "LayerG_DeleteGroup",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1825,12 +1825,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "put": {
         "summary": "Update fields in a given group.",
-        "operationId": "Nakama_UpdateGroup",
+        "operationId": "LayerG_UpdateGroup",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1859,42 +1859,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "Name."
-                },
-                "description": {
-                  "type": "string",
-                  "description": "Description string."
-                },
-                "langTag": {
-                  "type": "string",
-                  "description": "Lang tag."
-                },
-                "avatarUrl": {
-                  "type": "string",
-                  "description": "Avatar URL."
-                },
-                "open": {
-                  "type": "boolean",
-                  "description": "Open is true if anyone should be allowed to join, or false if joins must be approved by a group admin."
-                }
-              },
-              "description": "Update fields in a given group."
+              "$ref": "#/definitions/LayerGUpdateGroupBody"
             }
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/group/{groupId}/add": {
       "post": {
         "summary": "Add users to a group.",
-        "operationId": "Nakama_AddGroupUsers",
+        "operationId": "LayerG_AddGroupUsers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1931,14 +1908,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/group/{groupId}/ban": {
       "post": {
         "summary": "Ban a set of users from a group.",
-        "operationId": "Nakama_BanGroupUsers",
+        "operationId": "LayerG_BanGroupUsers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1975,14 +1952,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/group/{groupId}/demote": {
       "post": {
         "summary": "Demote a set of users in a group to the next role down.",
-        "operationId": "Nakama_DemoteGroupUsers",
+        "operationId": "LayerG_DemoteGroupUsers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2019,14 +1996,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/group/{groupId}/join": {
       "post": {
         "summary": "Immediately join an open group, or request to join a closed one.",
-        "operationId": "Nakama_JoinGroup",
+        "operationId": "LayerG_JoinGroup",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2052,14 +2029,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/group/{groupId}/kick": {
       "post": {
         "summary": "Kick a set of users from a group.",
-        "operationId": "Nakama_KickGroupUsers",
+        "operationId": "LayerG_KickGroupUsers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2096,14 +2073,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/group/{groupId}/leave": {
       "post": {
         "summary": "Leave a group the user is a member of.",
-        "operationId": "Nakama_LeaveGroup",
+        "operationId": "LayerG_LeaveGroup",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2129,14 +2106,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/group/{groupId}/promote": {
       "post": {
         "summary": "Promote a set of users in a group to the next role up.",
-        "operationId": "Nakama_PromoteGroupUsers",
+        "operationId": "LayerG_PromoteGroupUsers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2173,14 +2150,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/group/{groupId}/user": {
       "get": {
         "summary": "List all users that are part of a group.",
-        "operationId": "Nakama_ListGroupUsers",
+        "operationId": "LayerG_ListGroupUsers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2228,14 +2205,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/iap/purchase/apple": {
       "post": {
         "summary": "Validate Apple IAP Receipt",
-        "operationId": "Nakama_ValidatePurchaseApple",
+        "operationId": "LayerG_ValidatePurchaseApple",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2261,14 +2238,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/iap/purchase/facebookinstant": {
       "post": {
         "summary": "Validate FB Instant IAP Receipt",
-        "operationId": "Nakama_ValidatePurchaseFacebookInstant",
+        "operationId": "LayerG_ValidatePurchaseFacebookInstant",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2294,14 +2271,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/iap/purchase/google": {
       "post": {
         "summary": "Validate Google IAP Receipt",
-        "operationId": "Nakama_ValidatePurchaseGoogle",
+        "operationId": "LayerG_ValidatePurchaseGoogle",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2327,14 +2304,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/iap/purchase/huawei": {
       "post": {
         "summary": "Validate Huawei IAP Receipt",
-        "operationId": "Nakama_ValidatePurchaseHuawei",
+        "operationId": "LayerG_ValidatePurchaseHuawei",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2360,14 +2337,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/iap/subscription": {
       "post": {
         "summary": "List user's subscriptions.",
-        "operationId": "Nakama_ListSubscriptions",
+        "operationId": "LayerG_ListSubscriptions",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2394,14 +2371,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/iap/subscription/apple": {
       "post": {
         "summary": "Validate Apple Subscription Receipt",
-        "operationId": "Nakama_ValidateSubscriptionApple",
+        "operationId": "LayerG_ValidateSubscriptionApple",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2427,14 +2404,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/iap/subscription/google": {
       "post": {
         "summary": "Validate Google Subscription Receipt",
-        "operationId": "Nakama_ValidateSubscriptionGoogle",
+        "operationId": "LayerG_ValidateSubscriptionGoogle",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2460,14 +2437,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/iap/subscription/{productId}": {
       "get": {
         "summary": "Get subscription by product id.",
-        "operationId": "Nakama_GetSubscription",
+        "operationId": "LayerG_GetSubscription",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2492,14 +2469,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/leaderboard/{leaderboardId}": {
       "get": {
         "summary": "List leaderboard records.",
-        "operationId": "Nakama_ListLeaderboardRecords",
+        "operationId": "LayerG_ListLeaderboardRecords",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2558,12 +2535,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "delete": {
         "summary": "Delete a leaderboard record.",
-        "operationId": "Nakama_DeleteLeaderboardRecord",
+        "operationId": "LayerG_DeleteLeaderboardRecord",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2589,12 +2566,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "post": {
         "summary": "Write a record to a leaderboard.",
-        "operationId": "Nakama_WriteLeaderboardRecord",
+        "operationId": "LayerG_WriteLeaderboardRecord",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2628,14 +2605,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/leaderboard/{leaderboardId}/owner/{ownerId}": {
       "get": {
         "summary": "List leaderboard records that belong to a user.",
-        "operationId": "Nakama_ListLeaderboardRecordsAroundOwner",
+        "operationId": "LayerG_ListLeaderboardRecordsAroundOwner",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2690,14 +2667,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/match": {
       "get": {
         "summary": "Fetch list of running matches.",
-        "operationId": "Nakama_ListMatches",
+        "operationId": "LayerG_ListMatches",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2760,14 +2737,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/matchmaker/stats": {
       "get": {
         "summary": "Get matchmaker stats.",
-        "operationId": "Nakama_GetMatchmakerStats",
+        "operationId": "LayerG_GetMatchmakerStats",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2783,14 +2760,14 @@
           }
         },
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/notification": {
       "get": {
         "summary": "Fetch list of notifications.",
-        "operationId": "Nakama_ListNotifications",
+        "operationId": "LayerG_ListNotifications",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2823,12 +2800,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "delete": {
         "summary": "Delete one or more notifications for the current user.",
-        "operationId": "Nakama_DeleteNotifications",
+        "operationId": "LayerG_DeleteNotifications",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2858,14 +2835,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/rpc/{id}": {
       "get": {
         "summary": "Execute a Lua function on the server.",
-        "operationId": "Nakama_RpcFunc2",
+        "operationId": "LayerG_RpcFunc2",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2904,7 +2881,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -2915,7 +2892,7 @@
       },
       "post": {
         "summary": "Execute a Lua function on the server.",
-        "operationId": "Nakama_RpcFunc",
+        "operationId": "LayerG_RpcFunc",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2956,7 +2933,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ],
         "security": [
           {
@@ -2969,7 +2946,7 @@
     "/v2/session/logout": {
       "post": {
         "summary": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
-        "operationId": "Nakama_SessionLogout",
+        "operationId": "LayerG_SessionLogout",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2997,14 +2974,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/storage": {
       "post": {
         "summary": "Get storage objects.",
-        "operationId": "Nakama_ReadStorageObjects",
+        "operationId": "LayerG_ReadStorageObjects",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3031,12 +3008,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "put": {
         "summary": "Write objects into the storage engine.",
-        "operationId": "Nakama_WriteStorageObjects",
+        "operationId": "LayerG_WriteStorageObjects",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3063,14 +3040,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/storage/delete": {
       "put": {
         "summary": "Delete one or more objects by ID or username.",
-        "operationId": "Nakama_DeleteStorageObjects",
+        "operationId": "LayerG_DeleteStorageObjects",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3098,14 +3075,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/storage/{collection}": {
       "get": {
         "summary": "List publicly readable storage objects in a given collection.",
-        "operationId": "Nakama_ListStorageObjects",
+        "operationId": "LayerG_ListStorageObjects",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3152,14 +3129,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/storage/{collection}/{userId}": {
       "get": {
         "summary": "List publicly readable storage objects in a given collection.",
-        "operationId": "Nakama_ListStorageObjects2",
+        "operationId": "LayerG_ListStorageObjects2",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3206,14 +3183,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/tournament": {
       "get": {
         "summary": "List current or upcoming tournaments.",
-        "operationId": "Nakama_ListTournaments",
+        "operationId": "LayerG_ListTournaments",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3278,14 +3255,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/tournament/{tournamentId}": {
       "get": {
         "summary": "List tournament records.",
-        "operationId": "Nakama_ListTournamentRecords",
+        "operationId": "LayerG_ListTournamentRecords",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3344,12 +3321,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "delete": {
         "summary": "Delete a tournament record.",
-        "operationId": "Nakama_DeleteTournamentRecord",
+        "operationId": "LayerG_DeleteTournamentRecord",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3375,12 +3352,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "post": {
         "summary": "Write a record to a tournament.",
-        "operationId": "Nakama_WriteTournamentRecord2",
+        "operationId": "LayerG_WriteTournamentRecord2",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3414,12 +3391,12 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       },
       "put": {
         "summary": "Write a record to a tournament.",
-        "operationId": "Nakama_WriteTournamentRecord",
+        "operationId": "LayerG_WriteTournamentRecord",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3453,14 +3430,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/tournament/{tournamentId}/join": {
       "post": {
         "summary": "Attempt to join an open and running tournament.",
-        "operationId": "Nakama_JoinTournament",
+        "operationId": "LayerG_JoinTournament",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3486,14 +3463,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/tournament/{tournamentId}/owner/{ownerId}": {
       "get": {
         "summary": "List tournament records for a given owner.",
-        "operationId": "Nakama_ListTournamentRecordsAroundOwner",
+        "operationId": "LayerG_ListTournamentRecordsAroundOwner",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3548,14 +3525,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/user": {
       "get": {
         "summary": "Fetch zero or more users by ID and/or username.",
-        "operationId": "Nakama_GetUsers",
+        "operationId": "LayerG_GetUsers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3606,14 +3583,14 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     },
     "/v2/user/{userId}/group": {
       "get": {
         "summary": "List groups the current user belongs to.",
-        "operationId": "Nakama_ListUserGroups",
+        "operationId": "LayerG_ListUserGroups",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -3661,7 +3638,7 @@
           }
         ],
         "tags": [
-          "Nakama"
+          "LayerG"
         ]
       }
     }
@@ -3695,6 +3672,32 @@
         }
       },
       "description": "A single user-role pair."
+    },
+    "LayerGUpdateGroupBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description string."
+        },
+        "langTag": {
+          "type": "string",
+          "description": "Lang tag."
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "Avatar URL."
+        },
+        "open": {
+          "type": "boolean",
+          "description": "Open is true if anyone should be allowed to join, or false if joins must be approved by a group admin."
+        }
+      },
+      "description": "Update fields in a given group."
     },
     "UserGroupListUserGroup": {
       "type": "object",
@@ -3893,7 +3896,7 @@
       "properties": {
         "signedPlayerInfo": {
           "type": "string",
-          "title": "The OAuth token received from a Facebook Instant Game that may be decoded with the Application Secret (must be available with the nakama configuration)"
+          "title": "The OAuth token received from a Facebook Instant Game that may be decoded with the Application Secret (must be available with the layerG configuration)"
         },
         "vars": {
           "type": "object",
@@ -4126,32 +4129,6 @@
         }
       },
       "description": "Batch delete storage objects."
-    },
-    "apiEvent": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "An event name, type, category, or identifier."
-        },
-        "properties": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Arbitrary event property values."
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The time when the event was triggered."
-        },
-        "external": {
-          "type": "boolean",
-          "description": "True if the event came directly from a client call, false otherwise."
-        }
-      },
-      "description": "Represents an event to be passed through the server to registered event handlers."
     },
     "apiFriend": {
       "type": "object",
@@ -4842,7 +4819,7 @@
           "description": "The cursor to send when retrieving the previous page, if any."
         }
       },
-      "description": "A list of validated subscriptions stored by Nakama."
+      "description": "A list of validated subscriptions stored by LayerG."
     },
     "apiTournament": {
       "type": "object",
@@ -5299,10 +5276,10 @@
         },
         "seenBefore": {
           "type": "boolean",
-          "description": "Whether the purchase had already been validated by Nakama before."
+          "description": "Whether the purchase had already been validated by LayerG before."
         }
       },
-      "description": "Validated Purchase stored by Nakama."
+      "description": "Validated Purchase stored by LayerG."
     },
     "apiValidatedSubscription": {
       "type": "object",
@@ -5412,6 +5389,32 @@
       },
       "description": "Write objects to the storage engine."
     },
+    "layergapiEvent": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "An event name, type, category, or identifier."
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Arbitrary event property values."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The time when the event was triggered."
+        },
+        "external": {
+          "type": "boolean",
+          "description": "True if the event came directly from a client call, false otherwise."
+        }
+      },
+      "description": "Represents an event to be passed through the server to registered event handlers."
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -5462,7 +5465,7 @@
     }
   ],
   "externalDocs": {
-    "description": "Nakama server documentation",
-    "url": "https://heroiclabs.com/docs"
+    "description": "LayerG server documentation",
+    "url": "https://docs.u2u.xyz"
   }
 }

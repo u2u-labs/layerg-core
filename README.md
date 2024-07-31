@@ -151,20 +151,26 @@ To build the codebase and generate all sources follow these steps.
        "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
    ```
 
-2. If you've made changes to the embedded Console.
+2. Install the protobuf compiler
+
+  ```shell
+  brew install protobuf
+  ```
+
+3. If you've made changes to the embedded Console.
 
     ```shell
     cd console/ui
     ng serve
     ```
 
-3. Re-generate the protocol buffers, gateway code and console UI.
+4. Re-generate the protocol buffers, gateway code and console UI.
 
    ```shell
    env PATH="$HOME/go/bin:$PATH" go generate -x ./...
    ```
 
-4. Build the codebase.
+5. Build the codebase.
 
    ```shell
    go build -trimpath -mod=vendor
