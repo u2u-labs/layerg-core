@@ -1,5 +1,5 @@
 /* Colors */
-$brand-purple: #7668ED;
+$brand-black: #7668ED;
 $brand-light-purple: #A69BFF;
 $brand-grey: #FAFAFC;
 $brand-dark-blue: #333564;
@@ -31,7 +31,7 @@ $brand-dark-blue: #333564;
 
 .nav-link.account-link-active {
   opacity: 1;
-  border-bottom: solid 2px $brand-purple;
+  border-bottom: solid 2px $brand-black;
 }
 
 .navbar-expand-sm {

@@ -1,4 +1,4 @@
-name: "nakama"
+name: "layerg"
 data_dir: "./data"
 logger:
   level: "debug"
@@ -6,4 +6,4 @@ logger:
   file: ""
 database:
   address: ["root@localhost:26257"]
-  database: "nakama"
+  database: "layerg"
