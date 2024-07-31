@@ -68,7 +68,7 @@ type ctxExpiryKey struct{}
 type ctxFullMethodKey struct{}
 
 type ApiServer struct {
-	apigrpc.UnimplementedNakamaServer
+	apigrpc.UnimplementedLayerGServer
 	logger               *zap.Logger
 	db                   *sql.DB
 	config               Config
@@ -148,7 +148,7 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 	}
 
 	// Register and start GRPC server.
-	apigrpc.RegisterNakamaServer(grpcServer, s)
+	apigrpc.RegisterLayerGServer(grpcServer, s)
 	startupLogger.Info("Starting API server for gRPC requests", zap.Int("port", config.GetSocket().Port-1))
 	go func() {
 		listener, err := net.Listen("tcp", fmt.Sprintf("%v:%d", config.GetSocket().Address, config.GetSocket().Port-1))
@@ -217,10 +217,10 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 	} else {
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
-	if err := apigrpc.RegisterNakamaHandlerFromEndpoint(ctx, grpcGateway, dialAddr, dialOpts); err != nil {
+	if err := apigrpc.RegisterLayerGHandlerFromEndpoint(ctx, grpcGateway, dialAddr, dialOpts); err != nil {
 		startupLogger.Fatal("API server gateway registration failed", zap.Error(err))
 	}
-	//if err := apigrpc.RegisterNakamaHandlerServer(ctx, grpcGateway, s); err != nil {
+	//if err := apigrpc.RegisterLayerGHandlerServer(ctx, grpcGateway, s); err != nil {
 	//	startupLogger.Fatal("API server gateway registration failed", zap.Error(err))
 	//}
 
