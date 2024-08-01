@@ -337,28 +337,28 @@ func (s *ApiServer) Healthcheck(ctx context.Context, in *emptypb.Empty) (*emptyp
 
 func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache SessionCache, ctx context.Context, req interface{}, info *grpc.UnaryServerInfo) (context.Context, error) {
 	switch info.FullMethod {
-	case "/nakama.api.Nakama/Healthcheck":
+	case "/layerg.api.LayerG/Healthcheck":
 		// Healthcheck has no security.
 		return ctx, nil
-	case "/nakama.api.Nakama/SessionRefresh":
+	case "/layerg.api.LayerG/SessionRefresh":
 		fallthrough
-	case "/nakama.api.Nakama/AuthenticateApple":
+	case "/layerg.api.LayerG/AuthenticateApple":
 		fallthrough
-	case "/nakama.api.Nakama/AuthenticateCustom":
+	case "/layerg.api.LayerG/AuthenticateCustom":
 		fallthrough
-	case "/nakama.api.Nakama/AuthenticateDevice":
+	case "/layerg.api.LayerG/AuthenticateDevice":
 		fallthrough
-	case "/nakama.api.Nakama/AuthenticateEmail":
+	case "/layerg.api.LayerG/AuthenticateEmail":
 		fallthrough
-	case "/nakama.api.Nakama/AuthenticateFacebook":
+	case "/layerg.api.LayerG/AuthenticateFacebook":
 		fallthrough
-	case "/nakama.api.Nakama/AuthenticateFacebookInstantGame":
+	case "/layerg.api.LayerG/AuthenticateFacebookInstantGame":
 		fallthrough
-	case "/nakama.api.Nakama/AuthenticateGameCenter":
+	case "/layerg.api.LayerG/AuthenticateGameCenter":
 		fallthrough
-	case "/nakama.api.Nakama/AuthenticateGoogle":
+	case "/layerg.api.LayerG/AuthenticateGoogle":
 		fallthrough
-	case "/nakama.api.Nakama/AuthenticateSteam":
+	case "/layerg.api.LayerG/AuthenticateSteam":
 		// Session refresh and authentication functions only require server key.
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
@@ -386,7 +386,7 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 			// Value of "authorization" or "grpc-authorization" username component did not match server key.
 			return nil, status.Error(codes.Unauthenticated, "Server key invalid")
 		}
-	case "/nakama.api.Nakama/RpcFunc":
+	case "/layerg.api.LayerG/RpcFunc":
 		// RPC allows full user authentication or HTTP key authentication.
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {

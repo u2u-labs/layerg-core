@@ -39,7 +39,7 @@ var (
 	ErrRuntimeRPCNotFound = errors.New("RPC function not found")
 )
 
-const API_PREFIX = "/nakama.api.Nakama/"
+const API_PREFIX = "/layerg.api.LayerG/"
 const RTAPI_PREFIX = "*rtapi.Envelope_"
 
 var API_PREFIX_LOWERCASE = strings.ToLower(API_PREFIX)
