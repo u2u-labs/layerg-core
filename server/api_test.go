@@ -233,7 +233,7 @@ func NewAPIServer(t *testing.T, runtime *Runtime) (*ApiServer, *Pipeline) {
 	return apiServer, pipeline
 }
 
-func NewSession(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.NakamaClient, *api.Session, context.Context) {
+func NewSession(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.LayerGClient, *api.Session, context.Context) {
 	ctx := context.Background()
 	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{
 		"authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte("defaultkey:")),
@@ -243,7 +243,7 @@ func NewSession(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.Nakama
 		t.Fatal(err)
 	}
 
-	client := apigrpc.NewNakamaClient(conn)
+	client := apigrpc.NewLayerGClient(conn)
 	session, err := client.AuthenticateCustom(outgoingCtx, &api.AuthenticateCustomRequest{
 		Account: &api.AccountCustom{
 			Id: customID,
@@ -257,7 +257,7 @@ func NewSession(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.Nakama
 	return conn, client, session, outgoingCtx
 }
 
-func NewAuthenticatedAPIClient(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.NakamaClient, *api.Session, context.Context) {
+func NewAuthenticatedAPIClient(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.LayerGClient, *api.Session, context.Context) {
 	conn, _, session, _ := NewSession(t, customID)
 	conn.Close()
 
@@ -270,7 +270,7 @@ func NewAuthenticatedAPIClient(t *testing.T, customID string) (*grpc.ClientConn,
 		t.Fatal(err)
 	}
 
-	client := apigrpc.NewNakamaClient(conn)
+	client := apigrpc.NewLayerGClient(conn)
 	return conn, client, session, outgoingCtx
 }
 

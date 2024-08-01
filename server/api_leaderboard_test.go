@@ -22,7 +22,7 @@ func TestApiLeaderboard(t *testing.T) {
 		score    int64
 		subScore int64
 		conn     *grpc.ClientConn
-		cl       apigrpc.NakamaClient
+		cl       apigrpc.LayerGClient
 		ctx      context.Context
 	}
 
@@ -36,7 +36,7 @@ func TestApiLeaderboard(t *testing.T) {
 		}
 	}
 
-	verifyList := func(ctx context.Context, cl apigrpc.NakamaClient,
+	verifyList := func(ctx context.Context, cl apigrpc.LayerGClient,
 		lbId string, users []*testUser) {
 
 		resp, err := cl.ListLeaderboardRecords(ctx, &api.ListLeaderboardRecordsRequest{
@@ -94,7 +94,7 @@ func TestApiLeaderboard(t *testing.T) {
 		WaitForSocket(syscall.ECONNREFUSED, cfg)
 	}
 
-	newAPI := func(lb *Leaderboard) (*grpc.ClientConn, apigrpc.NakamaClient, *ApiServer, context.Context) {
+	newAPI := func(lb *Leaderboard) (*grpc.ClientConn, apigrpc.LayerGClient, *ApiServer, context.Context) {
 
 		modules := map[string]string{
 			"lb-init": fmt.Sprintf(`
