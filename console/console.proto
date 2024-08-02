@@ -17,17 +17,17 @@ option go_package = "github.com/u2u-labs/layerg-core/console";
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
-    title: "LayerG console API v2";
-    version: "2.0";
+    title: "LayerG console API v1";
+    version: "1.0";
     contact: {
       name: "The LayerG Authors & Contributors";
       url: "https://github.com/u2u-labs/layerg-core";
-      email: "hello@heroiclabs.com";
+      email: "hello@uniultra.xyz";
     };
   };
   host: "127.0.0.1:7351";
   external_docs: {
-    url: "https://heroiclabs.com/docs";
+    url: "https://docs.u2u.xyz";
     description: "LayerG server console documentation";
   }
   schemes: HTTP;
