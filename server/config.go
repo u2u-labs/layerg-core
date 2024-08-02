@@ -1,17 +1,3 @@
-// Copyright 2018 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server
 
 import (
@@ -31,7 +17,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config interface is the Nakama core configuration.
+// Config interface is the LayerG core configuration.
 type Config interface {
 	GetName() string
 	GetDataDir() string
@@ -60,7 +46,7 @@ type Config interface {
 func ParseArgs(logger *zap.Logger, args []string) Config {
 	// Parse args to get path to a config file if passed in.
 	configFilePath := NewConfig(logger)
-	configFileFlagSet := flag.NewFlagSet("nakama", flag.ExitOnError)
+	configFileFlagSet := flag.NewFlagSet("layerg", flag.ExitOnError)
 	configFileFlagMaker := flags.NewFlagMakerFlagSet(&flags.FlagMakingOptions{
 		UseLowerCase: true,
 		Flatten:      false,
@@ -94,7 +80,7 @@ func ParseArgs(logger *zap.Logger, args []string) Config {
 	mainConfig.Config = configFilePath.Config
 
 	// Override config with those passed from command-line.
-	mainFlagSet := flag.NewFlagSet("nakama", flag.ExitOnError)
+	mainFlagSet := flag.NewFlagSet("layerg", flag.ExitOnError)
 	mainFlagMaker := flags.NewFlagMakerFlagSet(&flags.FlagMakingOptions{
 		UseLowerCase: true,
 		Flatten:      false,
@@ -452,10 +438,10 @@ func convertRuntimeEnv(logger *zap.Logger, existingEnv map[string]string, mergeE
 }
 
 type config struct {
-	Name             string             `yaml:"name" json:"name" usage:"Nakama server’s node name - must be unique."`
+	Name             string             `yaml:"name" json:"name" usage:"LayerG server’s node name - must be unique."`
 	Config           []string           `yaml:"config" json:"config" usage:"The absolute file path to configuration YAML file."`
 	ShutdownGraceSec int                `yaml:"shutdown_grace_sec" json:"shutdown_grace_sec" usage:"Maximum number of seconds to wait for the server to complete work before shutting down. Default is 0 seconds. If 0 the server will shut down immediately when it receives a termination signal."`
-	Datadir          string             `yaml:"data_dir" json:"data_dir" usage:"An absolute path to a writeable folder where Nakama will store its data."`
+	Datadir          string             `yaml:"data_dir" json:"data_dir" usage:"An absolute path to a writeable folder where LayerG will store its data."`
 	Logger           *LoggerConfig      `yaml:"logger" json:"logger" usage:"Logger levels and output."`
 	Metrics          *MetricsConfig     `yaml:"metrics" json:"metrics" usage:"Metrics settings."`
 	Session          *SessionConfig     `yaml:"session" json:"session" usage:"Session authentication settings."`
@@ -482,7 +468,7 @@ func NewConfig(logger *zap.Logger) *config {
 		logger.Fatal("Error getting current working directory.", zap.Error(err))
 	}
 	return &config{
-		Name:             "nakama",
+		Name:             "layerg",
 		Datadir:          filepath.Join(cwd, "data"),
 		ShutdownGraceSec: 0,
 		Logger:           NewLoggerConfig(),
@@ -683,7 +669,7 @@ type MetricsConfig struct {
 	ReportingFreqSec int    `yaml:"reporting_freq_sec" json:"reporting_freq_sec" usage:"Frequency of metrics exports. Default is 60 seconds."`
 	Namespace        string `yaml:"namespace" json:"namespace" usage:"Namespace for Prometheus metrics. It will always prepend node name."`
 	PrometheusPort   int    `yaml:"prometheus_port" json:"prometheus_port" usage:"Port to expose Prometheus. If '0' Prometheus exports are disabled."`
-	Prefix           string `yaml:"prefix" json:"prefix" usage:"Prefix for metric names. Default is 'nakama', empty string '' disables the prefix."`
+	Prefix           string `yaml:"prefix" json:"prefix" usage:"Prefix for metric names. Default is 'layerg', empty string '' disables the prefix."`
 	CustomPrefix     string `yaml:"custom_prefix" json:"custom_prefix" usage:"Prefix for custom runtime metric names. Default is 'custom', empty string '' disables the prefix."`
 }
 
@@ -692,7 +678,7 @@ func NewMetricsConfig() *MetricsConfig {
 		ReportingFreqSec: 60,
 		Namespace:        "",
 		PrometheusPort:   0,
-		Prefix:           "nakama",
+		Prefix:           "layerg",
 		CustomPrefix:     "custom",
 	}
 }

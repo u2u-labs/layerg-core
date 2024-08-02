@@ -1,18 +1,4 @@
---[[
- Copyright 2018 The Nakama Authors
 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
---]]
 
 local du = require("debug_utils")
 
@@ -24,7 +10,7 @@ Context represents information about the match and server, for information purpo
   env = {}, -- key-value data set in the runtime.env server configuration.
   execution_mode = "Match",
   match_id = "client-friendly match ID, can be shared with clients and used in match join operations",
-  match_node = "name of the Nakama node hosting this match"
+  match_node = "name of the LayerG node hosting this match"
 }
 
 Params is the optional arbitrary second argument passed to `nk.match_create()`, or `nil` if none was used.
@@ -58,7 +44,7 @@ Context represents information about the match and server, for information purpo
   env = {}, -- key-value data set in the runtime.env server configuration.
   execution_mode = "Match",
   match_id = "client-friendly match ID, can be shared with clients and used in match join operations",
-  match_node = "name of the Nakama node hosting this match",
+  match_node = "name of the LayerG node hosting this match",
   match_label = "the label string returned from match_init",
   match_tick_rate = 1 -- the tick rate returned by match_init
 }
@@ -86,7 +72,7 @@ Presence is the user attempting to join the match. Format:
   user_id: "user unique ID",
   session_id: "session ID of the user's current connection",
   username: "user's unique username",
-  node: "name of the Nakama node the user is connected to"
+  node: "name of the LayerG node the user is connected to"
 }
 
 Metadata is an optional set of arbitrary key-value pairs received from the client. These may contain information
@@ -118,7 +104,7 @@ Context represents information about the match and server, for information purpo
   env = {}, -- key-value data set in the runtime.env server configuration.
   execution_mode = "Match",
   match_id = "client-friendly match ID, can be shared with clients and used in match join operations",
-  match_node = "name of the Nakama node hosting this match",
+  match_node = "name of the LayerG node hosting this match",
   match_label = "the label string returned from match_init",
   match_tick_rate = 1 -- the tick rate returned by match_init
 }
@@ -147,7 +133,7 @@ Presences is a list of users that have joined the match. Format:
     user_id: "user unique ID",
     session_id: "session ID of the user's current connection",
     username: "user's unique username",
-    node: "name of the Nakama node the user is connected to"
+    node: "name of the LayerG node the user is connected to"
   },
   ...
 }
@@ -170,7 +156,7 @@ Context represents information about the match and server, for information purpo
   env = {}, -- key-value data set in the runtime.env server configuration.
   execution_mode = "Match",
   match_id = "client-friendly match ID, can be shared with clients and used in match join operations",
-  match_node = "name of the Nakama node hosting this match",
+  match_node = "name of the LayerG node hosting this match",
   match_label = "the label string returned from match_init",
   match_tick_rate = 1 -- the tick rate returned by match_init
 }
@@ -199,7 +185,7 @@ Presences is a list of users that have left the match. Format:
     user_id: "user unique ID",
     session_id: "session ID of the user's current connection",
     username: "user's unique username",
-    node: "name of the Nakama node the user is connected to"
+    node: "name of the LayerG node the user is connected to"
   },
   ...
 }
@@ -222,7 +208,7 @@ Context represents information about the match and server, for information purpo
   env = {}, -- key-value data set in the runtime.env server configuration.
   executionMode = "Match",
   match_id = "client-friendly match ID, can be shared with clients and used in match join operations",
-  match_node = "name of the Nakama node hosting this match",
+  match_node = "name of the LayerG node hosting this match",
   match_label = "the label string returned from match_init",
   match_tick_rate = 1 -- the tick rate returned by match_init
 }
@@ -252,7 +238,7 @@ Messages is a list of data messages received from users between the previous and
       user_id: "user unique ID",
       session_id: "session ID of the user's current connection",
       username: "user's unique username",
-      node: "name of the Nakama node the user is connected to"
+      node: "name of the LayerG node the user is connected to"
     },
     op_code = 1, -- numeric op code set by the sender.
     data = "any string data set by the sender" -- may be nil.
@@ -281,7 +267,7 @@ Context represents information about the match and server, for information purpo
   env = {}, -- key-value data set in the runtime.env server configuration.
   executionMode = "Match",
   match_id = "client-friendly match ID, can be shared with clients and used in match join operations",
-  match_node = "name of the Nakama node hosting this match",
+  match_node = "name of the LayerG node hosting this match",
   match_label = "the label string returned from match_init",
   match_tick_rate = 1 -- the tick rate returned by match_init
 }
@@ -325,7 +311,7 @@ Context represents information about the match and server, for information purpo
   env = {}, -- key-value data set in the runtime.env server configuration.
   executionMode = "Match",
   match_id = "client-friendly match ID, can be shared with clients and used in match join operations",
-  match_node = "name of the Nakama node hosting this match",
+  match_node = "name of the LayerG node hosting this match",
   match_label = "the label string returned from match_init",
   match_tick_rate = 1 -- the tick rate returned by match_init
 }

@@ -1,17 +1,3 @@
-// Copyright 2020 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server
 
 import (
@@ -51,12 +37,12 @@ type RuntimeJS struct {
 	jsLoggerInst goja.Value
 	env          goja.Value
 	vm           *goja.Runtime
-	nakamaModule *runtimeJavascriptNakamaModule
+	layerGModule *runtimeJavascriptLayerGModule
 	callbacks    *RuntimeJavascriptCallbacks
 }
 
 func (r *RuntimeJS) SetContext(ctx context.Context) {
-	r.nakamaModule.ctx = ctx
+	r.layerGModule.ctx = ctx
 }
 
 func (r *RuntimeJS) GetCallback(e RuntimeExecutionMode, key string) string {
@@ -1716,8 +1702,8 @@ func NewRuntimeProviderJS(ctx context.Context, logger, startupLogger *zap.Logger
 			logger.Fatal("Failed to initialize JavaScript runtime", zap.Error(err))
 		}
 
-		nakamaModule := NewRuntimeJavascriptNakamaModule(logger, db, protojsonMarshaler, protojsonUnmarshaler, config, socialClient, leaderboardCache, leaderboardRankCache, storageIndex, localCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, eventFn, matchProvider.CreateMatch)
-		nk, err := nakamaModule.Constructor(runtime)
+		layerGModule := NewRuntimeJavascriptLayerGModule(logger, db, protojsonMarshaler, protojsonUnmarshaler, config, socialClient, leaderboardCache, leaderboardRankCache, storageIndex, localCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, eventFn, matchProvider.CreateMatch)
+		nk, err := layerGModule.Constructor(runtime)
 		if err != nil {
 			logger.Fatal("Failed to initialize JavaScript runtime", zap.Error(err))
 		}
@@ -1729,7 +1715,7 @@ func NewRuntimeProviderJS(ctx context.Context, logger, startupLogger *zap.Logger
 			node:         config.GetName(),
 			version:      version,
 			vm:           runtime,
-			nakamaModule: nakamaModule,
+			layerGModule: layerGModule,
 			env:          runtime.ToValue(config.GetRuntime().Environment),
 			callbacks:    callbacks,
 		}
@@ -2414,8 +2400,8 @@ func evalRuntimeModules(rp *RuntimeProviderJS, modCache *RuntimeJSModuleCache, m
 		return nil, err
 	}
 
-	nakamaModule := NewRuntimeJavascriptNakamaModule(rp.logger, rp.db, rp.protojsonMarshaler, rp.protojsonUnmarshaler, rp.config, rp.socialClient, rp.leaderboardCache, rp.leaderboardRankCache, storageIndex, localCache, leaderboardScheduler, rp.sessionRegistry, rp.sessionCache, rp.statusRegistry, rp.matchRegistry, rp.tracker, rp.metrics, rp.streamManager, rp.router, rp.eventFn, matchProvider.CreateMatch)
-	nk, err := nakamaModule.Constructor(r)
+	layerGModule := NewRuntimeJavascriptLayerGModule(rp.logger, rp.db, rp.protojsonMarshaler, rp.protojsonUnmarshaler, rp.config, rp.socialClient, rp.leaderboardCache, rp.leaderboardRankCache, storageIndex, localCache, leaderboardScheduler, rp.sessionRegistry, rp.sessionCache, rp.statusRegistry, rp.matchRegistry, rp.tracker, rp.metrics, rp.streamManager, rp.router, rp.eventFn, matchProvider.CreateMatch)
+	nk, err := layerGModule.Constructor(r)
 	if err != nil {
 		return nil, err
 	}

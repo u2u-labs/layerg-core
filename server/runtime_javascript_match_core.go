@@ -1,17 +1,3 @@
-// Copyright 2020 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server
 
 import (
@@ -61,7 +47,7 @@ type RuntimeJavaScriptMatchCore struct {
 	signalFn      goja.Callable
 	ctx           *goja.Object
 	dispatcher    goja.Value
-	nakamaModule  goja.Value
+	layerGModule  goja.Value
 	loggerModule  goja.Value
 
 	ctxCancelFn context.CancelFunc
@@ -75,13 +61,13 @@ func NewRuntimeJavascriptMatchCore(logger *zap.Logger, module string, db *sql.DB
 		logger.Fatal("Failed to initialize JavaScript runtime", zap.Error(err))
 	}
 
-	nakamaModule := NewRuntimeJavascriptNakamaModule(logger, db, protojsonMarshaler, protojsonUnmarshaler, config, socialClient, leaderboardCache, rankCache, storageIndex, localCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, eventFn, matchCreateFn)
-	nk, err := nakamaModule.Constructor(runtime)
+	layerGModule := NewRuntimeJavascriptLayerGModule(logger, db, protojsonMarshaler, protojsonUnmarshaler, config, socialClient, leaderboardCache, rankCache, storageIndex, localCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, eventFn, matchCreateFn)
+	nk, err := layerGModule.Constructor(runtime)
 	if err != nil {
 		logger.Fatal("Failed to initialize JavaScript runtime", zap.Error(err))
 	}
 	goCtx, ctxCancelFn := context.WithCancel(context.Background())
-	nakamaModule.ctx = goCtx
+	layerGModule.ctx = goCtx
 
 	_, err = runtime.RunProgram(modCache.Modules[modCache.Names[0]].Program)
 	if err != nil {
@@ -166,7 +152,7 @@ func NewRuntimeJavascriptMatchCore(logger *zap.Logger, module string, db *sql.DB
 		ctx:           ctx,
 
 		loggerModule: jsLoggerInst,
-		nakamaModule: nk,
+		layerGModule: nk,
 		ctxCancelFn:  ctxCancelFn,
 	}
 
@@ -194,7 +180,7 @@ func NewRuntimeJavascriptMatchCore(logger *zap.Logger, module string, db *sql.DB
 }
 
 func (rm *RuntimeJavaScriptMatchCore) MatchInit(presenceList *MatchPresenceList, deferMessageFn RuntimeMatchDeferMessageFunction, params map[string]interface{}) (interface{}, int, error) {
-	args := []goja.Value{rm.ctx, rm.loggerModule, rm.nakamaModule, rm.vm.ToValue(params)}
+	args := []goja.Value{rm.ctx, rm.loggerModule, rm.layerGModule, rm.vm.ToValue(params)}
 
 	retVal, err := rm.initFn(goja.Null(), args...)
 	if err != nil {
@@ -281,7 +267,7 @@ func (rm *RuntimeJavaScriptMatchCore) MatchJoinAttempt(tick int64, state interfa
 	for k, v := range state.(map[string]any) {
 		_ = stateObject.Set(k, v)
 	}
-	args := []goja.Value{ctxObj, rm.loggerModule, rm.nakamaModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(stateObject), presenceObj, rm.vm.ToValue(metadata)}
+	args := []goja.Value{ctxObj, rm.loggerModule, rm.layerGModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(stateObject), presenceObj, rm.vm.ToValue(metadata)}
 	retVal, err := rm.joinAttemptFn(goja.Null(), args...)
 	if err != nil {
 		return nil, false, "", err
@@ -345,7 +331,7 @@ func (rm *RuntimeJavaScriptMatchCore) MatchJoin(tick int64, state interface{}, j
 	for k, v := range state.(map[string]any) {
 		_ = stateObject.Set(k, v)
 	}
-	args := []goja.Value{rm.ctx, rm.loggerModule, rm.nakamaModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(stateObject), rm.vm.ToValue(presences)}
+	args := []goja.Value{rm.ctx, rm.loggerModule, rm.layerGModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(stateObject), rm.vm.ToValue(presences)}
 	retVal, err := rm.joinFn(goja.Null(), args...)
 	if err != nil {
 		return nil, err
@@ -390,7 +376,7 @@ func (rm *RuntimeJavaScriptMatchCore) MatchLeave(tick int64, state interface{}, 
 	for k, v := range s {
 		_ = o.Set(k, v)
 	}
-	args := []goja.Value{rm.ctx, rm.loggerModule, rm.nakamaModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(o), rm.vm.ToValue(presences)}
+	args := []goja.Value{rm.ctx, rm.loggerModule, rm.layerGModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(o), rm.vm.ToValue(presences)}
 	retVal, err := rm.leaveFn(goja.Null(), args...)
 	if err != nil {
 		return nil, err
@@ -447,7 +433,7 @@ func (rm *RuntimeJavaScriptMatchCore) MatchLoop(tick int64, state interface{}, i
 	for k, v := range state.(map[string]any) {
 		_ = stateObject.Set(k, v)
 	}
-	args := []goja.Value{rm.ctx, rm.loggerModule, rm.nakamaModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(stateObject), rm.vm.ToValue(inputs)}
+	args := []goja.Value{rm.ctx, rm.loggerModule, rm.layerGModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(stateObject), rm.vm.ToValue(inputs)}
 	retVal, err := rm.loopFn(goja.Null(), args...)
 	if err != nil {
 		return nil, err
@@ -479,7 +465,7 @@ func (rm *RuntimeJavaScriptMatchCore) MatchTerminate(tick int64, state interface
 	for k, v := range state.(map[string]any) {
 		_ = stateObject.Set(k, v)
 	}
-	args := []goja.Value{rm.ctx, rm.loggerModule, rm.nakamaModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(stateObject), rm.vm.ToValue(graceSeconds)}
+	args := []goja.Value{rm.ctx, rm.loggerModule, rm.layerGModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(stateObject), rm.vm.ToValue(graceSeconds)}
 	retVal, err := rm.terminateFn(goja.Null(), args...)
 	if err != nil {
 		return nil, err
@@ -511,7 +497,7 @@ func (rm *RuntimeJavaScriptMatchCore) MatchSignal(tick int64, state interface{},
 	for k, v := range state.(map[string]any) {
 		_ = stateObject.Set(k, v)
 	}
-	args := []goja.Value{rm.ctx, rm.loggerModule, rm.nakamaModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(stateObject), rm.vm.ToValue(data)}
+	args := []goja.Value{rm.ctx, rm.loggerModule, rm.layerGModule, rm.dispatcher, rm.vm.ToValue(tick), rm.vm.ToValue(stateObject), rm.vm.ToValue(data)}
 	retVal, err := rm.signalFn(goja.Null(), args...)
 	if err != nil {
 		return nil, "", err

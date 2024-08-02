@@ -1,17 +1,3 @@
-// Copyright 2018 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 //*
 // The RPC protocol for the developer console.
 
@@ -38,69 +24,69 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Console_Authenticate_FullMethodName              = "/nakama.console.Console/Authenticate"
-	Console_AuthenticateLogout_FullMethodName        = "/nakama.console.Console/AuthenticateLogout"
-	Console_AddUser_FullMethodName                   = "/nakama.console.Console/AddUser"
-	Console_AddGroupUsers_FullMethodName             = "/nakama.console.Console/AddGroupUsers"
-	Console_BanAccount_FullMethodName                = "/nakama.console.Console/BanAccount"
-	Console_CallApiEndpoint_FullMethodName           = "/nakama.console.Console/CallApiEndpoint"
-	Console_CallRpcEndpoint_FullMethodName           = "/nakama.console.Console/CallRpcEndpoint"
-	Console_DeleteAllData_FullMethodName             = "/nakama.console.Console/DeleteAllData"
-	Console_DeleteAccount_FullMethodName             = "/nakama.console.Console/DeleteAccount"
-	Console_DeleteChannelMessages_FullMethodName     = "/nakama.console.Console/DeleteChannelMessages"
-	Console_DeleteFriend_FullMethodName              = "/nakama.console.Console/DeleteFriend"
-	Console_DeleteGroup_FullMethodName               = "/nakama.console.Console/DeleteGroup"
-	Console_DeleteGroupUser_FullMethodName           = "/nakama.console.Console/DeleteGroupUser"
-	Console_DeleteStorage_FullMethodName             = "/nakama.console.Console/DeleteStorage"
-	Console_DeleteStorageObject_FullMethodName       = "/nakama.console.Console/DeleteStorageObject"
-	Console_DeleteAccounts_FullMethodName            = "/nakama.console.Console/DeleteAccounts"
-	Console_DeleteLeaderboard_FullMethodName         = "/nakama.console.Console/DeleteLeaderboard"
-	Console_DeleteLeaderboardRecord_FullMethodName   = "/nakama.console.Console/DeleteLeaderboardRecord"
-	Console_DeleteUser_FullMethodName                = "/nakama.console.Console/DeleteUser"
-	Console_DeleteWalletLedger_FullMethodName        = "/nakama.console.Console/DeleteWalletLedger"
-	Console_DemoteGroupMember_FullMethodName         = "/nakama.console.Console/DemoteGroupMember"
-	Console_ExportAccount_FullMethodName             = "/nakama.console.Console/ExportAccount"
-	Console_ExportGroup_FullMethodName               = "/nakama.console.Console/ExportGroup"
-	Console_GetAccount_FullMethodName                = "/nakama.console.Console/GetAccount"
-	Console_GetConfig_FullMethodName                 = "/nakama.console.Console/GetConfig"
-	Console_GetFriends_FullMethodName                = "/nakama.console.Console/GetFriends"
-	Console_GetGroup_FullMethodName                  = "/nakama.console.Console/GetGroup"
-	Console_GetMembers_FullMethodName                = "/nakama.console.Console/GetMembers"
-	Console_GetGroups_FullMethodName                 = "/nakama.console.Console/GetGroups"
-	Console_GetLeaderboard_FullMethodName            = "/nakama.console.Console/GetLeaderboard"
-	Console_GetMatchState_FullMethodName             = "/nakama.console.Console/GetMatchState"
-	Console_GetRuntime_FullMethodName                = "/nakama.console.Console/GetRuntime"
-	Console_GetStatus_FullMethodName                 = "/nakama.console.Console/GetStatus"
-	Console_GetStorage_FullMethodName                = "/nakama.console.Console/GetStorage"
-	Console_GetWalletLedger_FullMethodName           = "/nakama.console.Console/GetWalletLedger"
-	Console_GetPurchase_FullMethodName               = "/nakama.console.Console/GetPurchase"
-	Console_GetSubscription_FullMethodName           = "/nakama.console.Console/GetSubscription"
-	Console_ListApiEndpoints_FullMethodName          = "/nakama.console.Console/ListApiEndpoints"
-	Console_ListLeaderboardRecords_FullMethodName    = "/nakama.console.Console/ListLeaderboardRecords"
-	Console_ListLeaderboards_FullMethodName          = "/nakama.console.Console/ListLeaderboards"
-	Console_ListStorage_FullMethodName               = "/nakama.console.Console/ListStorage"
-	Console_ListStorageCollections_FullMethodName    = "/nakama.console.Console/ListStorageCollections"
-	Console_ListAccounts_FullMethodName              = "/nakama.console.Console/ListAccounts"
-	Console_ListChannelMessages_FullMethodName       = "/nakama.console.Console/ListChannelMessages"
-	Console_ListGroups_FullMethodName                = "/nakama.console.Console/ListGroups"
-	Console_ListMatches_FullMethodName               = "/nakama.console.Console/ListMatches"
-	Console_ListPurchases_FullMethodName             = "/nakama.console.Console/ListPurchases"
-	Console_ListSubscriptions_FullMethodName         = "/nakama.console.Console/ListSubscriptions"
-	Console_ListUsers_FullMethodName                 = "/nakama.console.Console/ListUsers"
-	Console_PromoteGroupMember_FullMethodName        = "/nakama.console.Console/PromoteGroupMember"
-	Console_UnbanAccount_FullMethodName              = "/nakama.console.Console/UnbanAccount"
-	Console_UnlinkCustom_FullMethodName              = "/nakama.console.Console/UnlinkCustom"
-	Console_UnlinkDevice_FullMethodName              = "/nakama.console.Console/UnlinkDevice"
-	Console_UnlinkEmail_FullMethodName               = "/nakama.console.Console/UnlinkEmail"
-	Console_UnlinkApple_FullMethodName               = "/nakama.console.Console/UnlinkApple"
-	Console_UnlinkFacebook_FullMethodName            = "/nakama.console.Console/UnlinkFacebook"
-	Console_UnlinkFacebookInstantGame_FullMethodName = "/nakama.console.Console/UnlinkFacebookInstantGame"
-	Console_UnlinkGameCenter_FullMethodName          = "/nakama.console.Console/UnlinkGameCenter"
-	Console_UnlinkGoogle_FullMethodName              = "/nakama.console.Console/UnlinkGoogle"
-	Console_UnlinkSteam_FullMethodName               = "/nakama.console.Console/UnlinkSteam"
-	Console_UpdateAccount_FullMethodName             = "/nakama.console.Console/UpdateAccount"
-	Console_UpdateGroup_FullMethodName               = "/nakama.console.Console/UpdateGroup"
-	Console_WriteStorageObject_FullMethodName        = "/nakama.console.Console/WriteStorageObject"
+	Console_Authenticate_FullMethodName              = "/layerg.console.Console/Authenticate"
+	Console_AuthenticateLogout_FullMethodName        = "/layerg.console.Console/AuthenticateLogout"
+	Console_AddUser_FullMethodName                   = "/layerg.console.Console/AddUser"
+	Console_AddGroupUsers_FullMethodName             = "/layerg.console.Console/AddGroupUsers"
+	Console_BanAccount_FullMethodName                = "/layerg.console.Console/BanAccount"
+	Console_CallApiEndpoint_FullMethodName           = "/layerg.console.Console/CallApiEndpoint"
+	Console_CallRpcEndpoint_FullMethodName           = "/layerg.console.Console/CallRpcEndpoint"
+	Console_DeleteAllData_FullMethodName             = "/layerg.console.Console/DeleteAllData"
+	Console_DeleteAccount_FullMethodName             = "/layerg.console.Console/DeleteAccount"
+	Console_DeleteChannelMessages_FullMethodName     = "/layerg.console.Console/DeleteChannelMessages"
+	Console_DeleteFriend_FullMethodName              = "/layerg.console.Console/DeleteFriend"
+	Console_DeleteGroup_FullMethodName               = "/layerg.console.Console/DeleteGroup"
+	Console_DeleteGroupUser_FullMethodName           = "/layerg.console.Console/DeleteGroupUser"
+	Console_DeleteStorage_FullMethodName             = "/layerg.console.Console/DeleteStorage"
+	Console_DeleteStorageObject_FullMethodName       = "/layerg.console.Console/DeleteStorageObject"
+	Console_DeleteAccounts_FullMethodName            = "/layerg.console.Console/DeleteAccounts"
+	Console_DeleteLeaderboard_FullMethodName         = "/layerg.console.Console/DeleteLeaderboard"
+	Console_DeleteLeaderboardRecord_FullMethodName   = "/layerg.console.Console/DeleteLeaderboardRecord"
+	Console_DeleteUser_FullMethodName                = "/layerg.console.Console/DeleteUser"
+	Console_DeleteWalletLedger_FullMethodName        = "/layerg.console.Console/DeleteWalletLedger"
+	Console_DemoteGroupMember_FullMethodName         = "/layerg.console.Console/DemoteGroupMember"
+	Console_ExportAccount_FullMethodName             = "/layerg.console.Console/ExportAccount"
+	Console_ExportGroup_FullMethodName               = "/layerg.console.Console/ExportGroup"
+	Console_GetAccount_FullMethodName                = "/layerg.console.Console/GetAccount"
+	Console_GetConfig_FullMethodName                 = "/layerg.console.Console/GetConfig"
+	Console_GetFriends_FullMethodName                = "/layerg.console.Console/GetFriends"
+	Console_GetGroup_FullMethodName                  = "/layerg.console.Console/GetGroup"
+	Console_GetMembers_FullMethodName                = "/layerg.console.Console/GetMembers"
+	Console_GetGroups_FullMethodName                 = "/layerg.console.Console/GetGroups"
+	Console_GetLeaderboard_FullMethodName            = "/layerg.console.Console/GetLeaderboard"
+	Console_GetMatchState_FullMethodName             = "/layerg.console.Console/GetMatchState"
+	Console_GetRuntime_FullMethodName                = "/layerg.console.Console/GetRuntime"
+	Console_GetStatus_FullMethodName                 = "/layerg.console.Console/GetStatus"
+	Console_GetStorage_FullMethodName                = "/layerg.console.Console/GetStorage"
+	Console_GetWalletLedger_FullMethodName           = "/layerg.console.Console/GetWalletLedger"
+	Console_GetPurchase_FullMethodName               = "/layerg.console.Console/GetPurchase"
+	Console_GetSubscription_FullMethodName           = "/layerg.console.Console/GetSubscription"
+	Console_ListApiEndpoints_FullMethodName          = "/layerg.console.Console/ListApiEndpoints"
+	Console_ListLeaderboardRecords_FullMethodName    = "/layerg.console.Console/ListLeaderboardRecords"
+	Console_ListLeaderboards_FullMethodName          = "/layerg.console.Console/ListLeaderboards"
+	Console_ListStorage_FullMethodName               = "/layerg.console.Console/ListStorage"
+	Console_ListStorageCollections_FullMethodName    = "/layerg.console.Console/ListStorageCollections"
+	Console_ListAccounts_FullMethodName              = "/layerg.console.Console/ListAccounts"
+	Console_ListChannelMessages_FullMethodName       = "/layerg.console.Console/ListChannelMessages"
+	Console_ListGroups_FullMethodName                = "/layerg.console.Console/ListGroups"
+	Console_ListMatches_FullMethodName               = "/layerg.console.Console/ListMatches"
+	Console_ListPurchases_FullMethodName             = "/layerg.console.Console/ListPurchases"
+	Console_ListSubscriptions_FullMethodName         = "/layerg.console.Console/ListSubscriptions"
+	Console_ListUsers_FullMethodName                 = "/layerg.console.Console/ListUsers"
+	Console_PromoteGroupMember_FullMethodName        = "/layerg.console.Console/PromoteGroupMember"
+	Console_UnbanAccount_FullMethodName              = "/layerg.console.Console/UnbanAccount"
+	Console_UnlinkCustom_FullMethodName              = "/layerg.console.Console/UnlinkCustom"
+	Console_UnlinkDevice_FullMethodName              = "/layerg.console.Console/UnlinkDevice"
+	Console_UnlinkEmail_FullMethodName               = "/layerg.console.Console/UnlinkEmail"
+	Console_UnlinkApple_FullMethodName               = "/layerg.console.Console/UnlinkApple"
+	Console_UnlinkFacebook_FullMethodName            = "/layerg.console.Console/UnlinkFacebook"
+	Console_UnlinkFacebookInstantGame_FullMethodName = "/layerg.console.Console/UnlinkFacebookInstantGame"
+	Console_UnlinkGameCenter_FullMethodName          = "/layerg.console.Console/UnlinkGameCenter"
+	Console_UnlinkGoogle_FullMethodName              = "/layerg.console.Console/UnlinkGoogle"
+	Console_UnlinkSteam_FullMethodName               = "/layerg.console.Console/UnlinkSteam"
+	Console_UpdateAccount_FullMethodName             = "/layerg.console.Console/UpdateAccount"
+	Console_UpdateGroup_FullMethodName               = "/layerg.console.Console/UpdateGroup"
+	Console_WriteStorageObject_FullMethodName        = "/layerg.console.Console/WriteStorageObject"
 )
 
 // ConsoleClient is the client API for Console service.
@@ -2287,7 +2273,7 @@ func _Console_WriteStorageObject_Handler(srv interface{}, ctx context.Context, d
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Console_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "nakama.console.Console",
+	ServiceName: "layerg.console.Console",
 	HandlerType: (*ConsoleServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
