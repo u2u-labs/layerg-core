@@ -200,7 +200,7 @@ func main() {
 	pipeline := server.NewPipeline(logger, config, db, jsonpbMarshaler, jsonpbUnmarshaler, sessionRegistry, statusRegistry, matchRegistry, partyRegistry, matchmaker, tracker, router, runtime)
 	statusHandler := server.NewLocalStatusHandler(logger, sessionRegistry, matchRegistry, tracker, metrics, config.GetName())
 
-	telemetryEnabled := len(os.Getenv("NAKAMA_TELEMETRY")) < 1
+	telemetryEnabled := len(os.Getenv("LAYERG_TELEMETRY")) < 1
 	console.UIFS.Nt = !telemetryEnabled
 	cookie := newOrLoadCookie(telemetryEnabled, config)
 
@@ -209,7 +209,7 @@ func main() {
 
 	if telemetryEnabled {
 		const telemetryKey = "YU1bIKUhjQA9WC0O6ouIRIWTaPlJ5kFs"
-		_ = se.Start(telemetryKey, cookie, semver, "nakama")
+		_ = se.Start(telemetryKey, cookie, semver, "layerg")
 		defer func() {
 			_ = se.End(telemetryKey, cookie)
 		}()
@@ -245,17 +245,17 @@ func main() {
 	startupLogger.Info("Shutdown complete")
 }
 
-// Help improve Nakama by sending anonymous usage statistics.
+// Help improve LayerG by sending anonymous usage statistics.
 //
 // You can disable the telemetry completely before server start by setting the
-// environment variable "NAKAMA_TELEMETRY" - i.e. NAKAMA_TELEMETRY=0 nakama
+// environment variable "LAYERG_TELEMETRY" - i.e. LAYERG_TELEMETRY=0 LayerG
 //
 // These properties are collected:
 // * A unique UUID v4 random identifier which is generated.
-// * Version of Nakama being used which includes build metadata.
+// * Version of LayerG being used which includes build metadata.
 // * Amount of time the server ran for.
 //
-// This information is sent via Segment which allows the Nakama team to
+// This information is sent via Segment which allows the LayerG team to
 // analyze usage patterns and errors in order to help improve the server.
 func newOrLoadCookie(enabled bool, config server.Config) string {
 	if !enabled {

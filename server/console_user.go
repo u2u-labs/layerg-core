@@ -64,7 +64,7 @@ func (s *ConsoleServer) AddUser(ctx context.Context, in *console.AddUserRequest)
 	if payloadJson, err := json.Marshal(payload); err != nil {
 		s.logger.Debug("Failed to create newsletter request payload.", zap.Error(err))
 	} else {
-		if req, err := http.NewRequest("POST", "https://cloud.heroiclabs.com/v1/nakama-newsletter/subscribe", bytes.NewBuffer(payloadJson)); err != nil {
+		if req, err := http.NewRequest("POST", "", bytes.NewBuffer(payloadJson)); err != nil {
 			s.logger.Debug("Failed to create newsletter request.", zap.Error(err))
 		} else {
 			req.Header.Set("Content-Type", "application/json")

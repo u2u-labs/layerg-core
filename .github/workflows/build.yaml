@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize]
 jobs:
   build_binary:
-    name: Build nakama binary
+    name: Build layerg binary
     runs-on: ubuntu-latest
     steps:
       - name: Setup Go

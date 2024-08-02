@@ -98,7 +98,7 @@ func TestApiLeaderboard(t *testing.T) {
 
 		modules := map[string]string{
 			"lb-init": fmt.Sprintf(`
-local nk = require("nakama")
+local nk = require("layerg")
 local reset = ""
 local metadata = {}
 nk.leaderboard_create(%q, %t, %q, %q, reset, metadata, %t)

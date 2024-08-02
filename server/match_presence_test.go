@@ -10,21 +10,21 @@ func TestMatchPresenceList(t *testing.T) {
 	list := NewMatchPresenceList()
 
 	p1 := &MatchPresence{
-		Node:      "nakama",
+		Node:      "layerg",
 		UserID:    uuid.Must(uuid.NewV4()),
 		SessionID: uuid.Must(uuid.NewV4()),
 		Username:  "user1",
 		Reason:    0,
 	}
 	p2 := &MatchPresence{
-		Node:      "nakama",
+		Node:      "layerg",
 		UserID:    uuid.Must(uuid.NewV4()),
 		SessionID: uuid.Must(uuid.NewV4()),
 		Username:  "user2",
 		Reason:    0,
 	}
 	p3 := &MatchPresence{
-		Node:      "nakama",
+		Node:      "layerg",
 		UserID:    uuid.Must(uuid.NewV4()),
 		SessionID: uuid.Must(uuid.NewV4()),
 		Username:  "user3",

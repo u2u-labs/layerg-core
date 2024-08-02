@@ -51,13 +51,13 @@ func TestEncodeDecodePresences(t *testing.T) {
 	presences := []runtime.Presence{
 		&Presence{
 			ID: PresenceID{
-				Node:      "nakama",
+				Node:      "layerg",
 				SessionID: uuid.Must(uuid.NewV4()),
 			},
 			Stream: PresenceStream{
 				Mode:    StreamModeMatchAuthoritative,
 				Subject: uuid.Must(uuid.NewV4()),
-				Label:   "nakama",
+				Label:   "layerg",
 			},
 			UserID: uuid.Must(uuid.NewV4()),
 			Meta: PresenceMeta{
@@ -66,13 +66,13 @@ func TestEncodeDecodePresences(t *testing.T) {
 		},
 		&Presence{
 			ID: PresenceID{
-				Node:      "nakama",
+				Node:      "layerg",
 				SessionID: uuid.Must(uuid.NewV4()),
 			},
 			Stream: PresenceStream{
 				Mode:    StreamModeMatchAuthoritative,
 				Subject: uuid.Must(uuid.NewV4()),
-				Label:   "nakama",
+				Label:   "layerg",
 			},
 			UserID: uuid.Must(uuid.NewV4()),
 			Meta: PresenceMeta{
