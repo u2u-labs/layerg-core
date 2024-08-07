@@ -37,11 +37,7 @@ func request_Console_Authenticate_0(ctx context.Context, marshaler runtime.Marsh
 	var protoReq AuthenticateRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -54,11 +50,7 @@ func local_request_Console_Authenticate_0(ctx context.Context, marshaler runtime
 	var protoReq AuthenticateRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -71,11 +63,7 @@ func request_Console_AuthenticateLogout_0(ctx context.Context, marshaler runtime
 	var protoReq AuthenticateLogoutRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -88,11 +76,7 @@ func local_request_Console_AuthenticateLogout_0(ctx context.Context, marshaler r
 	var protoReq AuthenticateLogoutRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -105,11 +89,7 @@ func request_Console_AddUser_0(ctx context.Context, marshaler runtime.Marshaler,
 	var protoReq AddUserRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -122,11 +102,7 @@ func local_request_Console_AddUser_0(ctx context.Context, marshaler runtime.Mars
 	var protoReq AddUserRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -139,11 +115,7 @@ func request_Console_AddGroupUsers_0(ctx context.Context, marshaler runtime.Mars
 	var protoReq AddGroupUsersRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -173,11 +145,7 @@ func local_request_Console_AddGroupUsers_0(ctx context.Context, marshaler runtim
 	var protoReq AddGroupUsersRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -259,11 +227,7 @@ func request_Console_CallApiEndpoint_0(ctx context.Context, marshaler runtime.Ma
 	var protoReq CallApiEndpointRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -293,11 +257,7 @@ func local_request_Console_CallApiEndpoint_0(ctx context.Context, marshaler runt
 	var protoReq CallApiEndpointRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -327,11 +287,7 @@ func request_Console_CallRpcEndpoint_0(ctx context.Context, marshaler runtime.Ma
 	var protoReq CallApiEndpointRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -361,11 +317,7 @@ func local_request_Console_CallRpcEndpoint_0(ctx context.Context, marshaler runt
 	var protoReq CallApiEndpointRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -410,7 +362,7 @@ func local_request_Console_DeleteAllData_0(ctx context.Context, marshaler runtim
 }
 
 var (
-	filter_Console_DeleteAccount_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_Console_DeleteAccount_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Console_DeleteAccount_0(ctx context.Context, marshaler runtime.Marshaler, client ConsoleClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -730,7 +682,7 @@ func local_request_Console_DeleteStorage_0(ctx context.Context, marshaler runtim
 }
 
 var (
-	filter_Console_DeleteStorageObject_0 = &utilities.DoubleArray{Encoding: map[string]int{"collection": 0, "key": 1, "user_id": 2, "userId": 3}, Base: []int{1, 2, 4, 5, 6, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 1, 2, 2, 3, 3, 4, 5}}
+	filter_Console_DeleteStorageObject_0 = &utilities.DoubleArray{Encoding: map[string]int{"collection": 0, "key": 1, "user_id": 2}, Base: []int{1, 1, 2, 3, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 3, 4}}
 )
 
 func request_Console_DeleteStorageObject_0(ctx context.Context, marshaler runtime.Marshaler, client ConsoleClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -1888,7 +1840,7 @@ func local_request_Console_GetStorage_0(ctx context.Context, marshaler runtime.M
 }
 
 var (
-	filter_Console_GetWalletLedger_0 = &utilities.DoubleArray{Encoding: map[string]int{"account_id": 0, "accountId": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+	filter_Console_GetWalletLedger_0 = &utilities.DoubleArray{Encoding: map[string]int{"account_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Console_GetWalletLedger_0(ctx context.Context, marshaler runtime.Marshaler, client ConsoleClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -2080,7 +2032,7 @@ func local_request_Console_ListApiEndpoints_0(ctx context.Context, marshaler run
 }
 
 var (
-	filter_Console_ListLeaderboardRecords_0 = &utilities.DoubleArray{Encoding: map[string]int{"leaderboard_id": 0, "leaderboardId": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+	filter_Console_ListLeaderboardRecords_0 = &utilities.DoubleArray{Encoding: map[string]int{"leaderboard_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Console_ListLeaderboardRecords_0(ctx context.Context, marshaler runtime.Marshaler, client ConsoleClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -2653,11 +2605,7 @@ func request_Console_UnlinkDevice_0(ctx context.Context, marshaler runtime.Marsh
 	var protoReq UnlinkDeviceRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -2687,11 +2635,7 @@ func local_request_Console_UnlinkDevice_0(ctx context.Context, marshaler runtime
 	var protoReq UnlinkDeviceRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -3085,11 +3029,7 @@ func request_Console_UpdateAccount_0(ctx context.Context, marshaler runtime.Mars
 	var protoReq UpdateAccountRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -3119,11 +3059,7 @@ func local_request_Console_UpdateAccount_0(ctx context.Context, marshaler runtim
 	var protoReq UpdateAccountRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -3153,11 +3089,7 @@ func request_Console_UpdateGroup_0(ctx context.Context, marshaler runtime.Marsha
 	var protoReq UpdateGroupRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -3187,11 +3119,7 @@ func local_request_Console_UpdateGroup_0(ctx context.Context, marshaler runtime.
 	var protoReq UpdateGroupRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -3221,11 +3149,7 @@ func request_Console_WriteStorageObject_0(ctx context.Context, marshaler runtime
 	var protoReq WriteStorageObjectRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -3275,11 +3199,7 @@ func local_request_Console_WriteStorageObject_0(ctx context.Context, marshaler r
 	var protoReq WriteStorageObjectRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -3329,6 +3249,7 @@ func local_request_Console_WriteStorageObject_0(ctx context.Context, marshaler r
 // UnaryRPC     :call ConsoleServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterConsoleHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ConsoleServer) error {
 
 	mux.Handle("POST", pattern_Console_Authenticate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -3339,7 +3260,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/Authenticate", runtime.WithHTTPPathPattern("/v2/console/authenticate"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/Authenticate", runtime.WithHTTPPathPattern("/v2/console/authenticate"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3364,7 +3285,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/AuthenticateLogout", runtime.WithHTTPPathPattern("/v2/console/authenticate/logout"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/AuthenticateLogout", runtime.WithHTTPPathPattern("/v2/console/authenticate/logout"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3389,7 +3310,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/AddUser", runtime.WithHTTPPathPattern("/v2/console/user"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/AddUser", runtime.WithHTTPPathPattern("/v2/console/user"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3414,7 +3335,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/AddGroupUsers", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/add"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/AddGroupUsers", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/add"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3439,7 +3360,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/BanAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/ban"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/BanAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/ban"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3464,7 +3385,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/CallApiEndpoint", runtime.WithHTTPPathPattern("/v2/console/api/endpoints/{method}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/CallApiEndpoint", runtime.WithHTTPPathPattern("/v2/console/api/endpoints/{method}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3489,7 +3410,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/CallRpcEndpoint", runtime.WithHTTPPathPattern("/v2/console/api/endpoints/rpc/{method}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/CallRpcEndpoint", runtime.WithHTTPPathPattern("/v2/console/api/endpoints/rpc/{method}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3514,7 +3435,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteAllData", runtime.WithHTTPPathPattern("/v2/console/all"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteAllData", runtime.WithHTTPPathPattern("/v2/console/all"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3539,7 +3460,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3564,7 +3485,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteChannelMessages", runtime.WithHTTPPathPattern("/v2/console/message"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteChannelMessages", runtime.WithHTTPPathPattern("/v2/console/message"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3589,7 +3510,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteFriend", runtime.WithHTTPPathPattern("/v2/console/account/{id}/friend/{friend_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteFriend", runtime.WithHTTPPathPattern("/v2/console/account/{id}/friend/{friend_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3614,7 +3535,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3639,7 +3560,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteGroupUser", runtime.WithHTTPPathPattern("/v2/console/account/{id}/group/{group_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteGroupUser", runtime.WithHTTPPathPattern("/v2/console/account/{id}/group/{group_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3664,7 +3585,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteStorage", runtime.WithHTTPPathPattern("/v2/console/storage"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteStorage", runtime.WithHTTPPathPattern("/v2/console/storage"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3689,7 +3610,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3714,7 +3635,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}/{version}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}/{version}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3739,7 +3660,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteAccounts", runtime.WithHTTPPathPattern("/v2/console/account"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteAccounts", runtime.WithHTTPPathPattern("/v2/console/account"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3764,7 +3685,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteLeaderboard", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteLeaderboard", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3789,7 +3710,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteLeaderboardRecord", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}/owner/{owner_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteLeaderboardRecord", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}/owner/{owner_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3814,7 +3735,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteUser", runtime.WithHTTPPathPattern("/v2/console/user"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteUser", runtime.WithHTTPPathPattern("/v2/console/user"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3839,7 +3760,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DeleteWalletLedger", runtime.WithHTTPPathPattern("/v2/console/account/{id}/wallet/{wallet_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DeleteWalletLedger", runtime.WithHTTPPathPattern("/v2/console/account/{id}/wallet/{wallet_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3864,7 +3785,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/DemoteGroupMember", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/account/{id}/demote"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/DemoteGroupMember", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/account/{id}/demote"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3889,7 +3810,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ExportAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/export"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ExportAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/export"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3914,7 +3835,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ExportGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}/export"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ExportGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}/export"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3939,7 +3860,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3964,7 +3885,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetConfig", runtime.WithHTTPPathPattern("/v2/console/config"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetConfig", runtime.WithHTTPPathPattern("/v2/console/config"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3989,7 +3910,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetFriends", runtime.WithHTTPPathPattern("/v2/console/account/{id}/friend"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetFriends", runtime.WithHTTPPathPattern("/v2/console/account/{id}/friend"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4014,7 +3935,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4039,7 +3960,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetMembers", runtime.WithHTTPPathPattern("/v2/console/group/{id}/member"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetMembers", runtime.WithHTTPPathPattern("/v2/console/group/{id}/member"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4064,7 +3985,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetGroups", runtime.WithHTTPPathPattern("/v2/console/account/{id}/group"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetGroups", runtime.WithHTTPPathPattern("/v2/console/account/{id}/group"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4089,7 +4010,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetLeaderboard", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetLeaderboard", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4114,7 +4035,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetMatchState", runtime.WithHTTPPathPattern("/v2/console/match/{id}/state"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetMatchState", runtime.WithHTTPPathPattern("/v2/console/match/{id}/state"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4139,7 +4060,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetRuntime", runtime.WithHTTPPathPattern("/v2/console/runtime"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetRuntime", runtime.WithHTTPPathPattern("/v2/console/runtime"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4164,7 +4085,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetStatus", runtime.WithHTTPPathPattern("/v2/console/status"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetStatus", runtime.WithHTTPPathPattern("/v2/console/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4189,7 +4110,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetStorage", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetStorage", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4214,7 +4135,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetWalletLedger", runtime.WithHTTPPathPattern("/v2/console/account/{account_id}/wallet"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetWalletLedger", runtime.WithHTTPPathPattern("/v2/console/account/{account_id}/wallet"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4239,7 +4160,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetPurchase", runtime.WithHTTPPathPattern("/v2/console/iap/purchase/{transaction_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetPurchase", runtime.WithHTTPPathPattern("/v2/console/iap/purchase/{transaction_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4264,7 +4185,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/GetSubscription", runtime.WithHTTPPathPattern("/v2/console/iap/subscription/{original_transaction_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/GetSubscription", runtime.WithHTTPPathPattern("/v2/console/iap/subscription/{original_transaction_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4289,7 +4210,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListApiEndpoints", runtime.WithHTTPPathPattern("/v2/console/api/endpoints"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListApiEndpoints", runtime.WithHTTPPathPattern("/v2/console/api/endpoints"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4314,7 +4235,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListLeaderboardRecords", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{leaderboard_id}/records"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListLeaderboardRecords", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{leaderboard_id}/records"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4339,7 +4260,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListLeaderboards", runtime.WithHTTPPathPattern("/v2/console/leaderboard"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListLeaderboards", runtime.WithHTTPPathPattern("/v2/console/leaderboard"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4364,7 +4285,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListStorage", runtime.WithHTTPPathPattern("/v2/console/storage"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListStorage", runtime.WithHTTPPathPattern("/v2/console/storage"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4389,7 +4310,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListStorageCollections", runtime.WithHTTPPathPattern("/v2/console/storage/collections"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListStorageCollections", runtime.WithHTTPPathPattern("/v2/console/storage/collections"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4414,7 +4335,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListAccounts", runtime.WithHTTPPathPattern("/v2/console/account"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListAccounts", runtime.WithHTTPPathPattern("/v2/console/account"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4439,7 +4360,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListChannelMessages", runtime.WithHTTPPathPattern("/v2/console/channel"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListChannelMessages", runtime.WithHTTPPathPattern("/v2/console/channel"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4464,7 +4385,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListGroups", runtime.WithHTTPPathPattern("/v2/console/group"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListGroups", runtime.WithHTTPPathPattern("/v2/console/group"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4489,7 +4410,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListMatches", runtime.WithHTTPPathPattern("/v2/console/match"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListMatches", runtime.WithHTTPPathPattern("/v2/console/match"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4514,7 +4435,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListPurchases", runtime.WithHTTPPathPattern("/v2/console/purchase"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListPurchases", runtime.WithHTTPPathPattern("/v2/console/purchase"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4539,7 +4460,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListSubscriptions", runtime.WithHTTPPathPattern("/v2/console/subscription"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListSubscriptions", runtime.WithHTTPPathPattern("/v2/console/subscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4564,7 +4485,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/ListUsers", runtime.WithHTTPPathPattern("/v2/console/user"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/ListUsers", runtime.WithHTTPPathPattern("/v2/console/user"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4589,7 +4510,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/PromoteGroupMember", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/account/{id}/promote"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/PromoteGroupMember", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/account/{id}/promote"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4614,7 +4535,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UnbanAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unban"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UnbanAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unban"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4639,7 +4560,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UnlinkCustom", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/custom"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UnlinkCustom", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/custom"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4664,7 +4585,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UnlinkDevice", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/device"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UnlinkDevice", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/device"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4689,7 +4610,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UnlinkEmail", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/email"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UnlinkEmail", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/email"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4714,7 +4635,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UnlinkApple", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/apple"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UnlinkApple", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/apple"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4739,7 +4660,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UnlinkFacebook", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/facebook"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UnlinkFacebook", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/facebook"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4764,7 +4685,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UnlinkFacebookInstantGame", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/facebookinstantgame"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UnlinkFacebookInstantGame", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/facebookinstantgame"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4789,7 +4710,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UnlinkGameCenter", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/gamecenter"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UnlinkGameCenter", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/gamecenter"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4814,7 +4735,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UnlinkGoogle", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/google"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UnlinkGoogle", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/google"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4839,7 +4760,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UnlinkSteam", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/steam"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UnlinkSteam", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/steam"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4864,7 +4785,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UpdateAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UpdateAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4889,7 +4810,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/UpdateGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/UpdateGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4914,7 +4835,7 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/nakama.console.Console/WriteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/layerg.console.Console/WriteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4937,21 +4858,21 @@ func RegisterConsoleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 // RegisterConsoleHandlerFromEndpoint is same as RegisterConsoleHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterConsoleHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.DialContext(ctx, endpoint, opts...)
+	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 			return
 		}
 		go func() {
 			<-ctx.Done()
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 		}()
 	}()
@@ -4969,7 +4890,7 @@ func RegisterConsoleHandler(ctx context.Context, mux *runtime.ServeMux, conn *gr
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ConsoleClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ConsoleClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "ConsoleClient" to call the correct interceptors.
+// "ConsoleClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ConsoleClient) error {
 
 	mux.Handle("POST", pattern_Console_Authenticate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -4978,7 +4899,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/Authenticate", runtime.WithHTTPPathPattern("/v2/console/authenticate"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/Authenticate", runtime.WithHTTPPathPattern("/v2/console/authenticate"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5000,7 +4921,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/AuthenticateLogout", runtime.WithHTTPPathPattern("/v2/console/authenticate/logout"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/AuthenticateLogout", runtime.WithHTTPPathPattern("/v2/console/authenticate/logout"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5022,7 +4943,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/AddUser", runtime.WithHTTPPathPattern("/v2/console/user"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/AddUser", runtime.WithHTTPPathPattern("/v2/console/user"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5044,7 +4965,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/AddGroupUsers", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/add"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/AddGroupUsers", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/add"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5066,7 +4987,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/BanAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/ban"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/BanAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/ban"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5088,7 +5009,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/CallApiEndpoint", runtime.WithHTTPPathPattern("/v2/console/api/endpoints/{method}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/CallApiEndpoint", runtime.WithHTTPPathPattern("/v2/console/api/endpoints/{method}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5110,7 +5031,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/CallRpcEndpoint", runtime.WithHTTPPathPattern("/v2/console/api/endpoints/rpc/{method}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/CallRpcEndpoint", runtime.WithHTTPPathPattern("/v2/console/api/endpoints/rpc/{method}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5132,7 +5053,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteAllData", runtime.WithHTTPPathPattern("/v2/console/all"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteAllData", runtime.WithHTTPPathPattern("/v2/console/all"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5154,7 +5075,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5176,7 +5097,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteChannelMessages", runtime.WithHTTPPathPattern("/v2/console/message"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteChannelMessages", runtime.WithHTTPPathPattern("/v2/console/message"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5198,7 +5119,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteFriend", runtime.WithHTTPPathPattern("/v2/console/account/{id}/friend/{friend_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteFriend", runtime.WithHTTPPathPattern("/v2/console/account/{id}/friend/{friend_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5220,7 +5141,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5242,7 +5163,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteGroupUser", runtime.WithHTTPPathPattern("/v2/console/account/{id}/group/{group_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteGroupUser", runtime.WithHTTPPathPattern("/v2/console/account/{id}/group/{group_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5264,7 +5185,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteStorage", runtime.WithHTTPPathPattern("/v2/console/storage"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteStorage", runtime.WithHTTPPathPattern("/v2/console/storage"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5286,7 +5207,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5308,7 +5229,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}/{version}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}/{version}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5330,7 +5251,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteAccounts", runtime.WithHTTPPathPattern("/v2/console/account"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteAccounts", runtime.WithHTTPPathPattern("/v2/console/account"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5352,7 +5273,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteLeaderboard", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteLeaderboard", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5374,7 +5295,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteLeaderboardRecord", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}/owner/{owner_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteLeaderboardRecord", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}/owner/{owner_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5396,7 +5317,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteUser", runtime.WithHTTPPathPattern("/v2/console/user"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteUser", runtime.WithHTTPPathPattern("/v2/console/user"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5418,7 +5339,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DeleteWalletLedger", runtime.WithHTTPPathPattern("/v2/console/account/{id}/wallet/{wallet_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DeleteWalletLedger", runtime.WithHTTPPathPattern("/v2/console/account/{id}/wallet/{wallet_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5440,7 +5361,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/DemoteGroupMember", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/account/{id}/demote"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/DemoteGroupMember", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/account/{id}/demote"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5462,7 +5383,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ExportAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/export"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ExportAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/export"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5484,7 +5405,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ExportGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}/export"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ExportGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}/export"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5506,7 +5427,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5528,7 +5449,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetConfig", runtime.WithHTTPPathPattern("/v2/console/config"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetConfig", runtime.WithHTTPPathPattern("/v2/console/config"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5550,7 +5471,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetFriends", runtime.WithHTTPPathPattern("/v2/console/account/{id}/friend"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetFriends", runtime.WithHTTPPathPattern("/v2/console/account/{id}/friend"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5572,7 +5493,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5594,7 +5515,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetMembers", runtime.WithHTTPPathPattern("/v2/console/group/{id}/member"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetMembers", runtime.WithHTTPPathPattern("/v2/console/group/{id}/member"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5616,7 +5537,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetGroups", runtime.WithHTTPPathPattern("/v2/console/account/{id}/group"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetGroups", runtime.WithHTTPPathPattern("/v2/console/account/{id}/group"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5638,7 +5559,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetLeaderboard", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetLeaderboard", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5660,7 +5581,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetMatchState", runtime.WithHTTPPathPattern("/v2/console/match/{id}/state"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetMatchState", runtime.WithHTTPPathPattern("/v2/console/match/{id}/state"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5682,7 +5603,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetRuntime", runtime.WithHTTPPathPattern("/v2/console/runtime"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetRuntime", runtime.WithHTTPPathPattern("/v2/console/runtime"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5704,7 +5625,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetStatus", runtime.WithHTTPPathPattern("/v2/console/status"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetStatus", runtime.WithHTTPPathPattern("/v2/console/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5726,7 +5647,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetStorage", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetStorage", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5748,7 +5669,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetWalletLedger", runtime.WithHTTPPathPattern("/v2/console/account/{account_id}/wallet"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetWalletLedger", runtime.WithHTTPPathPattern("/v2/console/account/{account_id}/wallet"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5770,7 +5691,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetPurchase", runtime.WithHTTPPathPattern("/v2/console/iap/purchase/{transaction_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetPurchase", runtime.WithHTTPPathPattern("/v2/console/iap/purchase/{transaction_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5792,7 +5713,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/GetSubscription", runtime.WithHTTPPathPattern("/v2/console/iap/subscription/{original_transaction_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/GetSubscription", runtime.WithHTTPPathPattern("/v2/console/iap/subscription/{original_transaction_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5814,7 +5735,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListApiEndpoints", runtime.WithHTTPPathPattern("/v2/console/api/endpoints"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListApiEndpoints", runtime.WithHTTPPathPattern("/v2/console/api/endpoints"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5836,7 +5757,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListLeaderboardRecords", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{leaderboard_id}/records"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListLeaderboardRecords", runtime.WithHTTPPathPattern("/v2/console/leaderboard/{leaderboard_id}/records"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5858,7 +5779,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListLeaderboards", runtime.WithHTTPPathPattern("/v2/console/leaderboard"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListLeaderboards", runtime.WithHTTPPathPattern("/v2/console/leaderboard"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5880,7 +5801,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListStorage", runtime.WithHTTPPathPattern("/v2/console/storage"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListStorage", runtime.WithHTTPPathPattern("/v2/console/storage"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5902,7 +5823,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListStorageCollections", runtime.WithHTTPPathPattern("/v2/console/storage/collections"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListStorageCollections", runtime.WithHTTPPathPattern("/v2/console/storage/collections"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5924,7 +5845,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListAccounts", runtime.WithHTTPPathPattern("/v2/console/account"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListAccounts", runtime.WithHTTPPathPattern("/v2/console/account"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5946,7 +5867,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListChannelMessages", runtime.WithHTTPPathPattern("/v2/console/channel"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListChannelMessages", runtime.WithHTTPPathPattern("/v2/console/channel"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5968,7 +5889,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListGroups", runtime.WithHTTPPathPattern("/v2/console/group"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListGroups", runtime.WithHTTPPathPattern("/v2/console/group"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5990,7 +5911,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListMatches", runtime.WithHTTPPathPattern("/v2/console/match"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListMatches", runtime.WithHTTPPathPattern("/v2/console/match"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6012,7 +5933,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListPurchases", runtime.WithHTTPPathPattern("/v2/console/purchase"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListPurchases", runtime.WithHTTPPathPattern("/v2/console/purchase"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6034,7 +5955,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListSubscriptions", runtime.WithHTTPPathPattern("/v2/console/subscription"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListSubscriptions", runtime.WithHTTPPathPattern("/v2/console/subscription"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6056,7 +5977,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/ListUsers", runtime.WithHTTPPathPattern("/v2/console/user"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/ListUsers", runtime.WithHTTPPathPattern("/v2/console/user"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6078,7 +5999,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/PromoteGroupMember", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/account/{id}/promote"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/PromoteGroupMember", runtime.WithHTTPPathPattern("/v2/console/group/{group_id}/account/{id}/promote"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6100,7 +6021,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UnbanAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unban"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UnbanAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unban"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6122,7 +6043,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UnlinkCustom", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/custom"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UnlinkCustom", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/custom"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6144,7 +6065,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UnlinkDevice", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/device"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UnlinkDevice", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/device"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6166,7 +6087,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UnlinkEmail", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/email"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UnlinkEmail", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/email"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6188,7 +6109,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UnlinkApple", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/apple"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UnlinkApple", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/apple"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6210,7 +6131,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UnlinkFacebook", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/facebook"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UnlinkFacebook", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/facebook"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6232,7 +6153,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UnlinkFacebookInstantGame", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/facebookinstantgame"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UnlinkFacebookInstantGame", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/facebookinstantgame"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6254,7 +6175,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UnlinkGameCenter", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/gamecenter"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UnlinkGameCenter", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/gamecenter"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6276,7 +6197,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UnlinkGoogle", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/google"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UnlinkGoogle", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/google"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6298,7 +6219,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UnlinkSteam", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/steam"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UnlinkSteam", runtime.WithHTTPPathPattern("/v2/console/account/{id}/unlink/steam"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6320,7 +6241,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UpdateAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UpdateAccount", runtime.WithHTTPPathPattern("/v2/console/account/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6342,7 +6263,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/UpdateGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/UpdateGroup", runtime.WithHTTPPathPattern("/v2/console/group/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6364,7 +6285,7 @@ func RegisterConsoleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/nakama.console.Console/WriteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/layerg.console.Console/WriteStorageObject", runtime.WithHTTPPathPattern("/v2/console/storage/{collection}/{key}/{user_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

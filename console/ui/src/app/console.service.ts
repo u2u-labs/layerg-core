@@ -5,18 +5,10 @@ import { Injectable, Optional } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-/** Account information. */
-export interface Account {
-  // The user's account details.
-  account?:ApiAccount
-  // The UNIX time when the account was disabled.
-  disable_time?:string
-}
-
 /** An export of all information stored for a user account. */
 export interface AccountExport {
   // The user's account details.
-  account?:ApiAccount
+  account?:LayergapiAccount
   // The user's friends.
   friends?:Array<ApiFriend>
   // The user's groups.
@@ -40,14 +32,7 @@ export interface AccountList {
   // Approximate total number of users.
   total_count?:number
   // A list of users.
-  users?:Array<ApiUser>
-}
-
-export interface AddGroupUsersRequest {
-  // Users to add/join.
-  ids?:string
-  // Whether it is a join request.
-  join_request?:boolean
+  users?:Array<LayergapiUser>
 }
 
 export interface AddUserRequest {
@@ -87,21 +72,9 @@ export interface AuthenticateRequest {
   username?:string
 }
 
-export interface CallApiEndpointRequest {
-  body?:string
-  session_vars?:Map<string, string>
-  user_id?:string
-}
-
 export interface CallApiEndpointResponse {
   body?:string
   error_message?:string
-}
-
-export interface CallRpcEndpointRequest {
-  body?:string
-  session_vars?:Map<string, string>
-  user_id?:string
 }
 
 /** The current server configuration and any associated warnings. */
@@ -122,10 +95,94 @@ export interface ConfigWarning {
   message?:string
 }
 
+/** Add/join users to a group. */
+export interface ConsoleAddGroupUsersBody {
+  // Users to add/join.
+  ids?:string
+  // Whether it is a join request.
+  join_request?:boolean
+}
+
+export interface ConsoleCallApiEndpointBody {
+  body?:string
+  session_vars?:Map<string, string>
+  user_id?:string
+}
+
+export interface ConsoleCallRpcEndpointBody {
+  body?:string
+  session_vars?:Map<string, string>
+  user_id?:string
+}
+
 /** A console user session. */
 export interface ConsoleSession {
   // A session token (JWT) for the console user.
   token?:string
+}
+
+/** Unlink a particular device ID from a user's account. */
+export interface ConsoleUnlinkDeviceBody {
+  // Device ID to unlink.
+  device_id?:string
+}
+
+/** Update user account information. */
+export interface ConsoleUpdateAccountBody {
+  // Avatar URL.
+  avatar_url?:string
+  // Custom ID.
+  custom_id?:string
+  // Device ID modifications.
+  device_ids?:Map<string, string>
+  // Display name.
+  display_name?:string
+  // Email.
+  email?:string
+  // Langtag.
+  lang_tag?:string
+  // Location.
+  location?:string
+  // Metadata.
+  metadata?:string
+  // Password.
+  password?:string
+  // Timezone.
+  timezone?:string
+  // Username.
+  username?:string
+  // Wallet.
+  wallet?:string
+}
+
+/** Update group information. */
+export interface ConsoleUpdateGroupBody {
+  // Avatar URL.
+  avatar_url?:string
+  // Description.
+  description?:string
+  // Langtag.
+  lang_tag?:string
+  // The maximum number of members allowed.
+  max_count?:number
+  // Metadata.
+  metadata?:string
+  // Name.
+  name?:string
+  // Anyone can join open groups, otherwise only admins can accept members.
+  open?:boolean
+}
+
+/** Write a new storage object or update an existing one. */
+export interface ConsoleWriteStorageObjectBody {
+  // Read permission value.
+  permission_read?:number
+  // Write permission value.
+  permission_write?:number
+  // Value.
+  value?:string
+  // Version for OCC.
+  version?:string
 }
 
 export interface DeleteChannelMessagesResponse {
@@ -141,79 +198,12 @@ export interface GroupExport {
   members?:Array<GroupUserListGroupUser>
 }
 
-export interface GroupList {
-  // A list of groups.
-  groups?:Array<ApiGroup>
-  // Next cursor.
-  next_cursor?:string
-  // Approximate total number of groups.
-  total_count?:number
-}
-
 /** A single user-role pair. */
 export interface GroupUserListGroupUser {
   // Their relationship to the group.
   state?:number
   // User.
-  user?:ApiUser
-}
-
-/** A leaderboard. */
-export interface Leaderboard {
-  // Authoritative.
-  authoritative?:boolean
-  // The category of the leaderboard. e.g. "vip" could be category 1.
-  category?:number
-  // The UNIX time when the leaderboard was created.
-  create_time?:string
-  // The description of the leaderboard. May be blank.
-  description?:string
-  // Duration of the tournament in seconds.
-  duration?:number
-  // The UNIX time when the leaderboard stops being active until next reset. A computed value.
-  end_active?:number
-  // The UNIX time when the leaderboard will be stopped.
-  end_time?:string
-  // The ID of the leaderboard.
-  id?:string
-  // Join required.
-  join_required?:boolean
-  // The maximum score updates allowed per player for the current leaderboard.
-  max_num_score?:number
-  // The maximum number of players for the leaderboard.
-  max_size?:number
-  // Additional information stored as a JSON object.
-  metadata?:string
-  // The UNIX time when the tournament is next playable. A computed value.
-  next_reset?:number
-  // The operator of the leaderboard
-  operator?:number
-  // The UNIX time when the tournament was last reset. A computed value.
-  prev_reset?:number
-  // Reset cron expression.
-  reset_schedule?:string
-  // The current number of players in the leaderboard.
-  size?:number
-  // ASC or DESC sort mode of scores in the leaderboard.
-  sort_order?:number
-  // The UNIX time when the leaderboard start being active. A computed value.
-  start_active?:number
-  // The UNIX time when the leaderboard will start.
-  start_time?:string
-  // The title for the leaderboard.
-  title?:string
-  // Tournament.
-  tournament?:boolean
-}
-
-/** A list of leaderboards. */
-export interface LeaderboardList {
-  // A cursor, if any.
-  cursor?:string
-  // The list of leaderboards returned.
-  leaderboards?:Array<Leaderboard>
-  // Total count of leaderboards and tournaments.
-  total?:number
+  user?:LayergapiUser
 }
 
 export enum ListChannelMessagesRequestType {
@@ -223,14 +213,9 @@ export enum ListChannelMessagesRequestType {
   DIRECT = 3,
 }
 
-/** A list of realtime matches, with their node names. */
-export interface MatchList {
-  matches?:Array<MatchListMatch>
-}
-
 export interface MatchListMatch {
   // The API match
-  api_match?:ApiMatch
+  api_match?:LayergapiMatch
   // The node name
   node?:string
 }
@@ -281,7 +266,7 @@ export interface StatusList {
   timestamp?:string
 }
 
-/** The status of a Nakama node. */
+/** The status of a LayerG node. */
 export interface StatusListStatus {
   // Average input bandwidth usage.
   avg_input_kbs?:number
@@ -338,55 +323,6 @@ export interface StorageListObject {
   user_id?:string
   // The version hash of the object.
   version?:string
-}
-
-export interface UnlinkDeviceRequest {
-  // Device ID to unlink.
-  device_id?:string
-}
-
-export interface UpdateAccountRequest {
-  // Avatar URL.
-  avatar_url?:string
-  // Custom ID.
-  custom_id?:string
-  // Device ID modifications.
-  device_ids?:Map<string, string>
-  // Display name.
-  display_name?:string
-  // Email.
-  email?:string
-  // Langtag.
-  lang_tag?:string
-  // Location.
-  location?:string
-  // Metadata.
-  metadata?:string
-  // Password.
-  password?:string
-  // Timezone.
-  timezone?:string
-  // Username.
-  username?:string
-  // Wallet.
-  wallet?:string
-}
-
-export interface UpdateGroupRequest {
-  // Avatar URL.
-  avatar_url?:string
-  // Description.
-  description?:string
-  // Langtag.
-  lang_tag?:string
-  // The maximum number of members allowed.
-  max_count?:number
-  // Metadata.
-  metadata?:string
-  // Name.
-  name?:string
-  // Anyone can join open groups, otherwise only admins can accept members.
-  open?:boolean
 }
 
 /** A single group-role pair. */
@@ -450,35 +386,6 @@ export interface WalletLedgerList {
   prev_cursor?:string
 }
 
-export interface WriteStorageObjectRequest {
-  // Read permission value.
-  permission_read?:number
-  // Write permission value.
-  permission_write?:number
-  // Value.
-  value?:string
-  // Version for OCC.
-  version?:string
-}
-
-/** A user with additional account details. Always the current user. */
-export interface ApiAccount {
-  // The custom id in the user's account.
-  custom_id?:string
-  // The devices which belong to the user's account.
-  devices?:Array<ApiAccountDevice>
-  // The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user's account was disabled/banned.
-  disable_time?:string
-  // The email address of the user.
-  email?:string
-  // The user object.
-  user?:ApiUser
-  // The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user's email was verified.
-  verify_time?:string
-  // The user's wallet data.
-  wallet?:string
-}
-
 /** Send a device to the server. Used with authenticate/link/unlink and user. */
 export interface ApiAccountDevice {
   // A device identifier. Should be obtained by a platform-specific device API.
@@ -536,7 +443,7 @@ export interface ApiFriend {
   // Time of the latest relationship update.
   update_time?:string
   // The user object.
-  user?:ApiUser
+  user?:LayergapiUser
 }
 
 /** A collection of zero or more friends of the user. */
@@ -625,22 +532,6 @@ export interface ApiLeaderboardRecordList {
   records?:Array<ApiLeaderboardRecord>
 }
 
-/** Represents a realtime match. */
-export interface ApiMatch {
-  // True if it's an server-managed authoritative match, false otherwise.
-  authoritative?:boolean
-  // Handler name
-  handler_name?:string
-  // Match label, if any.
-  label?:string
-  // The ID of the match, can be used to join.
-  match_id?:string
-  // Current number of users in the match.
-  size?:number
-  // Tick Rate
-  tick_rate?:number
-}
-
 /** A notification in the server. */
 export interface ApiNotification {
   // Category code for this notification.
@@ -659,7 +550,7 @@ export interface ApiNotification {
   subject?:string
 }
 
-/** A list of validated purchases stored by Nakama. */
+/** A list of validated purchases stored by LayerG. */
 export interface ApiPurchaseList {
   // The cursor to send when retrieving the next page, if any.
   cursor?:string
@@ -722,7 +613,7 @@ export enum ApiStoreProvider {
   FACEBOOK_INSTANT_STORE = 3,
 }
 
-/** A list of validated subscriptions stored by Nakama. */
+/** A list of validated subscriptions stored by LayerG. */
 export interface ApiSubscriptionList {
   // The cursor to send when retrieving the next page, if any.
   cursor?:string
@@ -730,46 +621,6 @@ export interface ApiSubscriptionList {
   prev_cursor?:string
   // Stored validated subscriptions.
   validated_subscriptions?:Array<ApiValidatedSubscription>
-}
-
-/** A user in the server. */
-export interface ApiUser {
-  // The Apple Sign In ID in the user's account.
-  apple_id?:string
-  // A URL for an avatar image.
-  avatar_url?:string
-  // The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user was created.
-  create_time?:string
-  // The display name of the user.
-  display_name?:string
-  // Number of related edges to this user.
-  edge_count?:number
-  // The Facebook id in the user's account.
-  facebook_id?:string
-  // The Facebook Instant Game ID in the user's account.
-  facebook_instant_game_id?:string
-  // The Apple Game Center in of the user's account.
-  gamecenter_id?:string
-  // The Google id in the user's account.
-  google_id?:string
-  // The id of the user's account.
-  id?:string
-  // The language expected to be a tag which follows the BCP-47 spec.
-  lang_tag?:string
-  // The location set by the user.
-  location?:string
-  // Additional information stored as a JSON object.
-  metadata?:string
-  // Indicates whether the user is currently online.
-  online?:boolean
-  // The Steam id in the user's account.
-  steam_id?:string
-  // The timezone set by the user.
-  timezone?:string
-  // The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user was last updated.
-  update_time?:string
-  // The username of the user's account.
-  username?:string
 }
 
 /** A list of groups belonging to a user, along with the user's role in each group. */
@@ -780,7 +631,7 @@ export interface ApiUserGroupList {
   user_groups?:Array<UserGroupListUserGroup>
 }
 
-/** Validated Purchase stored by Nakama. */
+/** Validated Purchase stored by LayerG. */
 export interface ApiValidatedPurchase {
   // Timestamp when the receipt validation was stored in DB.
   create_time?:string
@@ -794,7 +645,7 @@ export interface ApiValidatedPurchase {
   purchase_time?:string
   // Timestamp when the purchase was refunded. Set to UNIX
   refund_time?:string
-  // Whether the purchase had already been validated by Nakama before.
+  // Whether the purchase had already been validated by LayerG before.
   seen_before?:boolean
   // Store identifier
   store?:ApiStoreProvider
@@ -833,6 +684,160 @@ export interface ApiValidatedSubscription {
   update_time?:string
   // Subscription User ID.
   user_id?:string
+}
+
+/** A user with additional account details. Always the current user. */
+export interface LayergapiAccount {
+  // The custom id in the user's account.
+  custom_id?:string
+  // The devices which belong to the user's account.
+  devices?:Array<ApiAccountDevice>
+  // The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user's account was disabled/banned.
+  disable_time?:string
+  // The email address of the user.
+  email?:string
+  // The user object.
+  user?:LayergapiUser
+  // The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user's email was verified.
+  verify_time?:string
+  // The user's wallet data.
+  wallet?:string
+}
+
+/** Represents a realtime match. */
+export interface LayergapiMatch {
+  // True if it's an server-managed authoritative match, false otherwise.
+  authoritative?:boolean
+  // Handler name
+  handler_name?:string
+  // Match label, if any.
+  label?:string
+  // The ID of the match, can be used to join.
+  match_id?:string
+  // Current number of users in the match.
+  size?:number
+  // Tick Rate
+  tick_rate?:number
+}
+
+/** A user in the server. */
+export interface LayergapiUser {
+  // The Apple Sign In ID in the user's account.
+  apple_id?:string
+  // A URL for an avatar image.
+  avatar_url?:string
+  // The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user was created.
+  create_time?:string
+  // The display name of the user.
+  display_name?:string
+  // Number of related edges to this user.
+  edge_count?:number
+  // The Facebook id in the user's account.
+  facebook_id?:string
+  // The Facebook Instant Game ID in the user's account.
+  facebook_instant_game_id?:string
+  // The Apple Game Center in of the user's account.
+  gamecenter_id?:string
+  // The Google id in the user's account.
+  google_id?:string
+  // The id of the user's account.
+  id?:string
+  // The language expected to be a tag which follows the BCP-47 spec.
+  lang_tag?:string
+  // The location set by the user.
+  location?:string
+  // Additional information stored as a JSON object.
+  metadata?:string
+  // Indicates whether the user is currently online.
+  online?:boolean
+  // The Steam id in the user's account.
+  steam_id?:string
+  // The timezone set by the user.
+  timezone?:string
+  // The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user was last updated.
+  update_time?:string
+  // The username of the user's account.
+  username?:string
+}
+
+/** Account information. */
+export interface LayergconsoleAccount {
+  // The user's account details.
+  account?:LayergapiAccount
+  // The UNIX time when the account was disabled.
+  disable_time?:string
+}
+
+export interface LayergconsoleGroupList {
+  // A list of groups.
+  groups?:Array<ApiGroup>
+  // Next cursor.
+  next_cursor?:string
+  // Approximate total number of groups.
+  total_count?:number
+}
+
+/** A leaderboard. */
+export interface LayergconsoleLeaderboard {
+  // Authoritative.
+  authoritative?:boolean
+  // The category of the leaderboard. e.g. "vip" could be category 1.
+  category?:number
+  // The UNIX time when the leaderboard was created.
+  create_time?:string
+  // The description of the leaderboard. May be blank.
+  description?:string
+  // Duration of the tournament in seconds.
+  duration?:number
+  // The UNIX time when the leaderboard stops being active until next reset. A computed value.
+  end_active?:number
+  // The UNIX time when the leaderboard will be stopped.
+  end_time?:string
+  // The ID of the leaderboard.
+  id?:string
+  // Join required.
+  join_required?:boolean
+  // The maximum score updates allowed per player for the current leaderboard.
+  max_num_score?:number
+  // The maximum number of players for the leaderboard.
+  max_size?:number
+  // Additional information stored as a JSON object.
+  metadata?:string
+  // The UNIX time when the tournament is next playable. A computed value.
+  next_reset?:number
+  // The operator of the leaderboard
+  operator?:number
+  // The UNIX time when the tournament was last reset. A computed value.
+  prev_reset?:number
+  // Reset cron expression.
+  reset_schedule?:string
+  // The current number of players in the leaderboard.
+  size?:number
+  // ASC or DESC sort mode of scores in the leaderboard.
+  sort_order?:number
+  // The UNIX time when the leaderboard start being active. A computed value.
+  start_active?:number
+  // The UNIX time when the leaderboard will start.
+  start_time?:string
+  // The title for the leaderboard.
+  title?:string
+  // Tournament.
+  tournament?:boolean
+}
+
+/** A list of leaderboards. */
+export interface LayergconsoleLeaderboardList {
+  // A cursor, if any.
+  cursor?:string
+  // The list of leaderboards returned.
+  leaderboards?:Array<LayergconsoleLeaderboard>
+  // Total count of leaderboards and tournaments.
+  total?:number
+}
+
+/** A list of realtime matches, with their node names. */
+export interface LayergconsoleMatchList {
+  matches?:Array<MatchListMatch>
 }
 
 /** A user session associated to a stream, usually through a list operation or a join/leave event. */
@@ -918,15 +923,15 @@ export class ConsoleService {
   }
 
   /** Get detailed account information for a single user. */
-  getAccount(auth_token: string, id: string): Observable<Account> {
+  getAccount(auth_token: string, id: string): Observable<LayergconsoleAccount> {
     id = encodeURIComponent(String(id))
     const urlPath = `/v2/console/account/${id}`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
-    return this.httpClient.get<Account>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+    return this.httpClient.get<LayergconsoleAccount>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
 
   /** Update one or more fields on a user account. */
-  updateAccount(auth_token: string, id: string, body: UpdateAccountRequest): Observable<any> {
+  updateAccount(auth_token: string, id: string, body: ConsoleUpdateAccountBody): Observable<any> {
     id = encodeURIComponent(String(id))
     const urlPath = `/v2/console/account/${id}`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1008,7 +1013,7 @@ export class ConsoleService {
   }
 
   /** Unlink the device ID from a user account. */
-  unlinkDevice(auth_token: string, id: string, body: UnlinkDeviceRequest): Observable<any> {
+  unlinkDevice(auth_token: string, id: string, body: ConsoleUnlinkDeviceBody): Observable<any> {
     id = encodeURIComponent(String(id))
     const urlPath = `/v2/console/account/${id}/unlink/device`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1087,7 +1092,7 @@ export class ConsoleService {
   }
 
   /** API Explorer - call a custom RPC endpoint */
-  callRpcEndpoint(auth_token: string, method: string, body: CallRpcEndpointRequest): Observable<CallApiEndpointResponse> {
+  callRpcEndpoint(auth_token: string, method: string, body: ConsoleCallRpcEndpointBody): Observable<CallApiEndpointResponse> {
     method = encodeURIComponent(String(method))
     const urlPath = `/v2/console/api/endpoints/rpc/${method}`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1095,7 +1100,7 @@ export class ConsoleService {
   }
 
   /** API Explorer - call an endpoint */
-  callApiEndpoint(auth_token: string, method: string, body: CallApiEndpointRequest): Observable<CallApiEndpointResponse> {
+  callApiEndpoint(auth_token: string, method: string, body: ConsoleCallApiEndpointBody): Observable<CallApiEndpointResponse> {
     method = encodeURIComponent(String(method))
     const urlPath = `/v2/console/api/endpoints/${method}`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1149,7 +1154,7 @@ export class ConsoleService {
   }
 
   /** List (and optionally filter) groups. */
-  listGroups(auth_token: string, filter?: string, cursor?: string): Observable<GroupList> {
+  listGroups(auth_token: string, filter?: string, cursor?: string): Observable<LayergconsoleGroupList> {
     const urlPath = `/v2/console/group`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
     if (filter) {
@@ -1158,7 +1163,7 @@ export class ConsoleService {
     if (cursor) {
       params = params.set('cursor', cursor);
     }
-    return this.httpClient.get<GroupList>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+    return this.httpClient.get<LayergconsoleGroupList>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
 
   /** Demote a user from a group. */
@@ -1180,7 +1185,7 @@ export class ConsoleService {
   }
 
   /** Add/join members to a group. */
-  addGroupUsers(auth_token: string, group_id: string, body: AddGroupUsersRequest): Observable<any> {
+  addGroupUsers(auth_token: string, group_id: string, body: ConsoleAddGroupUsersBody): Observable<any> {
     group_id = encodeURIComponent(String(group_id))
     const urlPath = `/v2/console/group/${group_id}/add`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1204,7 +1209,7 @@ export class ConsoleService {
   }
 
   /** Update one or more fields on a group. */
-  updateGroup(auth_token: string, id: string, body: UpdateGroupRequest): Observable<any> {
+  updateGroup(auth_token: string, id: string, body: ConsoleUpdateGroupBody): Observable<any> {
     id = encodeURIComponent(String(id))
     const urlPath = `/v2/console/group/${id}`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1244,13 +1249,13 @@ export class ConsoleService {
   }
 
   /** List leaderboards */
-  listLeaderboards(auth_token: string, cursor?: string): Observable<LeaderboardList> {
+  listLeaderboards(auth_token: string, cursor?: string): Observable<LayergconsoleLeaderboardList> {
     const urlPath = `/v2/console/leaderboard`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
     if (cursor) {
       params = params.set('cursor', cursor);
     }
-    return this.httpClient.get<LeaderboardList>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+    return this.httpClient.get<LayergconsoleLeaderboardList>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
 
   /** Delete leaderboard */
@@ -1262,11 +1267,11 @@ export class ConsoleService {
   }
 
   /** Get leaderboard. */
-  getLeaderboard(auth_token: string, id: string): Observable<Leaderboard> {
+  getLeaderboard(auth_token: string, id: string): Observable<LayergconsoleLeaderboard> {
     id = encodeURIComponent(String(id))
     const urlPath = `/v2/console/leaderboard/${id}`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
-    return this.httpClient.get<Leaderboard>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+    return this.httpClient.get<LayergconsoleLeaderboard>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
 
   /** Delete leaderboard record */
@@ -1299,7 +1304,7 @@ export class ConsoleService {
   }
 
   /** List ongoing matches */
-  listMatches(auth_token: string, limit?: number, authoritative?: boolean, label?: string, min_size?: number, max_size?: number, match_id?: string, query?: string, node?: string): Observable<MatchList> {
+  listMatches(auth_token: string, limit?: number, authoritative?: boolean, label?: string, min_size?: number, max_size?: number, match_id?: string, query?: string, node?: string): Observable<LayergconsoleMatchList> {
     const urlPath = `/v2/console/match`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
     if (limit) {
@@ -1326,7 +1331,7 @@ export class ConsoleService {
     if (node) {
       params = params.set('node', node);
     }
-    return this.httpClient.get<MatchList>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+    return this.httpClient.get<LayergconsoleMatchList>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
 
   /** Get current state of a running match */
@@ -1437,7 +1442,7 @@ export class ConsoleService {
   }
 
   /** Write a new storage object or replace an existing one. */
-  writeStorageObject(auth_token: string, collection: string, key: string, user_id: string, body: WriteStorageObjectRequest): Observable<ApiStorageObjectAck> {
+  writeStorageObject(auth_token: string, collection: string, key: string, user_id: string, body: ConsoleWriteStorageObjectBody): Observable<ApiStorageObjectAck> {
     collection = encodeURIComponent(String(collection))
     key = encodeURIComponent(String(key))
     user_id = encodeURIComponent(String(user_id))
