@@ -696,6 +696,22 @@ func (n *RuntimeGoNakamaModule) LinkApple(ctx context.Context, userID, token str
 
 	return LinkApple(ctx, n.logger, n.db, n.config, n.socialClient, id, token)
 }
+func (n *RuntimeGoNakamaModule) LinkMetamask(ctx context.Context, userID, address, signature string) error {
+	id, err := uuid.FromString(userID)
+	if err != nil {
+		return errors.New("user ID must be a valid identifier")
+	}
+
+	return LinkMetamask(ctx, n.logger, n.db, n.config, n.socialClient, id, address, signature)
+}
+func (n *RuntimeGoNakamaModule) UnlinkMetamask(ctx context.Context, userID, address, signature string) error {
+	id, err := uuid.FromString(userID)
+	if err != nil {
+		return errors.New("user ID must be a valid identifier")
+	}
+
+	return LinkMetamask(ctx, n.logger, n.db, n.config, n.socialClient, id, address, signature)
+}
 
 // @group authenticate
 // @summary Link custom authentication to a user ID.

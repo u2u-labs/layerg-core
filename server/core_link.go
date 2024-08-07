@@ -80,6 +80,52 @@ AND (NOT EXISTS
 
 	return nil
 }
+func LinkMetamask(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, socialClient *social.Client, userID uuid.UUID, address, signature string) error {
+
+	// 	if address == "" || signature == "" {
+	// 		return status.Error(codes.InvalidArgument, "required.")
+	// 	}
+
+	// 	profile, err := socialClient.CheckAppleToken(ctx, config.GetSocial().Apple.BundleId, token)
+	// 	if err != nil {
+	// 		logger.Info("Could not authenticate Apple profile.", zap.Error(err))
+	// 		return status.Error(codes.Unauthenticated, "Could not authenticate Apple profile.")
+	// 	}
+
+	// 	res, err := db.ExecContext(ctx, `
+	// UPDATE users AS u
+	// SET apple_id = $2, update_time = now()
+	// WHERE (id = $1)
+	// AND (NOT EXISTS
+	//     (SELECT id
+	//      FROM users
+	//      WHERE apple_id = $2 AND NOT id = $1))`,
+	// 		userID,
+	// 		profile.ID)
+
+	// 	if err != nil {
+	// 		logger.Error("Could not link Apple ID.", zap.Error(err), zap.Any("input", token))
+	// 		return status.Error(codes.Internal, "Error while trying to link Apple ID.")
+	// 	} else if count, _ := res.RowsAffected(); count == 0 {
+	// 		return status.Error(codes.AlreadyExists, "Apple ID is already in use.")
+	// 	}
+
+	// 	// Import email address, if it exists.
+	// 	if profile.Email != "" {
+	// 		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", profile.Email, userID)
+	// 		if err != nil {
+	// 			var pgErr *pgconn.PgError
+	// 			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
+	// 				logger.Warn("Skipping apple account email import as it is already set in another user.", zap.Error(err), zap.String("appleID", profile.ID), zap.String("user_id", userID.String()))
+	// 			} else {
+	// 				logger.Error("Failed to import apple account email.", zap.Error(err), zap.String("appleID", profile.ID), zap.String("user_id", userID.String()))
+	// 				return status.Error(codes.Internal, "Error importing apple account email.")
+	// 			}
+	// 		}
+	// 	}
+
+	return nil
+}
 
 func LinkCustom(ctx context.Context, logger *zap.Logger, db *sql.DB, userID uuid.UUID, customID string) error {
 	if customID == "" {

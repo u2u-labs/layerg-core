@@ -36,6 +36,82 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+func AuthenticateMetamask(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, address, signature, username string, create bool) (string, string, bool, error) {
+	// Verify the Metamask signature
+	found := true
+
+	// Look for an existing account with the wallet address
+	query := "SELECT u.id, u.username, u.disable_time FROM users u JOIN wallet_ledger wl ON u.id = wl.user_id WHERE wl.onchain_id = $1"
+	var dbUserID string
+	var dbUsername string
+	var dbDisableTime pgtype.Timestamptz
+	err := db.QueryRowContext(ctx, query, address).Scan(&dbUserID, &dbUsername, &dbDisableTime)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			found = false
+		} else {
+			logger.Error("Error looking up user by Metamask address.", zap.Error(err), zap.String("address", address), zap.String("username", username), zap.Bool("create", create))
+			return "", "", false, status.Error(codes.Internal, "Error finding user account.")
+		}
+	}
+
+	// Existing account found
+	if found {
+		// Check if it's disabled
+		if dbDisableTime.Valid && dbDisableTime.Time.Unix() != 0 {
+			logger.Info("User account is disabled.", zap.String("address", address), zap.String("username", username), zap.Bool("create", create))
+			return "", "", false, status.Error(codes.PermissionDenied, "User account banned.")
+		}
+
+		return dbUserID, dbUsername, false, nil
+	}
+
+	if !create {
+		// No user account found, and creation is not allowed
+		return "", "", false, status.Error(codes.NotFound, "User account not found.")
+	}
+
+	// Create a new account
+	userID := uuid.Must(uuid.NewV4()).String()
+	query = "INSERT INTO users (id, username, create_time, update_time) VALUES ($1, $2, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, username)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
+			if strings.Contains(pgErr.Message, "users_username_key") {
+				// Username is already in use by a different account
+				return "", "", false, status.Error(codes.AlreadyExists, "Username is already in use.")
+			}
+		}
+		logger.Error("Cannot find or create user with Metamask address.", zap.Error(err), zap.String("address", address), zap.String("username", username), zap.Bool("create", create))
+		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
+		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
+		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	// Insert wallet address into wallet_ledger
+	query = "INSERT INTO wallet_ledger (id, onchain_id, user_id, create_time, update_time) VALUES ($1, $2, $3, now(), now())"
+	walletID := uuid.Must(uuid.NewV4()).String()
+	_, err = db.ExecContext(ctx, query, walletID, address, userID)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
+			if strings.Contains(pgErr.Message, "wallet_ledger_onchain_id_key") {
+				// A concurrent write has inserted this wallet address
+				logger.Info("Did not insert new wallet address as it already exists.", zap.Error(err), zap.String("address", address), zap.String("username", username), zap.Bool("create", create))
+				return "", "", false, status.Error(codes.Internal, "Error finding or creating wallet record.")
+			}
+		}
+		logger.Error("Cannot find or create wallet record.", zap.Error(err), zap.String("address", address), zap.String("username", username), zap.Bool("create", create))
+		return "", "", false, status.Error(codes.Internal, "Error finding or creating wallet record.")
+	}
+
+	return userID, username, true, nil
+}
+
 func AuthenticateApple(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, bundleId, token, username string, create bool) (string, string, bool, error) {
 	profile, err := client.CheckAppleToken(ctx, bundleId, token)
 	if err != nil {

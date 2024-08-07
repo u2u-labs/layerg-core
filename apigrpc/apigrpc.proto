@@ -132,6 +132,20 @@ service LayerG {
       }
     };
   }
+  rpc AuthenticateMetamask (api.AuthenticateMetamaskRequest) returns (api.Session) {
+    option (google.api.http) = {
+      post: "/v2/account/authenticate/metamask",
+      body: "account"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      security: {
+        security_requirement: {
+          key: "BasicAuth";
+          value: {};
+        }
+      }
+    };
+  }
 
   // Authenticate a user with a custom id against the server.
   rpc AuthenticateCustom (api.AuthenticateCustomRequest) returns (api.Session) {
@@ -388,10 +402,16 @@ service LayerG {
     option (google.api.http).post = "/v2/group/{group_id}/leave";
   }
 
-  // Add an Apple ID to the social profiles on the current user's account.
-  rpc LinkApple (api.AccountApple) returns (google.protobuf.Empty) {
+  // Add an Metamask ID to the social profiles on the current user's account.
+  rpc LinkMetamask (api.AccountApple) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v2/account/link/apple",
+      body: "*"
+    };
+  }
+  rpc LinkApple (api.AccountMetamask) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/account/link/metamask",
       body: "*"
     };
   }
@@ -589,6 +609,12 @@ service LayerG {
   rpc UnlinkApple (api.AccountApple) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v2/account/unlink/apple",
+      body: "*"
+    };
+  }
+  rpc UnlinkMetamask (api.AccountMetamask) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/account/unlink/metamask",
       body: "*"
     };
   }

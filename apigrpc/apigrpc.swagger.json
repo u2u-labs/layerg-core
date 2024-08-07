@@ -558,6 +558,58 @@
         ]
       }
     },
+    "/v2/account/authenticate/metamask": {
+      "post": {
+        "operationId": "LayerG_AuthenticateMetamask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiSession"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "account",
+            "description": "The Apple account details.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiAccountMetamask"
+            }
+          },
+          {
+            "name": "create",
+            "description": "Register the account if the user does not already exist.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "username",
+            "description": "Set the username on the account at register. Must be unique.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LayerG"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/v2/account/authenticate/steam": {
       "post": {
         "summary": "Authenticate a user with Steam against the server.",
@@ -620,8 +672,8 @@
     },
     "/v2/account/link/apple": {
       "post": {
-        "summary": "Add an Apple ID to the social profiles on the current user's account.",
-        "operationId": "LayerG_LinkApple",
+        "summary": "Add an Metamask ID to the social profiles on the current user's account.",
+        "operationId": "LayerG_LinkMetamask",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -897,6 +949,39 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/apiAccountGoogle"
+            }
+          }
+        ],
+        "tags": [
+          "LayerG"
+        ]
+      }
+    },
+    "/v2/account/link/metamask": {
+      "post": {
+        "operationId": "LayerG_LinkApple",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiAccountMetamask"
             }
           }
         ],
@@ -1251,6 +1336,39 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/apiAccountGoogle"
+            }
+          }
+        ],
+        "tags": [
+          "LayerG"
+        ]
+      }
+    },
+    "/v2/account/unlink/metamask": {
+      "post": {
+        "operationId": "LayerG_UnlinkMetamask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiAccountMetamask"
             }
           }
         ],
@@ -3962,6 +4080,19 @@
         }
       },
       "description": "Send a Google token to the server. Used with authenticate/link/unlink."
+    },
+    "apiAccountMetamask": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "description": "The ID token received from Apple to validate."
+        },
+        "signature": {
+          "type": "string",
+          "description": "Extra information that will be bundled in the session token."
+        }
+      }
     },
     "apiAccountSteam": {
       "type": "object",

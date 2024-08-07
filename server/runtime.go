@@ -62,7 +62,9 @@ type (
 	RuntimeBeforeSessionLogoutFunction                     func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.SessionLogoutRequest) (*api.SessionLogoutRequest, error, codes.Code)
 	RuntimeAfterSessionLogoutFunction                      func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.SessionLogoutRequest) error
 	RuntimeBeforeAuthenticateAppleFunction                 func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateAppleRequest) (*api.AuthenticateAppleRequest, error, codes.Code)
+	RuntimeBeforeAuthenticateMetamaskFunction              func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateMetamaskRequest) (*api.AuthenticateMetamaskRequest, error, codes.Code)
 	RuntimeAfterAuthenticateAppleFunction                  func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateAppleRequest) error
+	RuntimeAfterAuthenticateMetamaskFunction               func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateMetamaskRequest) error
 	RuntimeBeforeAuthenticateCustomFunction                func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateCustomRequest) (*api.AuthenticateCustomRequest, error, codes.Code)
 	RuntimeAfterAuthenticateCustomFunction                 func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateCustomRequest) error
 	RuntimeBeforeAuthenticateDeviceFunction                func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateDeviceRequest) (*api.AuthenticateDeviceRequest, error, codes.Code)
@@ -132,7 +134,9 @@ type (
 	RuntimeBeforeListLeaderboardRecordsAroundOwnerFunction func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.ListLeaderboardRecordsAroundOwnerRequest) (*api.ListLeaderboardRecordsAroundOwnerRequest, error, codes.Code)
 	RuntimeAfterListLeaderboardRecordsAroundOwnerFunction  func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.LeaderboardRecordList, in *api.ListLeaderboardRecordsAroundOwnerRequest) error
 	RuntimeBeforeLinkAppleFunction                         func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountApple) (*api.AccountApple, error, codes.Code)
+	RuntimeBeforeLinkMetamaskFunction                      func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountMetamask) (*api.AccountMetamask, error, codes.Code)
 	RuntimeAfterLinkAppleFunction                          func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountApple) error
+	RuntimeAfterLinkMetamaskFunction                       func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountMetamask) error
 	RuntimeBeforeLinkCustomFunction                        func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountCustom) (*api.AccountCustom, error, codes.Code)
 	RuntimeAfterLinkCustomFunction                         func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountCustom) error
 	RuntimeBeforeLinkDeviceFunction                        func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountDevice) (*api.AccountDevice, error, codes.Code)
@@ -350,6 +354,7 @@ type RuntimeBeforeReqFunctions struct {
 	beforeSessionRefreshFunction                    RuntimeBeforeSessionRefreshFunction
 	beforeSessionLogoutFunction                     RuntimeBeforeSessionLogoutFunction
 	beforeAuthenticateAppleFunction                 RuntimeBeforeAuthenticateAppleFunction
+	beforeAuthenticateMetamaskFunction              RuntimeBeforeAuthenticateMetamaskFunction
 	beforeAuthenticateCustomFunction                RuntimeBeforeAuthenticateCustomFunction
 	beforeAuthenticateDeviceFunction                RuntimeBeforeAuthenticateDeviceFunction
 	beforeAuthenticateEmailFunction                 RuntimeBeforeAuthenticateEmailFunction
@@ -385,6 +390,7 @@ type RuntimeBeforeReqFunctions struct {
 	beforeWriteLeaderboardRecordFunction            RuntimeBeforeWriteLeaderboardRecordFunction
 	beforeListLeaderboardRecordsAroundOwnerFunction RuntimeBeforeListLeaderboardRecordsAroundOwnerFunction
 	beforeLinkAppleFunction                         RuntimeBeforeLinkAppleFunction
+	beforeLinkMetamaskFunction                      RuntimeBeforeLinkMetamaskFunction
 	beforeLinkCustomFunction                        RuntimeBeforeLinkCustomFunction
 	beforeLinkDeviceFunction                        RuntimeBeforeLinkDeviceFunction
 	beforeLinkEmailFunction                         RuntimeBeforeLinkEmailFunction
@@ -434,6 +440,7 @@ type RuntimeAfterReqFunctions struct {
 	afterSessionRefreshFunction                    RuntimeAfterSessionRefreshFunction
 	afterSessionLogoutFunction                     RuntimeAfterSessionLogoutFunction
 	afterAuthenticateAppleFunction                 RuntimeAfterAuthenticateAppleFunction
+	afterAuthenticateMetamaskFunction              RuntimeAfterAuthenticateMetamaskFunction
 	afterAuthenticateCustomFunction                RuntimeAfterAuthenticateCustomFunction
 	afterAuthenticateDeviceFunction                RuntimeAfterAuthenticateDeviceFunction
 	afterAuthenticateEmailFunction                 RuntimeAfterAuthenticateEmailFunction
@@ -469,6 +476,7 @@ type RuntimeAfterReqFunctions struct {
 	afterWriteLeaderboardRecordFunction            RuntimeAfterWriteLeaderboardRecordFunction
 	afterListLeaderboardRecordsAroundOwnerFunction RuntimeAfterListLeaderboardRecordsAroundOwnerFunction
 	afterLinkAppleFunction                         RuntimeAfterLinkAppleFunction
+	afterLinkMetamaskFunction                      RuntimeAfterLinkMetamaskFunction
 	afterLinkCustomFunction                        RuntimeAfterLinkCustomFunction
 	afterLinkDeviceFunction                        RuntimeAfterLinkDeviceFunction
 	afterLinkEmailFunction                         RuntimeAfterLinkEmailFunction
@@ -2832,8 +2840,15 @@ func (r *Runtime) BeforeAuthenticateApple() RuntimeBeforeAuthenticateAppleFuncti
 	return r.beforeReqFunctions.beforeAuthenticateAppleFunction
 }
 
+func (r *Runtime) BeforeAuthenticateMetamask() RuntimeBeforeAuthenticateMetamaskFunction {
+	return r.beforeReqFunctions.beforeAuthenticateMetamaskFunction
+}
+
 func (r *Runtime) AfterAuthenticateApple() RuntimeAfterAuthenticateAppleFunction {
 	return r.afterReqFunctions.afterAuthenticateAppleFunction
+}
+func (r *Runtime) AfterAuthenticateMetamask() RuntimeAfterAuthenticateMetamaskFunction {
+	return r.afterReqFunctions.afterAuthenticateMetamaskFunction
 }
 
 func (r *Runtime) BeforeAuthenticateCustom() RuntimeBeforeAuthenticateCustomFunction {
@@ -3114,6 +3129,13 @@ func (r *Runtime) BeforeLinkApple() RuntimeBeforeLinkAppleFunction {
 
 func (r *Runtime) AfterLinkApple() RuntimeAfterLinkAppleFunction {
 	return r.afterReqFunctions.afterLinkAppleFunction
+}
+func (r *Runtime) BeforeLinkMetamask() RuntimeBeforeLinkMetamaskFunction {
+	return r.beforeReqFunctions.beforeLinkMetamaskFunction
+}
+
+func (r *Runtime) AfterLinkMetamask() RuntimeAfterLinkMetamaskFunction {
+	return r.afterReqFunctions.afterLinkMetamaskFunction
 }
 
 func (r *Runtime) BeforeLinkCustom() RuntimeBeforeLinkCustomFunction {

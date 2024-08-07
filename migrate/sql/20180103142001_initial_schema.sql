@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS users (
     google_id     VARCHAR(128)  UNIQUE,
     gamecenter_id VARCHAR(128)  UNIQUE,
     steam_id      VARCHAR(128)  UNIQUE,
+    telegram_id   VARCHAR(128)  UNIQUE,
     custom_id     VARCHAR(128)  UNIQUE,
     edge_count    INT           NOT NULL DEFAULT 0 CHECK (edge_count >= 0),
     create_time   TIMESTAMPTZ   NOT NULL DEFAULT now(),
@@ -160,6 +161,8 @@ CREATE TABLE IF NOT EXISTS wallet_ledger (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
 
     id          UUID        NOT NULL UNIQUE,
+    onchain_id  VARCHAR(128)  UNIQUE,
+    signature  VARCHAR(128)  UNIQUE,
     user_id     UUID        NOT NULL,
     changeset   JSONB       NOT NULL,
     metadata    JSONB       NOT NULL,

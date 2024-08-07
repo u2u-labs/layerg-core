@@ -344,6 +344,8 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 		fallthrough
 	case "/layerg.api.LayerG/AuthenticateApple":
 		fallthrough
+	case "/layerg.api.LayerG/AuthenticateMetamask":
+		fallthrough
 	case "/layerg.api.LayerG/AuthenticateCustom":
 		fallthrough
 	case "/layerg.api.LayerG/AuthenticateDevice":
