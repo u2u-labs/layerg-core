@@ -673,7 +673,7 @@
     "/v2/account/link/apple": {
       "post": {
         "summary": "Add an Metamask ID to the social profiles on the current user's account.",
-        "operationId": "LayerG_LinkMetamask",
+        "operationId": "LayerG_LinkApple",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -959,7 +959,7 @@
     },
     "/v2/account/link/metamask": {
       "post": {
-        "operationId": "LayerG_LinkApple",
+        "operationId": "LayerG_LinkMetamask",
         "responses": {
           "200": {
             "description": "A successful response.",
