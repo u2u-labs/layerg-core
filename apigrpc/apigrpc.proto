@@ -403,13 +403,13 @@ service LayerG {
   }
 
   // Add an Metamask ID to the social profiles on the current user's account.
-  rpc LinkMetamask (api.AccountApple) returns (google.protobuf.Empty) {
+  rpc LinkApple (api.AccountApple) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v2/account/link/apple",
       body: "*"
     };
   }
-  rpc LinkApple (api.AccountMetamask) returns (google.protobuf.Empty) {
+  rpc LinkMetamask (api.AccountMetamask) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v2/account/link/metamask",
       body: "*"
