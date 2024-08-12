@@ -245,6 +245,22 @@ service LayerG {
     };
   }
 
+  // Authenticate a user with Google against the server.
+  rpc AuthenticateTelegram (api.AuthenticateTelegramRequest) returns (api.Session) {
+      option (google.api.http) = {
+        post: "/v2/account/authenticate/telegram",
+        body: "account"
+      };
+      option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+        security: {
+          security_requirement: {
+            key: "BasicAuth";
+            value: {};
+          }
+        }
+      };
+    }
+
   // Authenticate a user with Steam against the server.
   rpc AuthenticateSteam (api.AuthenticateSteamRequest) returns (api.Session) {
     option (google.api.http) = {

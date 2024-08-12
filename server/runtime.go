@@ -63,6 +63,8 @@ type (
 	RuntimeAfterAuthenticateGameCenterFunction             func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateGameCenterRequest) error
 	RuntimeBeforeAuthenticateGoogleFunction                func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateGoogleRequest) (*api.AuthenticateGoogleRequest, error, codes.Code)
 	RuntimeAfterAuthenticateGoogleFunction                 func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateGoogleRequest) error
+	RuntimeBeforeAuthenticateTelegramFunction              func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateTelegramRequest) (*api.AuthenticateTelegramRequest, error, codes.Code)
+	RuntimeAfterAuthenticateTelegramFunction               func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateTelegramRequest) error
 	RuntimeBeforeAuthenticateSteamFunction                 func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateSteamRequest) (*api.AuthenticateSteamRequest, error, codes.Code)
 	RuntimeAfterAuthenticateSteamFunction                  func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateSteamRequest) error
 	RuntimeBeforeListChannelMessagesFunction               func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.ListChannelMessagesRequest) (*api.ListChannelMessagesRequest, error, codes.Code)
@@ -343,6 +345,7 @@ type RuntimeBeforeReqFunctions struct {
 	beforeAuthenticateFacebookInstantGameFunction   RuntimeBeforeAuthenticateFacebookInstantGameFunction
 	beforeAuthenticateGameCenterFunction            RuntimeBeforeAuthenticateGameCenterFunction
 	beforeAuthenticateGoogleFunction                RuntimeBeforeAuthenticateGoogleFunction
+	beforeAuthenticateTelegramFunction              RuntimeBeforeAuthenticateTelegramFunction
 	beforeAuthenticateSteamFunction                 RuntimeBeforeAuthenticateSteamFunction
 	beforeListChannelMessagesFunction               RuntimeBeforeListChannelMessagesFunction
 	beforeListFriendsFunction                       RuntimeBeforeListFriendsFunction
@@ -427,6 +430,7 @@ type RuntimeAfterReqFunctions struct {
 	afterAuthenticateFacebookInstantGameFunction   RuntimeAfterAuthenticateFacebookInstantGameFunction
 	afterAuthenticateGameCenterFunction            RuntimeAfterAuthenticateGameCenterFunction
 	afterAuthenticateGoogleFunction                RuntimeAfterAuthenticateGoogleFunction
+	afterAuthenticateTelegramFunction              RuntimeAfterAuthenticateTelegramFunction
 	afterAuthenticateSteamFunction                 RuntimeAfterAuthenticateSteamFunction
 	afterListChannelMessagesFunction               RuntimeAfterListChannelMessagesFunction
 	afterListFriendsFunction                       RuntimeAfterListFriendsFunction
@@ -2876,6 +2880,14 @@ func (r *Runtime) BeforeAuthenticateGoogle() RuntimeBeforeAuthenticateGoogleFunc
 
 func (r *Runtime) AfterAuthenticateGoogle() RuntimeAfterAuthenticateGoogleFunction {
 	return r.afterReqFunctions.afterAuthenticateGoogleFunction
+}
+
+func (r *Runtime) BeforeAuthenticateTelegram() RuntimeBeforeAuthenticateTelegramFunction {
+	return r.beforeReqFunctions.beforeAuthenticateTelegramFunction
+}
+
+func (r *Runtime) AfterAuthenticateTelegram() RuntimeAfterAuthenticateTelegramFunction {
+	return r.afterReqFunctions.afterAuthenticateTelegramFunction
 }
 
 func (r *Runtime) BeforeAuthenticateSteam() RuntimeBeforeAuthenticateSteamFunction {
