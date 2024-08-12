@@ -196,4 +196,3 @@ CREATE TABLE IF NOT EXISTS group_edge (
 DROP TABLE IF EXISTS
     group_edge, groups, user_tombstone, wallet_ledger, leaderboard_record, leaderboard, message, storage, notification, user_edge, user_device, users;
 
-ALTER TABLE users ADD telegram_id varchar(128) NULL;
