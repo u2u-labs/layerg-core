@@ -17,7 +17,6 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/u2u-labs/go-layerg-common v0.0.0-20240812063840-17588897b39e
 	github.com/uber-go/tally/v4 v4.1.16
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0
@@ -67,6 +66,7 @@ require (
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/twmb/murmur3 v1.1.8 // indirect
+	github.com/u2u-labs/go-layerg-common v0.0.0-20240813075307-f7cd4b980453 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
