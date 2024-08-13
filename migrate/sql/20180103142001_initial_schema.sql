@@ -195,3 +195,4 @@ CREATE TABLE IF NOT EXISTS group_edge (
 -- +migrate Down
 DROP TABLE IF EXISTS
     group_edge, groups, user_tombstone, wallet_ledger, leaderboard_record, leaderboard, message, storage, notification, user_edge, user_device, users;
+

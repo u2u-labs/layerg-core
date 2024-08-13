@@ -352,6 +352,33 @@ func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, u
 }
 
 // @group authenticate
+// @summary Authenticate user and create a session token using a Telegram ID.
+// @param ctx(type=context.Context) The context object represents information about the server and requester.
+// @param telegramId(type=string) Tegegram ID.
+// @param telegramAppData(type=string) The user's telegram App Data
+// @param username(type=string) The user's username. If left empty, one is generated.
+// @param create(type=bool) Create user if one didn't exist previously.
+// @return userID(string) The user ID of the authenticated user.
+// @return username(string) The username of the authenticated user.
+// @return create(bool) Value indicating if this account was just created or already existed.
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) AuthenticateTelegram(ctx context.Context, telegramId, telegramAppData, username string, create bool) (string, string, bool, error) {
+	if telegramId == "" {
+		return "", "", false, errors.New("expects Telegram ID string")
+	}
+
+	if username == "" {
+		username = generateUsername()
+	} else if invalidUsernameRegex.MatchString(username) {
+		return "", "", false, errors.New("expects username to be valid, no spaces or control characters allowed")
+	} else if len(username) > 128 {
+		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
+	}
+
+	return AuthenticateTelegram(ctx, n.logger, n.db, telegramId, telegramAppData, username, create)
+}
+
+// @group authenticate
 // @summary Authenticate user and create a session token using a Steam account token.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
 // @param token(type=string) Steam token.
