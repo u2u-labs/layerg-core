@@ -1,14 +1,3 @@
-// Copyright 2021 Heroic Labs.
-// All rights reserved.
-//
-// NOTICE: All information contained herein is, and remains the property of Heroic
-// Labs. and its suppliers, if any. The intellectual and technical concepts
-// contained herein are proprietary to Heroic Labs. and its suppliers and may be
-// covered by U.S. and Foreign Patents, patents in process, and are protected by
-// trade secret or copyright law. Dissemination of this information or reproduction
-// of this material is strictly forbidden unless prior written permission is
-// obtained from Heroic Labs.
-
 package migrate
 
 import (
@@ -66,15 +55,15 @@ func Check(ctx context.Context, logger *zap.Logger, db *pgx.Conn) {
 
 	records, err := sqlmigrate.GetMigrationRecords(ctx, db)
 	if err != nil {
-		logger.Fatal("Could not get migration records, run `nakama migrate up`", zap.Error(err))
+		logger.Fatal("Could not get migration records, run `layerg-core migrate up`", zap.Error(err))
 	}
 
 	diff := len(migrations) - len(records)
 	if diff > 0 {
-		logger.Fatal("DB schema outdated, run `nakama migrate up`", zap.Int("migrations", diff))
+		logger.Fatal("DB schema outdated, run `layerg-core migrate up`", zap.Int("migrations", diff))
 	}
 	if diff < 0 {
-		logger.Warn("DB schema newer, update Nakama", zap.Int64("migrations", int64(math.Abs(float64(diff)))))
+		logger.Warn("DB schema newer, update layerg-core", zap.Int64("migrations", int64(math.Abs(float64(diff)))))
 	}
 	db.Close(ctx)
 }

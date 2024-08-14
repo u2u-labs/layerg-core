@@ -17,7 +17,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/u2u-labs/go-layerg-common v0.0.0-20240730110028-28ef7bb121dc
+	github.com/u2u-labs/go-layerg-common v0.0.0-20240814074024-14403d125eed
 	github.com/uber-go/tally/v4 v4.1.16
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0

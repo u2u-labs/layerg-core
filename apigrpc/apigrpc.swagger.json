@@ -618,6 +618,51 @@
         ]
       }
     },
+    "/v2/account/authenticate/telegram": {
+      "post": {
+        "summary": "Authenticate a user with Google against the server.",
+        "operationId": "LayerG_AuthenticateTelegram",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiSession"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "account",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiAccountTelegram"
+            }
+          },
+          {
+            "name": "create",
+            "description": "Register the account if the user does not already exist.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "LayerG"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/v2/account/link/apple": {
       "post": {
         "summary": "Add an Apple ID to the social profiles on the current user's account.",
@@ -3979,6 +4024,30 @@
         }
       },
       "description": "Send a Steam token to the server. Used with authenticate/link/unlink."
+    },
+    "apiAccountTelegram": {
+      "type": "object",
+      "properties": {
+        "telegramId": {
+          "type": "string",
+          "description": "The Telegram account details."
+        },
+        "username": {
+          "type": "string",
+          "description": "Set the username on the account at register. Must be unique."
+        },
+        "telegramAppData": {
+          "type": "string"
+        },
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Extra information that will be bundled in the session token."
+        }
+      },
+      "description": "Send a Telegram token to the server. Used with authenticate/link/unlink."
     },
     "apiChannelMessage": {
       "type": "object",

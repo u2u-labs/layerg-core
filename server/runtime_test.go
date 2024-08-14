@@ -1,17 +1,3 @@
-// Copyright 2017 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server
 
 import (
@@ -73,7 +59,7 @@ func runtimeWithModules(t *testing.T, modules map[string]string) (*Runtime, *Run
 }
 
 func runtimeWithModulesWithData(t *testing.T, modules map[string]string) (*Runtime, *RuntimeInfo, *testRuntimeData, error) {
-	dir, err := os.MkdirTemp("", fmt.Sprintf("nakama_runtime_lua_test_%v", uuid.Must(uuid.NewV4()).String()))
+	dir, err := os.MkdirTemp("", fmt.Sprintf("layerg_runtime_lua_test_%v", uuid.Must(uuid.NewV4()).String()))
 	if err != nil {
 		t.Fatalf("Failed initializing runtime modules tempdir: %s", err.Error())
 	}
@@ -149,7 +135,7 @@ func TestRuntimeRequireEval(t *testing.T) {
 	modules := map[string]string{
 		TEST_MODULE_NAME: TEST_MODULE_DATA,
 		"test-invoke": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 local test = require("test")
 test.printWorld()`,
 	}
@@ -333,9 +319,9 @@ end
 print("Test Module Loaded")
 return test`,
 		"http-invoke": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 local test = require("test")
-nakama.register_rpc(test.printWorld, "helloworld")`,
+layerg.register_rpc(test.printWorld, "helloworld")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -372,9 +358,9 @@ end
 print("Test Module Loaded")
 return test`,
 		"http-invoke": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 local test = require("test")
-nakama.register_rpc(test.printWorld, "helloworld")`,
+layerg.register_rpc(test.printWorld, "helloworld")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -417,12 +403,12 @@ func TestRuntimeHTTPRequest(t *testing.T) {
 
 	modules := map[string]string{
 		"test": fmt.Sprintf(`
-local nakama = require("nakama")
+local layerg = require("layerg")
 function test(ctx, payload)
-	local success, code, headers, body = pcall(nakama.http_request, "%s", "GET", {})
+	local success, code, headers, body = pcall(layerg.http_request, "%s", "GET", {})
 	return tostring(code)
 end
-nakama.register_rpc(test, "test")`, srv.URL),
+layerg.register_rpc(test, "test")`, srv.URL),
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -448,11 +434,11 @@ nakama.register_rpc(test, "test")`, srv.URL),
 func TestRuntimeJson(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function test(ctx, payload)
-	return nakama.json_encode(nakama.json_decode(payload))
+	return layerg.json_encode(layerg.json_decode(payload))
 end
-nakama.register_rpc(test, "test")`,
+layerg.register_rpc(test, "test")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -479,11 +465,11 @@ nakama.register_rpc(test, "test")`,
 func TestRuntimeBase64(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function test(ctx, payload)
-	return nakama.base64_decode(nakama.base64_encode(payload))
+	return layerg.base64_decode(layerg.base64_encode(payload))
 end
-nakama.register_rpc(test, "test")`,
+layerg.register_rpc(test, "test")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -510,11 +496,11 @@ nakama.register_rpc(test, "test")`,
 func TestRuntimeBase16(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function test(ctx, payload)
-	return nakama.base16_decode(nakama.base16_encode(payload))
+	return layerg.base16_decode(layerg.base16_encode(payload))
 end
-nakama.register_rpc(test, "test")`,
+layerg.register_rpc(test, "test")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -541,11 +527,11 @@ nakama.register_rpc(test, "test")`,
 func TestRuntimeAes128(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function test(ctx, payload)
-	return nakama.aes128_decrypt(nakama.aes128_encrypt(payload, "goldenbridge_key"), "goldenbridge_key")
+	return layerg.aes128_decrypt(layerg.aes128_encrypt(payload, "goldenbridge_key"), "goldenbridge_key")
 end
-nakama.register_rpc(test, "test")`,
+layerg.register_rpc(test, "test")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -572,7 +558,7 @@ nakama.register_rpc(test, "test")`,
 func TestRuntimeMD5Hash(t *testing.T) {
 	modules := map[string]string{
 		"md5hash-test": `
-local nk = require("nakama")
+local nk = require("layerg")
 assert(nk.md5_hash("test") == "098f6bcd4621d373cade4e832627b4f6")`,
 	}
 
@@ -585,7 +571,7 @@ assert(nk.md5_hash("test") == "098f6bcd4621d373cade4e832627b4f6")`,
 func TestRuntimeSHA256Hash(t *testing.T) {
 	modules := map[string]string{
 		"sha256hash-test": `
-local nk = require("nakama")
+local nk = require("layerg")
 assert(nk.sha256_hash("test") == "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08")`,
 	}
 
@@ -598,11 +584,11 @@ assert(nk.sha256_hash("test") == "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b82
 func TestRuntimeBcryptHash(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function test(ctx, payload)
-	return nakama.bcrypt_hash(payload)
+	return layerg.bcrypt_hash(payload)
 end
-nakama.register_rpc(test, "test")`,
+layerg.register_rpc(test, "test")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -630,11 +616,11 @@ nakama.register_rpc(test, "test")`,
 func TestRuntimeBcryptCompare(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function test(ctx, payload)
-	return tostring(nakama.bcrypt_compare(payload, "something_to_encrypt"))
+	return tostring(layerg.bcrypt_compare(payload, "something_to_encrypt"))
 end
-nakama.register_rpc(test, "test")`,
+layerg.register_rpc(test, "test")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -662,7 +648,7 @@ nakama.register_rpc(test, "test")`,
 func TestRuntimeNotificationsSend(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nk = require("nakama")
+local nk = require("layerg")
 
 local subject = "You've unlocked level 100!"
 local content = {
@@ -686,7 +672,7 @@ nk.notifications_send(new_notifications)`,
 func TestRuntimeNotificationSend(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nk = require("nakama")
+local nk = require("layerg")
 
 local subject = "You've unlocked level 100!"
 local content = {
@@ -707,7 +693,7 @@ nk.notification_send(user_id, subject, content, code, "", false)`,
 func TestRuntimeNotificationsDelete(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nk = require("nakama")
+local nk = require("layerg")
 
 local user_id = "4c2ae592-b2a7-445e-98ec-697694478b1c"
 local notification_id = "3707b43c-60f0-4ba7-a94b-e21a028aeffb"
@@ -731,7 +717,7 @@ func TestRuntimeWalletWrite(t *testing.T) {
 
 	modules := map[string]string{
 		"test": `
-local nk = require("nakama")
+local nk = require("layerg")
 
 local content = {
   reward_coins = 1000
@@ -750,7 +736,7 @@ nk.wallet_update(user_id, content)`,
 func TestRuntimeStorageWrite(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nk = require("nakama")
+local nk = require("layerg")
 
 local new_objects = {
 	{collection = "settings", key = "a", user_id = nil, value = {}},
@@ -770,7 +756,7 @@ nk.storage_write(new_objects)`,
 func TestRuntimeStorageRead(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nk = require("nakama")
+local nk = require("layerg")
 local object_ids = {
   {collection = "settings", key = "a", user_id = nil},
   {collection = "settings", key = "b", user_id = nil},
@@ -792,11 +778,11 @@ end`,
 func TestRuntimeReqBeforeHook(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function before_storage_write(ctx, payload)
 	return payload
 end
-nakama.register_req_before(before_storage_write, "WriteStorageObjects")`,
+layerg.register_req_before(before_storage_write, "WriteStorageObjects")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -831,11 +817,11 @@ nakama.register_req_before(before_storage_write, "WriteStorageObjects")`,
 func TestRuntimeReqBeforeHookDisallowed(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function before_storage_write(ctx, payload)
 	return nil
 end
-nakama.register_req_before(before_storage_write, "WriteStorageObjects")`,
+layerg.register_req_before(before_storage_write, "WriteStorageObjects")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -867,12 +853,12 @@ nakama.register_req_before(before_storage_write, "WriteStorageObjects")`,
 func TestRuntimeReqAfterHook(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function after_storage_write(ctx, payload)
-	nakama.wallet_update(ctx.user_id, {gem = 10})
+	layerg.wallet_update(ctx.user_id, {gem = 10})
 	return payload
 end
-nakama.register_req_after(after_storage_write, "WriteStorageObjects")`,
+layerg.register_req_after(after_storage_write, "WriteStorageObjects")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -916,12 +902,12 @@ nakama.register_req_after(after_storage_write, "WriteStorageObjects")`,
 func TestRuntimeRTBeforeHook(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function before_match_create(ctx, payload)
-	nakama.wallet_update(ctx.user_id, {gem = 20})
+	layerg.wallet_update(ctx.user_id, {gem = 20})
 	return payload
 end
-nakama.register_rt_before(before_match_create, "MatchCreate")`,
+layerg.register_rt_before(before_match_create, "MatchCreate")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -965,17 +951,17 @@ nakama.register_rt_before(before_match_create, "MatchCreate")`,
 func TestRuntimeRTBeforeHookDisallow(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nakama = require("nakama")
+local layerg = require("layerg")
 function before_match_create(ctx, payload)
 	return nil
 end
-nakama.register_rt_before(before_match_create, "MatchCreate")
+layerg.register_rt_before(before_match_create, "MatchCreate")
 
 function after_match_create(ctx, payload)
-	nakama.wallet_update(ctx.user_id, {gem = 30})
+	layerg.wallet_update(ctx.user_id, {gem = 30})
 	return payload
 end
-nakama.register_rt_after(after_match_create, "MatchCreate")`,
+layerg.register_rt_after(after_match_create, "MatchCreate")`,
 	}
 
 	runtime, _, err := runtimeWithModules(t, modules)
@@ -1019,7 +1005,7 @@ nakama.register_rt_after(after_match_create, "MatchCreate")`,
 func TestRuntimeGroupTests(t *testing.T) {
 	modules := map[string]string{
 		"test": `
-local nk = require("nakama")
+local nk = require("layerg")
 
 local user_id = nk.uuid_v4()
 local group_name = nk.uuid_v4()

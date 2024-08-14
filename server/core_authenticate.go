@@ -1,17 +1,3 @@
-// Copyright 2018 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server
 
 import (
@@ -1118,4 +1104,64 @@ func sendFriendAddedNotification(ctx context.Context, logger *zap.Logger, db *sq
 	}
 	// Any error is already logged before it's returned here.
 	_ = NotificationSend(ctx, logger, db, tracker, messageRouter, notifications)
+}
+
+func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, telegramId, username, telegramAppData string, create bool) (string, string, bool, error) {
+	//TODO: verify telegram invalid
+	// Look for an existing account
+	query := "SELECT id, username, display_name FROM users WHERE telegram_id = $1"
+	var dbUserID string
+	var dbUsername string
+	var dbDisplayName sql.NullString
+	err := db.QueryRowContext(ctx, query, telegramId).Scan(&dbUserID, &dbUsername, &dbDisplayName)
+	found := true
+	if err != nil {
+		if err == sql.ErrNoRows {
+			found = false
+		} else if err != nil {
+			logger.Error("Error looking up user by Telegram ID.", zap.Error(err),
+				zap.String("telegramID", telegramId),
+				zap.String("telegramAppData", telegramAppData),
+				zap.Bool("create", create))
+			return "", "", false, status.Error(codes.Internal, "Error finding user account.")
+		}
+	}
+
+	// Existing account found.
+	if found {
+		return dbUserID, dbUsername, false, nil
+	}
+
+	if !create {
+		// No user account found, and creation is not allowed.
+		return "", "", false, status.Error(codes.NotFound, "User account not found.")
+	}
+
+	// Create a new account.
+	userID := uuid.Must(uuid.NewV4()).String()
+	query = "INSERT INTO users (id, username, telegram_id, display_name, create_time, update_time) VALUES ($1, $2, $3, $4, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, username, telegramId, username)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
+			if strings.Contains(pgErr.Message, "users_username_key") {
+				// Username is already in use by a different account.
+				logger.Info("Username is already in use.", zap.Error(err), zap.String("telegramID", telegramId), zap.String("username", username))
+				return "", "", false, status.Error(codes.AlreadyExists, "Username is already in use.")
+			} else if strings.Contains(pgErr.Message, "users_telegram_id_key") {
+				// A concurrent write has inserted this Telegram ID.
+				logger.Info("Did not insert new user as Telegram ID already exists.", zap.Error(err), zap.String("telegramID", telegramId), zap.String("username", username), zap.Bool("create", create))
+				return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+			}
+		}
+		logger.Error("Cannot find or create user with Telegram ID.", zap.Error(err), zap.String("Telegram", telegramId), zap.String("username", username), zap.Bool("create", create))
+		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
+		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
+		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	return userID, username, true, nil
 }

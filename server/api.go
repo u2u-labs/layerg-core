@@ -1,17 +1,3 @@
-// Copyright 2018 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server
 
 import (
@@ -162,7 +148,7 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 	}()
 
 	// Register and start GRPC Gateway server.
-	// Should start after GRPC server itself because RegisterNakamaHandlerFromEndpoint below tries to dial GRPC.
+	// Should start after GRPC server itself because RegisterLayerGHandlerFromEndpoint below tries to dial GRPC.
 	ctx := context.Background()
 	grpcGateway := grpcgw.NewServeMux(
 		grpcgw.WithRoutingErrorHandler(handleRoutingError),
@@ -176,7 +162,7 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 			p := make(map[string][]string, len(q))
 			for k, vs := range q {
 				if k == "http_key" {
-					// Skip Nakama's own query params, only process custom ones.
+					// Skip LayerG's own query params, only process custom ones.
 					continue
 				}
 				p["q_"+k] = vs
@@ -357,6 +343,8 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 	case "/layerg.api.LayerG/AuthenticateGameCenter":
 		fallthrough
 	case "/layerg.api.LayerG/AuthenticateGoogle":
+		fallthrough
+	case "/layerg.api.LayerG/AuthenticateTelegram":
 		fallthrough
 	case "/layerg.api.LayerG/AuthenticateSteam":
 		// Session refresh and authentication functions only require server key.

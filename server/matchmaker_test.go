@@ -1,27 +1,14 @@
-// Copyright 2021 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server
 
 import (
 	"context"
 	"errors"
-	"github.com/u2u-labs/go-layerg-common/api"
 	"math"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/u2u-labs/go-layerg-common/api"
 
 	"github.com/blugelabs/bluge"
 	"github.com/gofrs/uuid/v5"
@@ -1623,13 +1610,13 @@ func TestGroupIndexes(t *testing.T) {
 // to ensure proper resource management
 func createTestMatchmaker(t fatalable, logger *zap.Logger, tickerActive bool, messageCallback func(presences []*PresenceID, envelope *rtapi.Envelope)) (*LocalMatchmaker, func() error, error) {
 	cfg := NewConfig(logger)
-	cfg.Database.Addresses = []string{"postgres:postgres@localhost:5432/nakama"}
+	cfg.Database.Addresses = []string{"postgres:postgres@localhost:5432/layerg"}
 	cfg.Matchmaker.IntervalSec = 1
 	cfg.Matchmaker.MaxIntervals = 5
 	cfg.Matchmaker.RevPrecision = true
 	// configure a path runtime can use (it will mkdir this, so it must be writable)
 	var err error
-	cfg.Runtime.Path, err = os.MkdirTemp("", "nakama-matchmaker-test")
+	cfg.Runtime.Path, err = os.MkdirTemp("", "layerg-matchmaker-test")
 	if err != nil {
 		t.Fatal(err)
 	}

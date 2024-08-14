@@ -1,4 +1,4 @@
-module github.com/heroiclabs/nakama/console/protoc-gen-angular
+module github.com/u2u-labs/layerg-core/console/protoc-gen-angular
 
 go 1.13
 

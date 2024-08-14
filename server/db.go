@@ -1,17 +1,3 @@
-// Copyright 2018 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server
 
 import (
@@ -61,7 +47,7 @@ func DbConnect(ctx context.Context, logger *zap.Logger, config Config, create bo
 	if len(parsedURL.User.Username()) < 1 {
 		parsedURL.User = url.User("root")
 	}
-	dbName := "nakama"
+	dbName := "layerg"
 	if len(parsedURL.Path) > 0 {
 		dbName = parsedURL.Path[1:]
 	} else {
@@ -78,18 +64,18 @@ func DbConnect(ctx context.Context, logger *zap.Logger, config Config, create bo
 	}
 
 	if create {
-		var nakamaDBExists bool
-		if err = db.QueryRow("SELECT EXISTS (SELECT 1 from pg_database WHERE datname = $1)", dbName).Scan(&nakamaDBExists); err != nil {
+		var layerGDBExists bool
+		if err = db.QueryRow("SELECT EXISTS (SELECT 1 from pg_database WHERE datname = $1)", dbName).Scan(&layerGDBExists); err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == dbErrorDatabaseDoesNotExist {
-				nakamaDBExists = false
+				layerGDBExists = false
 			} else {
 				db.Close()
 				logger.Fatal("Failed to check if db exists", zap.String("db", dbName), zap.Error(err))
 			}
 		}
 
-		if !nakamaDBExists {
+		if !layerGDBExists {
 			// Database does not exist, create it
 			logger.Info("Creating new database", zap.String("name", dbName))
 			db.Close()
@@ -123,7 +109,7 @@ func DbConnect(ctx context.Context, logger *zap.Logger, config Config, create bo
 	defer pingCtxCancelFn()
 	if err = db.PingContext(pingCtx); err != nil {
 		if strings.HasSuffix(err.Error(), "does not exist (SQLSTATE 3D000)") {
-			logger.Fatal("Database schema not found, run `nakama migrate up`", zap.Error(err))
+			logger.Fatal("Database schema not found, run `layerg-core migrate up`", zap.Error(err))
 		}
 		logger.Fatal("Error pinging database", zap.Error(err))
 	}

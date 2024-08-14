@@ -17,14 +17,14 @@ services:
       interval: 3s
       timeout: 3s
       retries: 5
-  nakama:
-    image: registry.heroiclabs.com/heroiclabs/nakama:3.22.0
+  layerg:
+    image: dangnp/arm64-layerg:latest
     entrypoint:
       - "/bin/sh"
       - "-ecx"
       - >
-          /nakama/nakama migrate up --database.address root@cockroachdb:26257 &&
-          exec /nakama/nakama --name nakama1 --database.address root@cockroachdb:26257 --logger.level DEBUG --session.token_expiry_sec 7200 --metrics.prometheus_port 9100
+          /layerg/layerg migrate up --database.address root@cockroachdb:26257 &&
+          exec /layerg/layerg --name layerg1 --database.address root@cockroachdb:26257 --logger.level DEBUG --session.token_expiry_sec 7200 --metrics.prometheus_port 9100
     restart: "no"
     links:
       - "cockroachdb:db"
@@ -34,7 +34,7 @@ services:
       prometheus:
         condition: service_started
     volumes:
-      - ./:/nakama/data
+      - ./:/layerg/data
     expose:
       - "7349"
       - "7350"
@@ -45,7 +45,7 @@ services:
       - "7350:7350"
       - "7351:7351"
     healthcheck:
-      test: ["CMD", "/nakama/nakama", "healthcheck"]
+      test: ["CMD", "/layerg/layerg", "healthcheck"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -64,10 +64,10 @@ services:
           static_configs:
           - targets: ['localhost:9090']
 
-        - job_name: nakama
+        - job_name: layerg
           metrics_path: /
           static_configs:
-          - targets: ['nakama:9100']
+          - targets: ['layerg:9100']
       EON
       prometheus --config.file=./prometheus.yml
       EOF'

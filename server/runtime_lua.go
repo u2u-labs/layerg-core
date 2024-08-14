@@ -1,17 +1,3 @@
-// Copyright 2018 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server
 
 import (
@@ -2446,8 +2432,8 @@ func checkRuntimeLuaVM(logger *zap.Logger, config Config, version string, stdLib
 		vm.Push(lua.LString(name))
 		vm.Call(1, 0)
 	}
-	nakamaModule := NewRuntimeLuaNakamaModule(logger, nil, nil, nil, config, version, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	vm.PreloadModule("nakama", nakamaModule.Loader)
+	layerGModule := NewRuntimeLuaLayerGModule(logger, nil, nil, nil, config, version, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	vm.PreloadModule("layerg", layerGModule.Loader)
 
 	preload := vm.GetField(vm.GetField(vm.Get(lua.EnvironIndex), "package"), "preload")
 	for _, name := range moduleCache.Names {
@@ -2514,8 +2500,8 @@ func newRuntimeLuaVM(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojs
 			callbacks.StorageIndexFilter.Store(key, fn)
 		}
 	}
-	nakamaModule := NewRuntimeLuaNakamaModule(logger, db, protojsonMarshaler, protojsonUnmarshaler, config, version, socialClient, leaderboardCache, rankCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, once, localCache, storageIndex, matchCreateFn, eventFn, registerCallbackFn, announceCallbackFn)
-	vm.PreloadModule("nakama", nakamaModule.Loader)
+	layerGModule := NewRuntimeLuaLayerGModule(logger, db, protojsonMarshaler, protojsonUnmarshaler, config, version, socialClient, leaderboardCache, rankCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, once, localCache, storageIndex, matchCreateFn, eventFn, registerCallbackFn, announceCallbackFn)
+	vm.PreloadModule("layerg", layerGModule.Loader)
 	r := &RuntimeLua{
 		logger:    logger,
 		node:      config.GetName(),

@@ -6,7 +6,7 @@ Angular service code gen
 
 ### Install
 ```sh
-  go install github.com/heroiclabs/nakama/console/openapi-gen-angular
+  go install github.com/u2u-labs/layerg-core/console/openapi-gen-angular
 ```
 ### Usage
 
@@ -18,7 +18,7 @@ Angular service code gen
 #### Generate the Angular service
 ##### Example
 ```shell
-go run . -i '../console.swagger.json' -o '../ui/src/app/console.service.ts' -rm_prefix='console,nakamaconsole,nakama,Console_'
+go run . -i '../console.swagger.json' -o '../ui/src/app/console.service.ts' -rm_prefix='console,layergconsole,layerg,Console_'
 ```
 
 The output file is: `console.service.ts`.

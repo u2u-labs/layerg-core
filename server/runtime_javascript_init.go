@@ -1,17 +1,3 @@
-// Copyright 2020 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server
 
 import (
@@ -134,7 +120,9 @@ func (im *RuntimeJavascriptInitModule) mappings(r *goja.Runtime) map[string]func
 		"registerBeforeAuthenticateGameCenter":            im.registerBeforeAuthenticateGameCenter(r),
 		"registerAfterAuthenticateGameCenter":             im.registerAfterAuthenticateGameCenter(r),
 		"registerBeforeAuthenticateGoogle":                im.registerBeforeAuthenticateGoogle(r),
+		"registerBeforeAuthenticateTelegram":              im.registerBeforeAuthenticateTelegram(r),
 		"registerAfterAuthenticateGoogle":                 im.registerAfterAuthenticateGoogle(r),
+		"registerAfterAuthenticateTelegram":               im.registerAfterAuthenticateTelegram(r),
 		"registerBeforeAuthenticateSteam":                 im.registerBeforeAuthenticateSteam(r),
 		"registerAfterAuthenticateSteam":                  im.registerAfterAuthenticateSteam(r),
 		"registerBeforeListChannelMessages":               im.registerBeforeListChannelMessages(r),
@@ -486,8 +474,16 @@ func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateGoogle(r *goja.
 	return im.registerHook(r, RuntimeExecutionModeBefore, "registerBeforeAuthenticateGoogle", "authenticategoogle")
 }
 
+func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateTelegram(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return im.registerHook(r, RuntimeExecutionModeBefore, "registerBeforeAuthenticateTelegram", "authenticatetelegram")
+}
+
 func (im *RuntimeJavascriptInitModule) registerAfterAuthenticateGoogle(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return im.registerHook(r, RuntimeExecutionModeAfter, "registerAfterAuthenticateGoogle", "authenticategoogle")
+}
+
+func (im *RuntimeJavascriptInitModule) registerAfterAuthenticateTelegram(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return im.registerHook(r, RuntimeExecutionModeAfter, "registerAfterAuthenticateTelegram", "authenticatetelegram")
 }
 
 func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateSteam(r *goja.Runtime) func(goja.FunctionCall) goja.Value {

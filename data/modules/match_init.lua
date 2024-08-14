@@ -1,20 +1,4 @@
---[[
- Copyright 2018 The Nakama Authors
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
---]]
-
-local nk = require("nakama")
+local nk = require("layerg")
 
 --[[
 Called when the matchmaker has found a match for some set of users.
@@ -32,7 +16,7 @@ Matchmaker users will contain a table array of the users that have matched toget
       user_id: "user unique ID",
       session_id: "session ID of the user's current connection",
       username: "user's unique username",
-      node: "name of the Nakama node the user is connected to"
+      node: "name of the LayerG node the user is connected to"
     },
     properties: {
       foo: "any properties the client set when it started its matchmaking process",

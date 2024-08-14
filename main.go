@@ -1,17 +1,3 @@
-// Copyright 2018 The Nakama Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
@@ -44,7 +30,7 @@ import (
 const cookieFilename = ".cookie"
 
 var (
-	version  string = "3.0.0"
+	version  string = "1.0.0"
 	commitID string = "dev"
 
 	// Shared utility components.
@@ -133,7 +119,7 @@ func main() {
 	logger, startupLogger := server.SetupLogging(tmpLogger, config)
 	configWarnings := server.ValidateConfig(logger, config)
 
-	startupLogger.Info("Nakama starting")
+	startupLogger.Info("LayerG starting")
 	startupLogger.Info("Node", zap.String("name", config.GetName()), zap.String("version", semver), zap.String("runtime", runtime.Version()), zap.Int("cpu", runtime.NumCPU()), zap.Int("proc", runtime.GOMAXPROCS(0)))
 	startupLogger.Info("Data directory", zap.String("path", config.GetDataDir()))
 
@@ -214,7 +200,7 @@ func main() {
 	pipeline := server.NewPipeline(logger, config, db, jsonpbMarshaler, jsonpbUnmarshaler, sessionRegistry, statusRegistry, matchRegistry, partyRegistry, matchmaker, tracker, router, runtime)
 	statusHandler := server.NewLocalStatusHandler(logger, sessionRegistry, matchRegistry, tracker, metrics, config.GetName())
 
-	telemetryEnabled := len(os.Getenv("NAKAMA_TELEMETRY")) < 1
+	telemetryEnabled := len(os.Getenv("LAYERG_TELEMETRY")) < 1
 	console.UIFS.Nt = !telemetryEnabled
 	cookie := newOrLoadCookie(telemetryEnabled, config)
 
@@ -223,7 +209,7 @@ func main() {
 
 	if telemetryEnabled {
 		const telemetryKey = "YU1bIKUhjQA9WC0O6ouIRIWTaPlJ5kFs"
-		_ = se.Start(telemetryKey, cookie, semver, "nakama")
+		_ = se.Start(telemetryKey, cookie, semver, "layerg")
 		defer func() {
 			_ = se.End(telemetryKey, cookie)
 		}()
@@ -259,17 +245,17 @@ func main() {
 	startupLogger.Info("Shutdown complete")
 }
 
-// Help improve Nakama by sending anonymous usage statistics.
+// Help improve LayerG by sending anonymous usage statistics.
 //
 // You can disable the telemetry completely before server start by setting the
-// environment variable "NAKAMA_TELEMETRY" - i.e. NAKAMA_TELEMETRY=0 nakama
+// environment variable "LAYERG_TELEMETRY" - i.e. LAYERG_TELEMETRY=0 LayerG
 //
 // These properties are collected:
 // * A unique UUID v4 random identifier which is generated.
-// * Version of Nakama being used which includes build metadata.
+// * Version of LayerG being used which includes build metadata.
 // * Amount of time the server ran for.
 //
-// This information is sent via Segment which allows the Nakama team to
+// This information is sent via Segment which allows the LayerG team to
 // analyze usage patterns and errors in order to help improve the server.
 func newOrLoadCookie(enabled bool, config server.Config) string {
 	if !enabled {
