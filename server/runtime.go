@@ -763,6 +763,9 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if allBeforeReqFunctions.beforeAuthenticateEmailFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticateemail"))
 	}
+	if allBeforeReqFunctions.beforeAuthenticateTelegramFunction != nil {
+		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticatetelegram"))
+	}
 	if allBeforeReqFunctions.beforeAuthenticateFacebookFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticatefacebook"))
 	}
@@ -1017,6 +1020,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if luaBeforeReqFns.beforeAuthenticateEmailFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateEmailFunction = luaBeforeReqFns.beforeAuthenticateEmailFunction
 		startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "authenticateemail"))
+	}
+	if luaBeforeReqFns.beforeAuthenticateTelegramFunction != nil {
+		allBeforeReqFunctions.beforeAuthenticateTelegramFunction = luaBeforeReqFns.beforeAuthenticateTelegramFunction
+		startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "authenticatetelegram"))
 	}
 	if luaBeforeReqFns.beforeAuthenticateFacebookFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateFacebookFunction = luaBeforeReqFns.beforeAuthenticateFacebookFunction
@@ -1340,6 +1347,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		allBeforeReqFunctions.beforeAuthenticateEmailFunction = goBeforeReqFns.beforeAuthenticateEmailFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticateemail"))
 	}
+	if goBeforeReqFns.beforeAuthenticateTelegramFunction != nil {
+		allBeforeReqFunctions.beforeAuthenticateTelegramFunction = goBeforeReqFns.beforeAuthenticateTelegramFunction
+		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticatetelegram"))
+	}
 	if goBeforeReqFns.beforeAuthenticateFacebookFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateFacebookFunction = goBeforeReqFns.beforeAuthenticateFacebookFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticatefacebook"))
@@ -1653,6 +1664,9 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if allAfterReqFunctions.afterAuthenticateEmailFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticateemail"))
 	}
+	if allAfterReqFunctions.afterAuthenticateTelegramFunction != nil {
+		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticatetelegram"))
+	}
 	if allAfterReqFunctions.afterAuthenticateFacebookFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticatefacebook"))
 	}
@@ -1904,6 +1918,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if luaAfterReqFns.afterAuthenticateEmailFunction != nil {
 		allAfterReqFunctions.afterAuthenticateEmailFunction = luaAfterReqFns.afterAuthenticateEmailFunction
 		startupLogger.Info("Registered Lua runtime After function invocation", zap.String("id", "authenticateemail"))
+	}
+	if luaAfterReqFns.afterAuthenticateTelegramFunction != nil {
+		allAfterReqFunctions.afterAuthenticateTelegramFunction = luaAfterReqFns.afterAuthenticateTelegramFunction
+		startupLogger.Info("Registered Lua runtime After function invocation", zap.String("id", "authenticatetelegram"))
 	}
 	if luaAfterReqFns.afterAuthenticateFacebookFunction != nil {
 		allAfterReqFunctions.afterAuthenticateFacebookFunction = luaAfterReqFns.afterAuthenticateFacebookFunction
@@ -2218,6 +2236,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if goAfterReqFns.afterAuthenticateEmailFunction != nil {
 		allAfterReqFunctions.afterAuthenticateEmailFunction = goAfterReqFns.afterAuthenticateEmailFunction
 		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "authenticateemail"))
+	}
+	if goAfterReqFns.afterAuthenticateTelegramFunction != nil {
+		allAfterReqFunctions.afterAuthenticateTelegramFunction = goAfterReqFns.afterAuthenticateTelegramFunction
+		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "authenticatetelegram"))
 	}
 	if goAfterReqFns.afterAuthenticateFacebookFunction != nil {
 		allAfterReqFunctions.afterAuthenticateFacebookFunction = goAfterReqFns.afterAuthenticateFacebookFunction
