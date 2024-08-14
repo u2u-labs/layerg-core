@@ -1109,7 +1109,7 @@ func sendFriendAddedNotification(ctx context.Context, logger *zap.Logger, db *sq
 func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, telegramId, username, telegramAppData string, create bool) (string, string, bool, error) {
 	//TODO: verify telegram invalid
 	// Look for an existing account
-	query := "SELECT id, username, disable_time, display_name, avatar_url FROM users WHERE telegram_id = $1"
+	query := "SELECT id, username, display_name FROM users WHERE telegram_id = $1"
 	var dbUserID string
 	var dbUsername string
 	var dbDisplayName sql.NullString

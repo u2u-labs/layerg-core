@@ -375,7 +375,7 @@ func (n *RuntimeGoLayerGModule) AuthenticateTelegram(ctx context.Context, telegr
 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
 	}
 
-	return AuthenticateTelegram(ctx, n.logger, n.db, telegramId, telegramAppData, username, create)
+	return AuthenticateTelegram(ctx, n.logger, n.db, telegramId, username, telegramAppData, create)
 }
 
 // @group authenticate
