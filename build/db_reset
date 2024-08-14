@@ -4,4 +4,4 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-cockroach sql -d="nakama" --insecure --execute="DROP DATABASE nakama CASCADE"
+cockroach sql -d="layerg" --insecure --execute="DROP DATABASE layerg CASCADE"

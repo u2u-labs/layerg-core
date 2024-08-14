@@ -1,7 +1,7 @@
 Release Instructions
 ===
 
-These instructions guide the release process for new official Nakama server builds.
+These instructions guide the release process for new official LayerG server builds.
 
 ## Steps
 
@@ -31,7 +31,7 @@ These steps are run for each new release.
 
    ```
    git add CHANGELOG.md
-   git commit -m "Nakama 2.1.0 release."
+   git commit -m "LayerG 2.1.0 release."
    git tag -a v2.1.0 -m "v2.1.0"
    git push origin v2.1.0 master
    ```
@@ -39,20 +39,20 @@ These steps are run for each new release.
 3. Execute the cross-compiled build helper.
 
    ```
-   xgo --targets=darwin/arm64,darwin/amd64,linux/amd64,linux/arm64,windows/amd64 --trimpath --ldflags "-s -w -X main.version=2.1.0 -X main.commitID=$(git rev-parse --short HEAD 2>/dev/null)" github.com/heroiclabs/nakama
+   xgo --targets=darwin/arm64,darwin/amd64,linux/amd64,linux/arm64,windows/amd64 --trimpath --ldflags "-s -w -X main.version=2.1.0 -X main.commitID=$(git rev-parse --short HEAD 2>/dev/null)" github.com/u2u-labs/layerg-core
    ```
 
-   This will build binaries for all target platforms supported officially by Heroic Labs.
+   This will build binaries for all target platforms supported officially by LayerG Labs.
 
 4. Package up each release as a compressed bundle.
 
    ```
-   tar -czf "nakama-<os>-<arch>.tar.gz" nakama README.md LICENSE CHANGELOG.md
+   tar -czf "layerg-<os>-<arch>.tar.gz" layerg README.md LICENSE CHANGELOG.md
    ```
 
 5. Create a new draft release on GitHub and publish it with the compressed bundles.
 
-## Build Nakama Image
+## Build LayerG Image
 
 With the release generated we can create the official container image.
 
@@ -60,18 +60,18 @@ With the release generated we can create the official container image.
 
    ```
    cd build
-   docker build "$PWD" --platform "linux/amd64" --file ./Dockerfile --build-arg commit="$(git rev-parse --short HEAD 2>/dev/null)" --build-arg version=2.1.0 -t heroiclabs/nakama:2.1.0
+   docker build "$PWD" --platform "linux/amd64" --file ./Dockerfile --build-arg commit="$(git rev-parse --short HEAD 2>/dev/null)" --build-arg version=2.1.0 -t layerglabs/layerg:2.1.0
    ```
 
 2. Push the image to the container registry.
 
    ```
-   docker tag <CONTAINERID> heroiclabs/nakama:latest
-   docker push heroiclabs/nakama:2.1.0
-   docker push heroiclabs/nakama:latest
+   docker tag <CONTAINERID> layerglabs/layerg:latest
+   docker push layerglabs/layerg:2.1.0
+   docker push layerglabs/layerg:latest
    ```
 
-## Build Nakama Image (dSYM)
+## Build LayerG Image (dSYM)
 
 With the release generated we can also create an official container image which includes debug symbols.
 
@@ -79,15 +79,15 @@ With the release generated we can also create an official container image which 
 
    ```
    cd build
-   docker build "$PWD" --platform "linux/amd64" --file ./Dockerfile.dsym --build-arg commit="$(git rev-parse --short HEAD 2>/dev/null)" --build-arg version=2.1.0 -t heroiclabs/nakama-dsym:2.1.0
+   docker build "$PWD" --platform "linux/amd64" --file ./Dockerfile.dsym --build-arg commit="$(git rev-parse --short HEAD 2>/dev/null)" --build-arg version=2.1.0 -t layerglabs/layerg-dsym:2.1.0
    ```
 
 2. Push the image to the container registry.
 
    ```
-   docker tag <CONTAINERID> heroiclabs/nakama-dsym:latest
-   docker push heroiclabs/nakama-dsym:2.1.0
-   docker push heroiclabs/nakama-dsym:latest
+   docker tag <CONTAINERID> layerglabs/layerg-dsym:latest
+   docker push layerglabs/layerg-dsym:2.1.0
+   docker push layerglabs/layerg-dsym:latest
    ```
 
 ## Build Plugin Builder Image
@@ -98,13 +98,13 @@ With the official release image generated we can create a container image to hel
 
    ```
    cd build/pluginbuilder
-   docker build "$PWD" --platform "linux/amd64" --file ./Dockerfile --build-arg commit="$(git rev-parse --short HEAD 2>/dev/null)" --build-arg version=2.1.0 -t heroiclabs/nakama-pluginbuilder:2.1.0
+   docker build "$PWD" --platform "linux/amd64" --file ./Dockerfile --build-arg commit="$(git rev-parse --short HEAD 2>/dev/null)" --build-arg version=2.1.0 -t layerglabs/layerg-pluginbuilder:2.1.0
    ```
 
 2. Push the image to the container registry.
 
    ```
-   docker tag <CONTAINERID> heroiclabs/nakama-pluginbuilder:latest
-   docker push heroiclabs/nakama-pluginbuilder:2.1.0
-   docker push heroiclabs/nakama-pluginbuilder:latest
+   docker tag <CONTAINERID> layerglabs/layerg-pluginbuilder:latest
+   docker push layerglabs/layerg-pluginbuilder:2.1.0
+   docker push layerglabs/layerg-pluginbuilder:latest
    ```
