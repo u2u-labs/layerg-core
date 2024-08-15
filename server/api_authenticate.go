@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/rand"
 	"regexp"
 	"strings"
@@ -68,7 +70,7 @@ func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvm
 	}
 
 	// Validate the signature
-	valid, err := verifySignature(in.Account.EvmAddress, in.Account.EvmSignature)
+	valid, err := verifySignature("sample", in.Account.EvmAddress, in.Account.EvmSignature)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid signature.")
 	}
@@ -113,20 +115,41 @@ func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvm
 	return session, nil
 }
 
-func verifySignature(address, signature string) (bool, error) {
-	message := "Sample sign"
-	msgHash := crypto.Keccak256Hash([]byte(message))
-	sigBytes := []byte(signature)
+func verifySignature(message, address, signature string) (bool, error) {
+	// Ethereum specific prefix
+	prefix := fmt.Sprintf("\x19Ethereum Signed Message:\n%d", len(message))
+	prefixedMsg := []byte(prefix + message)
+	msgHash := crypto.Keccak256Hash(prefixedMsg)
+
+	// Remove the 0x prefix if present
+	if strings.HasPrefix(signature, "0x") {
+		signature = signature[2:]
+	}
+
+	// Decode the signature from hex
+	sigBytes, err := hex.DecodeString(signature)
+	if err != nil {
+		return false, errors.New("invalid hex signature")
+	}
+
 	if len(sigBytes) != 65 {
 		return false, errors.New("invalid signature length")
 	}
+
+	// Adjust the last byte of the signature (the recovery id)
 	sigBytes[64] -= 27
+
+	// Recover the public key from the signature
 	pubKey, err := crypto.SigToPub(msgHash.Bytes(), sigBytes)
 	if err != nil {
 		return false, err
 	}
+
+	// Convert the public key to an Ethereum address
 	recoveredAddr := crypto.PubkeyToAddress(*pubKey).Hex()
-	return recoveredAddr == address, nil
+
+	// Verify if the recovered address matches the provided address
+	return strings.ToLower(recoveredAddr) == strings.ToLower(address), nil
 }
 
 func (s *ApiServer) AuthenticateApple(ctx context.Context, in *api.AuthenticateAppleRequest) (*api.Session, error) {
