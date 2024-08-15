@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gofrs/uuid/v5"
 	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/u2u-labs/go-layerg-common/api"
@@ -39,6 +40,93 @@ func (stc *SessionTokenClaims) Valid() error {
 		return vErr
 	}
 	return nil
+}
+
+func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest) (*api.Session, error) {
+	// Before hook.
+	if fn := s.runtime.BeforeAuthenticateEvm(); fn != nil {
+		beforeFn := func(clientIP, clientPort string) error {
+			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+			if err != nil {
+				return status.Error(code, err.Error())
+			}
+			if result == nil {
+				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+				return status.Error(codes.NotFound, "Requested resource was not found.")
+			}
+			in = result
+			return nil
+		}
+		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if in.Account == nil || in.Account.EvmAddress == "" || in.Account.EvmSignature == "" {
+		return nil, status.Error(codes.InvalidArgument, "Metamask address and signature are required.")
+	}
+
+	// Validate the signature
+	valid, err := verifySignature(in.Account.EvmAddress, in.Account.EvmSignature)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid signature.")
+	}
+	if !valid {
+		return nil, status.Error(codes.Unauthenticated, "Signature does not match the address.")
+	}
+
+	username := in.Account.Username
+	if username == "" {
+		username = generateUsername()
+	} else if invalidUsernameRegex.MatchString(username) {
+		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	} else if len(username) > 128 {
+		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	}
+
+	create := in.Create == nil || in.Create.Value
+
+	dbUserID, dbUsername, created, err := AuthenticateEvm(ctx, s.logger, s.db, in.Account.EvmAddress, in.Account.EvmAddress, username, create)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.config.GetSession().SingleSession {
+		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
+	}
+
+	tokenID := uuid.Must(uuid.NewV4()).String()
+	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
+	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+
+	// After hook.
+	if fn := s.runtime.AfterAuthenticateEvm(); fn != nil {
+		afterFn := func(clientIP, clientPort string) error {
+			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
+		}
+		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	}
+
+	return session, nil
+}
+
+func verifySignature(address, signature string) (bool, error) {
+	message := "Sample sign"
+	msgHash := crypto.Keccak256Hash([]byte(message))
+	sigBytes := []byte(signature)
+	if len(sigBytes) != 65 {
+		return false, errors.New("invalid signature length")
+	}
+	sigBytes[64] -= 27
+	pubKey, err := crypto.SigToPub(msgHash.Bytes(), sigBytes)
+	if err != nil {
+		return false, err
+	}
+	recoveredAddr := crypto.PubkeyToAddress(*pubKey).Hex()
+	return recoveredAddr == address, nil
 }
 
 func (s *ApiServer) AuthenticateApple(ctx context.Context, in *api.AuthenticateAppleRequest) (*api.Session, error) {

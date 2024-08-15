@@ -17,7 +17,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/u2u-labs/go-layerg-common v0.0.0-20240814074024-14403d125eed
+	github.com/u2u-labs/go-layerg-common v0.0.0-20240815081240-09cfc10d1821
 	github.com/uber-go/tally/v4 v4.1.16
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0
@@ -29,6 +29,12 @@ require (
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
+	github.com/holiman/uint256 v1.3.1 // indirect
 )
 
 require (
@@ -49,10 +55,11 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
 	github.com/dlclark/regexp2 v1.11.2 // indirect
+	github.com/ethereum/go-ethereum v1.14.8
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/golang/mock v1.6.0 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
+	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

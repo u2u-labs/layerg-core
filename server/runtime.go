@@ -65,6 +65,8 @@ type (
 	RuntimeAfterAuthenticateGoogleFunction                 func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateGoogleRequest) error
 	RuntimeBeforeAuthenticateTelegramFunction              func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateTelegramRequest) (*api.AuthenticateTelegramRequest, error, codes.Code)
 	RuntimeAfterAuthenticateTelegramFunction               func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateTelegramRequest) error
+	RuntimeBeforeAuthenticateEvmFunction                   func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateEvmRequest) (*api.AuthenticateEvmRequest, error, codes.Code)
+	RuntimeAfterAuthenticateEvmFunction                    func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateEvmRequest) error
 	RuntimeBeforeAuthenticateSteamFunction                 func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateSteamRequest) (*api.AuthenticateSteamRequest, error, codes.Code)
 	RuntimeAfterAuthenticateSteamFunction                  func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateSteamRequest) error
 	RuntimeBeforeListChannelMessagesFunction               func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.ListChannelMessagesRequest) (*api.ListChannelMessagesRequest, error, codes.Code)
@@ -134,6 +136,8 @@ type (
 	RuntimeBeforeLinkGameCenterFunction                    func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountGameCenter) (*api.AccountGameCenter, error, codes.Code)
 	RuntimeAfterLinkGameCenterFunction                     func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountGameCenter) error
 	RuntimeBeforeLinkGoogleFunction                        func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountGoogle) (*api.AccountGoogle, error, codes.Code)
+	RuntimeBeforeLinkEvmFunction                           func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountEvm) (*api.AccountEvm, error, codes.Code)
+	RuntimeAfterLinkEvmFunction                            func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountEvm) error
 	RuntimeAfterLinkGoogleFunction                         func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AccountGoogle) error
 	RuntimeBeforeLinkSteamFunction                         func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.LinkSteamRequest) (*api.LinkSteamRequest, error, codes.Code)
 	RuntimeAfterLinkSteamFunction                          func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.LinkSteamRequest) error
@@ -338,6 +342,7 @@ type RuntimeBeforeReqFunctions struct {
 	beforeSessionRefreshFunction                    RuntimeBeforeSessionRefreshFunction
 	beforeSessionLogoutFunction                     RuntimeBeforeSessionLogoutFunction
 	beforeAuthenticateAppleFunction                 RuntimeBeforeAuthenticateAppleFunction
+	beforeAuthenticateEvmFunction                   RuntimeBeforeAuthenticateEvmFunction
 	beforeAuthenticateCustomFunction                RuntimeBeforeAuthenticateCustomFunction
 	beforeAuthenticateDeviceFunction                RuntimeBeforeAuthenticateDeviceFunction
 	beforeAuthenticateEmailFunction                 RuntimeBeforeAuthenticateEmailFunction
@@ -381,6 +386,7 @@ type RuntimeBeforeReqFunctions struct {
 	beforeLinkFacebookInstantGameFunction           RuntimeBeforeLinkFacebookInstantGameFunction
 	beforeLinkGameCenterFunction                    RuntimeBeforeLinkGameCenterFunction
 	beforeLinkGoogleFunction                        RuntimeBeforeLinkGoogleFunction
+	beforeLinkEvmFunction                           RuntimeBeforeLinkEvmFunction
 	beforeLinkSteamFunction                         RuntimeBeforeLinkSteamFunction
 	beforeListMatchesFunction                       RuntimeBeforeListMatchesFunction
 	beforeListNotificationsFunction                 RuntimeBeforeListNotificationsFunction
@@ -431,6 +437,7 @@ type RuntimeAfterReqFunctions struct {
 	afterAuthenticateGameCenterFunction            RuntimeAfterAuthenticateGameCenterFunction
 	afterAuthenticateGoogleFunction                RuntimeAfterAuthenticateGoogleFunction
 	afterAuthenticateTelegramFunction              RuntimeAfterAuthenticateTelegramFunction
+	afterAuthenticateEvmFunction                   RuntimeAfterAuthenticateEvmFunction
 	afterAuthenticateSteamFunction                 RuntimeAfterAuthenticateSteamFunction
 	afterListChannelMessagesFunction               RuntimeAfterListChannelMessagesFunction
 	afterListFriendsFunction                       RuntimeAfterListFriendsFunction
@@ -766,6 +773,9 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if allBeforeReqFunctions.beforeAuthenticateTelegramFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticatetelegram"))
 	}
+	if allBeforeReqFunctions.beforeAuthenticateEvmFunction != nil {
+		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticateevm"))
+	}
 	if allBeforeReqFunctions.beforeAuthenticateFacebookFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticatefacebook"))
 	}
@@ -1021,9 +1031,9 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		allBeforeReqFunctions.beforeAuthenticateEmailFunction = luaBeforeReqFns.beforeAuthenticateEmailFunction
 		startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "authenticateemail"))
 	}
-	if luaBeforeReqFns.beforeAuthenticateTelegramFunction != nil {
-		allBeforeReqFunctions.beforeAuthenticateTelegramFunction = luaBeforeReqFns.beforeAuthenticateTelegramFunction
-		startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "authenticatetelegram"))
+	if luaBeforeReqFns.beforeAuthenticateEvmFunction != nil {
+		allBeforeReqFunctions.beforeAuthenticateEvmFunction = luaBeforeReqFns.beforeAuthenticateEvmFunction
+		startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "authenticateevm"))
 	}
 	if luaBeforeReqFns.beforeAuthenticateFacebookFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateFacebookFunction = luaBeforeReqFns.beforeAuthenticateFacebookFunction
@@ -1351,6 +1361,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		allBeforeReqFunctions.beforeAuthenticateTelegramFunction = goBeforeReqFns.beforeAuthenticateTelegramFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticatetelegram"))
 	}
+	if goBeforeReqFns.beforeAuthenticateEvmFunction != nil {
+		allBeforeReqFunctions.beforeAuthenticateEvmFunction = goBeforeReqFns.beforeAuthenticateEvmFunction
+		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticateevm"))
+	}
 	if goBeforeReqFns.beforeAuthenticateFacebookFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateFacebookFunction = goBeforeReqFns.beforeAuthenticateFacebookFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticatefacebook"))
@@ -1667,6 +1681,9 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if allAfterReqFunctions.afterAuthenticateTelegramFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticatetelegram"))
 	}
+	if allAfterReqFunctions.afterAuthenticateEvmFunction != nil {
+		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticateevm"))
+	}
 	if allAfterReqFunctions.afterAuthenticateFacebookFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticatefacebook"))
 	}
@@ -1922,6 +1939,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if luaAfterReqFns.afterAuthenticateTelegramFunction != nil {
 		allAfterReqFunctions.afterAuthenticateTelegramFunction = luaAfterReqFns.afterAuthenticateTelegramFunction
 		startupLogger.Info("Registered Lua runtime After function invocation", zap.String("id", "authenticatetelegram"))
+	}
+	if luaAfterReqFns.afterAuthenticateEvmFunction != nil {
+		allAfterReqFunctions.afterAuthenticateEvmFunction = luaAfterReqFns.afterAuthenticateEvmFunction
+		startupLogger.Info("Registered Lua runtime After function invocation", zap.String("id", "authenticateevm"))
 	}
 	if luaAfterReqFns.afterAuthenticateFacebookFunction != nil {
 		allAfterReqFunctions.afterAuthenticateFacebookFunction = luaAfterReqFns.afterAuthenticateFacebookFunction
@@ -2240,6 +2261,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if goAfterReqFns.afterAuthenticateTelegramFunction != nil {
 		allAfterReqFunctions.afterAuthenticateTelegramFunction = goAfterReqFns.afterAuthenticateTelegramFunction
 		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "authenticatetelegram"))
+	}
+	if goAfterReqFns.afterAuthenticateEvmFunction != nil {
+		allAfterReqFunctions.afterAuthenticateEvmFunction = goAfterReqFns.afterAuthenticateEvmFunction
+		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "authenticateevm"))
 	}
 	if goAfterReqFns.afterAuthenticateFacebookFunction != nil {
 		allAfterReqFunctions.afterAuthenticateFacebookFunction = goAfterReqFns.afterAuthenticateFacebookFunction
@@ -2910,6 +2935,14 @@ func (r *Runtime) BeforeAuthenticateTelegram() RuntimeBeforeAuthenticateTelegram
 
 func (r *Runtime) AfterAuthenticateTelegram() RuntimeAfterAuthenticateTelegramFunction {
 	return r.afterReqFunctions.afterAuthenticateTelegramFunction
+}
+
+func (r *Runtime) BeforeAuthenticateEvm() RuntimeBeforeAuthenticateEvmFunction {
+	return r.beforeReqFunctions.beforeAuthenticateEvmFunction
+}
+
+func (r *Runtime) AfterAuthenticateEvm() RuntimeAfterAuthenticateEvmFunction {
+	return r.afterReqFunctions.afterAuthenticateEvmFunction
 }
 
 func (r *Runtime) BeforeAuthenticateSteam() RuntimeBeforeAuthenticateSteamFunction {

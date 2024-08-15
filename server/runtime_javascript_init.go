@@ -477,6 +477,9 @@ func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateGoogle(r *goja.
 func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateTelegram(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return im.registerHook(r, RuntimeExecutionModeBefore, "registerBeforeAuthenticateTelegram", "authenticatetelegram")
 }
+func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateEvm(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return im.registerHook(r, RuntimeExecutionModeBefore, "registerBeforeAuthenticateEvm", "authenticateevm")
+}
 
 func (im *RuntimeJavascriptInitModule) registerAfterAuthenticateGoogle(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return im.registerHook(r, RuntimeExecutionModeAfter, "registerAfterAuthenticateGoogle", "authenticategoogle")
@@ -484,6 +487,9 @@ func (im *RuntimeJavascriptInitModule) registerAfterAuthenticateGoogle(r *goja.R
 
 func (im *RuntimeJavascriptInitModule) registerAfterAuthenticateTelegram(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return im.registerHook(r, RuntimeExecutionModeAfter, "registerAfterAuthenticateTelegram", "authenticatetelegram")
+}
+func (im *RuntimeJavascriptInitModule) registerAfterAuthenticateEvm(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return im.registerHook(r, RuntimeExecutionModeAfter, "registerAfterAuthenticateEvm", "authenticateem")
 }
 
 func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateSteam(r *goja.Runtime) func(goja.FunctionCall) goja.Value {

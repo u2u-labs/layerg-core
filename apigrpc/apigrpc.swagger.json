@@ -339,6 +339,51 @@
         ]
       }
     },
+    "/v2/account/authenticate/evm": {
+      "post": {
+        "summary": "Authenticate a user with Google against the server.",
+        "operationId": "LayerG_AuthenticateEvm",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiSession"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "account",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiAccountEvm"
+            }
+          },
+          {
+            "name": "create",
+            "description": "Register the account if the user does not already exist.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "LayerG"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/v2/account/authenticate/facebook": {
       "post": {
         "summary": "Authenticate a user with a Facebook OAuth token against the server.",
@@ -3918,6 +3963,30 @@
         }
       },
       "description": "Send an email with password to the server. Used with authenticate/link/unlink."
+    },
+    "apiAccountEvm": {
+      "type": "object",
+      "properties": {
+        "evmAddress": {
+          "type": "string",
+          "description": "The Telegram account details."
+        },
+        "username": {
+          "type": "string",
+          "description": "Set the username on the account at register. Must be unique."
+        },
+        "evmSignature": {
+          "type": "string"
+        },
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Extra information that will be bundled in the session token."
+        }
+      },
+      "description": "Send a Telegram token to the server. Used with authenticate/link/unlink."
     },
     "apiAccountFacebook": {
       "type": "object",

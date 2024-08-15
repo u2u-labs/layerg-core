@@ -54,7 +54,7 @@ var file_apigrpc_proto_rawDesc = []byte{
 	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x32, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
 	0x6f, 0x6d, 0x2f, 0x75, 0x32, 0x75, 0x2d, 0x6c, 0x61, 0x62, 0x73, 0x2f, 0x67, 0x6f, 0x2d, 0x6c,
 	0x61, 0x79, 0x65, 0x72, 0x67, 0x2d, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f, 0x61, 0x70, 0x69,
-	0x2f, 0x61, 0x70, 0x69, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0xbe, 0x50, 0x0a, 0x06, 0x4c,
+	0x2f, 0x61, 0x70, 0x69, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0xce, 0x51, 0x0a, 0x06, 0x4c,
 	0x61, 0x79, 0x65, 0x72, 0x47, 0x12, 0x57, 0x0a, 0x0a, 0x41, 0x64, 0x64, 0x46, 0x72, 0x69, 0x65,
 	0x6e, 0x64, 0x73, 0x12, 0x1d, 0x2e, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x67, 0x2e, 0x61, 0x70, 0x69,
 	0x2e, 0x41, 0x64, 0x64, 0x46, 0x72, 0x69, 0x65, 0x6e, 0x64, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
@@ -172,7 +172,16 @@ var file_apigrpc_proto_rawDesc = []byte{
 	0x74, 0x68, 0x12, 0x00, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x2c, 0x3a, 0x07, 0x61, 0x63, 0x63, 0x6f,
 	0x75, 0x6e, 0x74, 0x22, 0x21, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
 	0x2f, 0x61, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x65, 0x2f, 0x74, 0x65,
-	0x6c, 0x65, 0x67, 0x72, 0x61, 0x6d, 0x12, 0x93, 0x01, 0x0a, 0x11, 0x41, 0x75, 0x74, 0x68, 0x65,
+	0x6c, 0x65, 0x67, 0x72, 0x61, 0x6d, 0x12, 0x8d, 0x01, 0x0a, 0x0f, 0x41, 0x75, 0x74, 0x68, 0x65,
+	0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x65, 0x45, 0x76, 0x6d, 0x12, 0x22, 0x2e, 0x6c, 0x61, 0x79,
+	0x65, 0x72, 0x67, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69,
+	0x63, 0x61, 0x74, 0x65, 0x45, 0x76, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13,
+	0x2e, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x67, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x73, 0x73,
+	0x69, 0x6f, 0x6e, 0x22, 0x41, 0x92, 0x41, 0x11, 0x62, 0x0f, 0x0a, 0x0d, 0x0a, 0x09, 0x42, 0x61,
+	0x73, 0x69, 0x63, 0x41, 0x75, 0x74, 0x68, 0x12, 0x00, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x27, 0x3a,
+	0x07, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x22, 0x1c, 0x2f, 0x76, 0x32, 0x2f, 0x61, 0x63,
+	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2f, 0x61, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61,
+	0x74, 0x65, 0x2f, 0x65, 0x76, 0x6d, 0x12, 0x93, 0x01, 0x0a, 0x11, 0x41, 0x75, 0x74, 0x68, 0x65,
 	0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x65, 0x53, 0x74, 0x65, 0x61, 0x6d, 0x12, 0x24, 0x2e, 0x6c,
 	0x61, 0x79, 0x65, 0x72, 0x67, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e,
 	0x74, 0x69, 0x63, 0x61, 0x74, 0x65, 0x53, 0x74, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65,
@@ -740,91 +749,92 @@ var file_apigrpc_proto_goTypes = []any{
 	(*api.AuthenticateGameCenterRequest)(nil),            // 10: layerg.api.AuthenticateGameCenterRequest
 	(*api.AuthenticateGoogleRequest)(nil),                // 11: layerg.api.AuthenticateGoogleRequest
 	(*api.AuthenticateTelegramRequest)(nil),              // 12: layerg.api.AuthenticateTelegramRequest
-	(*api.AuthenticateSteamRequest)(nil),                 // 13: layerg.api.AuthenticateSteamRequest
-	(*api.BanGroupUsersRequest)(nil),                     // 14: layerg.api.BanGroupUsersRequest
-	(*api.BlockFriendsRequest)(nil),                      // 15: layerg.api.BlockFriendsRequest
-	(*api.CreateGroupRequest)(nil),                       // 16: layerg.api.CreateGroupRequest
-	(*emptypb.Empty)(nil),                                // 17: google.protobuf.Empty
-	(*api.DeleteFriendsRequest)(nil),                     // 18: layerg.api.DeleteFriendsRequest
-	(*api.DeleteGroupRequest)(nil),                       // 19: layerg.api.DeleteGroupRequest
-	(*api.DeleteLeaderboardRecordRequest)(nil),           // 20: layerg.api.DeleteLeaderboardRecordRequest
-	(*api.DeleteNotificationsRequest)(nil),               // 21: layerg.api.DeleteNotificationsRequest
-	(*api.DeleteTournamentRecordRequest)(nil),            // 22: layerg.api.DeleteTournamentRecordRequest
-	(*api.DeleteStorageObjectsRequest)(nil),              // 23: layerg.api.DeleteStorageObjectsRequest
-	(*api.Event)(nil),                                    // 24: layerg.api.Event
-	(*api.GetUsersRequest)(nil),                          // 25: layerg.api.GetUsersRequest
-	(*api.GetSubscriptionRequest)(nil),                   // 26: layerg.api.GetSubscriptionRequest
-	(*api.ImportFacebookFriendsRequest)(nil),             // 27: layerg.api.ImportFacebookFriendsRequest
-	(*api.ImportSteamFriendsRequest)(nil),                // 28: layerg.api.ImportSteamFriendsRequest
-	(*api.JoinGroupRequest)(nil),                         // 29: layerg.api.JoinGroupRequest
-	(*api.JoinTournamentRequest)(nil),                    // 30: layerg.api.JoinTournamentRequest
-	(*api.KickGroupUsersRequest)(nil),                    // 31: layerg.api.KickGroupUsersRequest
-	(*api.LeaveGroupRequest)(nil),                        // 32: layerg.api.LeaveGroupRequest
-	(*api.AccountApple)(nil),                             // 33: layerg.api.AccountApple
-	(*api.AccountCustom)(nil),                            // 34: layerg.api.AccountCustom
-	(*api.AccountDevice)(nil),                            // 35: layerg.api.AccountDevice
-	(*api.AccountEmail)(nil),                             // 36: layerg.api.AccountEmail
-	(*api.LinkFacebookRequest)(nil),                      // 37: layerg.api.LinkFacebookRequest
-	(*api.AccountFacebookInstantGame)(nil),               // 38: layerg.api.AccountFacebookInstantGame
-	(*api.AccountGameCenter)(nil),                        // 39: layerg.api.AccountGameCenter
-	(*api.AccountGoogle)(nil),                            // 40: layerg.api.AccountGoogle
-	(*api.LinkSteamRequest)(nil),                         // 41: layerg.api.LinkSteamRequest
-	(*api.ListChannelMessagesRequest)(nil),               // 42: layerg.api.ListChannelMessagesRequest
-	(*api.ListFriendsRequest)(nil),                       // 43: layerg.api.ListFriendsRequest
-	(*api.ListFriendsOfFriendsRequest)(nil),              // 44: layerg.api.ListFriendsOfFriendsRequest
-	(*api.ListGroupsRequest)(nil),                        // 45: layerg.api.ListGroupsRequest
-	(*api.ListGroupUsersRequest)(nil),                    // 46: layerg.api.ListGroupUsersRequest
-	(*api.ListLeaderboardRecordsRequest)(nil),            // 47: layerg.api.ListLeaderboardRecordsRequest
-	(*api.ListLeaderboardRecordsAroundOwnerRequest)(nil), // 48: layerg.api.ListLeaderboardRecordsAroundOwnerRequest
-	(*api.ListMatchesRequest)(nil),                       // 49: layerg.api.ListMatchesRequest
-	(*api.ListNotificationsRequest)(nil),                 // 50: layerg.api.ListNotificationsRequest
-	(*api.ListStorageObjectsRequest)(nil),                // 51: layerg.api.ListStorageObjectsRequest
-	(*api.ListSubscriptionsRequest)(nil),                 // 52: layerg.api.ListSubscriptionsRequest
-	(*api.ListTournamentsRequest)(nil),                   // 53: layerg.api.ListTournamentsRequest
-	(*api.ListTournamentRecordsRequest)(nil),             // 54: layerg.api.ListTournamentRecordsRequest
-	(*api.ListTournamentRecordsAroundOwnerRequest)(nil),  // 55: layerg.api.ListTournamentRecordsAroundOwnerRequest
-	(*api.ListUserGroupsRequest)(nil),                    // 56: layerg.api.ListUserGroupsRequest
-	(*api.PromoteGroupUsersRequest)(nil),                 // 57: layerg.api.PromoteGroupUsersRequest
-	(*api.DemoteGroupUsersRequest)(nil),                  // 58: layerg.api.DemoteGroupUsersRequest
-	(*api.ReadStorageObjectsRequest)(nil),                // 59: layerg.api.ReadStorageObjectsRequest
-	(*api.Rpc)(nil),                                      // 60: layerg.api.Rpc
-	(*api.AccountFacebook)(nil),                          // 61: layerg.api.AccountFacebook
-	(*api.AccountSteam)(nil),                             // 62: layerg.api.AccountSteam
-	(*api.UpdateAccountRequest)(nil),                     // 63: layerg.api.UpdateAccountRequest
-	(*api.UpdateGroupRequest)(nil),                       // 64: layerg.api.UpdateGroupRequest
-	(*api.ValidatePurchaseAppleRequest)(nil),             // 65: layerg.api.ValidatePurchaseAppleRequest
-	(*api.ValidateSubscriptionAppleRequest)(nil),         // 66: layerg.api.ValidateSubscriptionAppleRequest
-	(*api.ValidatePurchaseGoogleRequest)(nil),            // 67: layerg.api.ValidatePurchaseGoogleRequest
-	(*api.ValidateSubscriptionGoogleRequest)(nil),        // 68: layerg.api.ValidateSubscriptionGoogleRequest
-	(*api.ValidatePurchaseHuaweiRequest)(nil),            // 69: layerg.api.ValidatePurchaseHuaweiRequest
-	(*api.ValidatePurchaseFacebookInstantRequest)(nil),   // 70: layerg.api.ValidatePurchaseFacebookInstantRequest
-	(*api.WriteLeaderboardRecordRequest)(nil),            // 71: layerg.api.WriteLeaderboardRecordRequest
-	(*api.WriteStorageObjectsRequest)(nil),               // 72: layerg.api.WriteStorageObjectsRequest
-	(*api.WriteTournamentRecordRequest)(nil),             // 73: layerg.api.WriteTournamentRecordRequest
-	(*api.Session)(nil),                                  // 74: layerg.api.Session
-	(*api.Group)(nil),                                    // 75: layerg.api.Group
-	(*api.Account)(nil),                                  // 76: layerg.api.Account
-	(*api.Users)(nil),                                    // 77: layerg.api.Users
-	(*api.ValidatedSubscription)(nil),                    // 78: layerg.api.ValidatedSubscription
-	(*api.MatchmakerStats)(nil),                          // 79: layerg.api.MatchmakerStats
-	(*api.ChannelMessageList)(nil),                       // 80: layerg.api.ChannelMessageList
-	(*api.FriendList)(nil),                               // 81: layerg.api.FriendList
-	(*api.FriendsOfFriendsList)(nil),                     // 82: layerg.api.FriendsOfFriendsList
-	(*api.GroupList)(nil),                                // 83: layerg.api.GroupList
-	(*api.GroupUserList)(nil),                            // 84: layerg.api.GroupUserList
-	(*api.LeaderboardRecordList)(nil),                    // 85: layerg.api.LeaderboardRecordList
-	(*api.MatchList)(nil),                                // 86: layerg.api.MatchList
-	(*api.NotificationList)(nil),                         // 87: layerg.api.NotificationList
-	(*api.StorageObjectList)(nil),                        // 88: layerg.api.StorageObjectList
-	(*api.SubscriptionList)(nil),                         // 89: layerg.api.SubscriptionList
-	(*api.TournamentList)(nil),                           // 90: layerg.api.TournamentList
-	(*api.TournamentRecordList)(nil),                     // 91: layerg.api.TournamentRecordList
-	(*api.UserGroupList)(nil),                            // 92: layerg.api.UserGroupList
-	(*api.StorageObjects)(nil),                           // 93: layerg.api.StorageObjects
-	(*api.ValidatePurchaseResponse)(nil),                 // 94: layerg.api.ValidatePurchaseResponse
-	(*api.ValidateSubscriptionResponse)(nil),             // 95: layerg.api.ValidateSubscriptionResponse
-	(*api.LeaderboardRecord)(nil),                        // 96: layerg.api.LeaderboardRecord
-	(*api.StorageObjectAcks)(nil),                        // 97: layerg.api.StorageObjectAcks
+	(*api.AuthenticateEvmRequest)(nil),                   // 13: layerg.api.AuthenticateEvmRequest
+	(*api.AuthenticateSteamRequest)(nil),                 // 14: layerg.api.AuthenticateSteamRequest
+	(*api.BanGroupUsersRequest)(nil),                     // 15: layerg.api.BanGroupUsersRequest
+	(*api.BlockFriendsRequest)(nil),                      // 16: layerg.api.BlockFriendsRequest
+	(*api.CreateGroupRequest)(nil),                       // 17: layerg.api.CreateGroupRequest
+	(*emptypb.Empty)(nil),                                // 18: google.protobuf.Empty
+	(*api.DeleteFriendsRequest)(nil),                     // 19: layerg.api.DeleteFriendsRequest
+	(*api.DeleteGroupRequest)(nil),                       // 20: layerg.api.DeleteGroupRequest
+	(*api.DeleteLeaderboardRecordRequest)(nil),           // 21: layerg.api.DeleteLeaderboardRecordRequest
+	(*api.DeleteNotificationsRequest)(nil),               // 22: layerg.api.DeleteNotificationsRequest
+	(*api.DeleteTournamentRecordRequest)(nil),            // 23: layerg.api.DeleteTournamentRecordRequest
+	(*api.DeleteStorageObjectsRequest)(nil),              // 24: layerg.api.DeleteStorageObjectsRequest
+	(*api.Event)(nil),                                    // 25: layerg.api.Event
+	(*api.GetUsersRequest)(nil),                          // 26: layerg.api.GetUsersRequest
+	(*api.GetSubscriptionRequest)(nil),                   // 27: layerg.api.GetSubscriptionRequest
+	(*api.ImportFacebookFriendsRequest)(nil),             // 28: layerg.api.ImportFacebookFriendsRequest
+	(*api.ImportSteamFriendsRequest)(nil),                // 29: layerg.api.ImportSteamFriendsRequest
+	(*api.JoinGroupRequest)(nil),                         // 30: layerg.api.JoinGroupRequest
+	(*api.JoinTournamentRequest)(nil),                    // 31: layerg.api.JoinTournamentRequest
+	(*api.KickGroupUsersRequest)(nil),                    // 32: layerg.api.KickGroupUsersRequest
+	(*api.LeaveGroupRequest)(nil),                        // 33: layerg.api.LeaveGroupRequest
+	(*api.AccountApple)(nil),                             // 34: layerg.api.AccountApple
+	(*api.AccountCustom)(nil),                            // 35: layerg.api.AccountCustom
+	(*api.AccountDevice)(nil),                            // 36: layerg.api.AccountDevice
+	(*api.AccountEmail)(nil),                             // 37: layerg.api.AccountEmail
+	(*api.LinkFacebookRequest)(nil),                      // 38: layerg.api.LinkFacebookRequest
+	(*api.AccountFacebookInstantGame)(nil),               // 39: layerg.api.AccountFacebookInstantGame
+	(*api.AccountGameCenter)(nil),                        // 40: layerg.api.AccountGameCenter
+	(*api.AccountGoogle)(nil),                            // 41: layerg.api.AccountGoogle
+	(*api.LinkSteamRequest)(nil),                         // 42: layerg.api.LinkSteamRequest
+	(*api.ListChannelMessagesRequest)(nil),               // 43: layerg.api.ListChannelMessagesRequest
+	(*api.ListFriendsRequest)(nil),                       // 44: layerg.api.ListFriendsRequest
+	(*api.ListFriendsOfFriendsRequest)(nil),              // 45: layerg.api.ListFriendsOfFriendsRequest
+	(*api.ListGroupsRequest)(nil),                        // 46: layerg.api.ListGroupsRequest
+	(*api.ListGroupUsersRequest)(nil),                    // 47: layerg.api.ListGroupUsersRequest
+	(*api.ListLeaderboardRecordsRequest)(nil),            // 48: layerg.api.ListLeaderboardRecordsRequest
+	(*api.ListLeaderboardRecordsAroundOwnerRequest)(nil), // 49: layerg.api.ListLeaderboardRecordsAroundOwnerRequest
+	(*api.ListMatchesRequest)(nil),                       // 50: layerg.api.ListMatchesRequest
+	(*api.ListNotificationsRequest)(nil),                 // 51: layerg.api.ListNotificationsRequest
+	(*api.ListStorageObjectsRequest)(nil),                // 52: layerg.api.ListStorageObjectsRequest
+	(*api.ListSubscriptionsRequest)(nil),                 // 53: layerg.api.ListSubscriptionsRequest
+	(*api.ListTournamentsRequest)(nil),                   // 54: layerg.api.ListTournamentsRequest
+	(*api.ListTournamentRecordsRequest)(nil),             // 55: layerg.api.ListTournamentRecordsRequest
+	(*api.ListTournamentRecordsAroundOwnerRequest)(nil),  // 56: layerg.api.ListTournamentRecordsAroundOwnerRequest
+	(*api.ListUserGroupsRequest)(nil),                    // 57: layerg.api.ListUserGroupsRequest
+	(*api.PromoteGroupUsersRequest)(nil),                 // 58: layerg.api.PromoteGroupUsersRequest
+	(*api.DemoteGroupUsersRequest)(nil),                  // 59: layerg.api.DemoteGroupUsersRequest
+	(*api.ReadStorageObjectsRequest)(nil),                // 60: layerg.api.ReadStorageObjectsRequest
+	(*api.Rpc)(nil),                                      // 61: layerg.api.Rpc
+	(*api.AccountFacebook)(nil),                          // 62: layerg.api.AccountFacebook
+	(*api.AccountSteam)(nil),                             // 63: layerg.api.AccountSteam
+	(*api.UpdateAccountRequest)(nil),                     // 64: layerg.api.UpdateAccountRequest
+	(*api.UpdateGroupRequest)(nil),                       // 65: layerg.api.UpdateGroupRequest
+	(*api.ValidatePurchaseAppleRequest)(nil),             // 66: layerg.api.ValidatePurchaseAppleRequest
+	(*api.ValidateSubscriptionAppleRequest)(nil),         // 67: layerg.api.ValidateSubscriptionAppleRequest
+	(*api.ValidatePurchaseGoogleRequest)(nil),            // 68: layerg.api.ValidatePurchaseGoogleRequest
+	(*api.ValidateSubscriptionGoogleRequest)(nil),        // 69: layerg.api.ValidateSubscriptionGoogleRequest
+	(*api.ValidatePurchaseHuaweiRequest)(nil),            // 70: layerg.api.ValidatePurchaseHuaweiRequest
+	(*api.ValidatePurchaseFacebookInstantRequest)(nil),   // 71: layerg.api.ValidatePurchaseFacebookInstantRequest
+	(*api.WriteLeaderboardRecordRequest)(nil),            // 72: layerg.api.WriteLeaderboardRecordRequest
+	(*api.WriteStorageObjectsRequest)(nil),               // 73: layerg.api.WriteStorageObjectsRequest
+	(*api.WriteTournamentRecordRequest)(nil),             // 74: layerg.api.WriteTournamentRecordRequest
+	(*api.Session)(nil),                                  // 75: layerg.api.Session
+	(*api.Group)(nil),                                    // 76: layerg.api.Group
+	(*api.Account)(nil),                                  // 77: layerg.api.Account
+	(*api.Users)(nil),                                    // 78: layerg.api.Users
+	(*api.ValidatedSubscription)(nil),                    // 79: layerg.api.ValidatedSubscription
+	(*api.MatchmakerStats)(nil),                          // 80: layerg.api.MatchmakerStats
+	(*api.ChannelMessageList)(nil),                       // 81: layerg.api.ChannelMessageList
+	(*api.FriendList)(nil),                               // 82: layerg.api.FriendList
+	(*api.FriendsOfFriendsList)(nil),                     // 83: layerg.api.FriendsOfFriendsList
+	(*api.GroupList)(nil),                                // 84: layerg.api.GroupList
+	(*api.GroupUserList)(nil),                            // 85: layerg.api.GroupUserList
+	(*api.LeaderboardRecordList)(nil),                    // 86: layerg.api.LeaderboardRecordList
+	(*api.MatchList)(nil),                                // 87: layerg.api.MatchList
+	(*api.NotificationList)(nil),                         // 88: layerg.api.NotificationList
+	(*api.StorageObjectList)(nil),                        // 89: layerg.api.StorageObjectList
+	(*api.SubscriptionList)(nil),                         // 90: layerg.api.SubscriptionList
+	(*api.TournamentList)(nil),                           // 91: layerg.api.TournamentList
+	(*api.TournamentRecordList)(nil),                     // 92: layerg.api.TournamentRecordList
+	(*api.UserGroupList)(nil),                            // 93: layerg.api.UserGroupList
+	(*api.StorageObjects)(nil),                           // 94: layerg.api.StorageObjects
+	(*api.ValidatePurchaseResponse)(nil),                 // 95: layerg.api.ValidatePurchaseResponse
+	(*api.ValidateSubscriptionResponse)(nil),             // 96: layerg.api.ValidateSubscriptionResponse
+	(*api.LeaderboardRecord)(nil),                        // 97: layerg.api.LeaderboardRecord
+	(*api.StorageObjectAcks)(nil),                        // 98: layerg.api.StorageObjectAcks
 }
 var file_apigrpc_proto_depIdxs = []int32{
 	0,  // 0: layerg.api.LayerG.AddFriends:input_type -> layerg.api.AddFriendsRequest
@@ -840,163 +850,165 @@ var file_apigrpc_proto_depIdxs = []int32{
 	10, // 10: layerg.api.LayerG.AuthenticateGameCenter:input_type -> layerg.api.AuthenticateGameCenterRequest
 	11, // 11: layerg.api.LayerG.AuthenticateGoogle:input_type -> layerg.api.AuthenticateGoogleRequest
 	12, // 12: layerg.api.LayerG.AuthenticateTelegram:input_type -> layerg.api.AuthenticateTelegramRequest
-	13, // 13: layerg.api.LayerG.AuthenticateSteam:input_type -> layerg.api.AuthenticateSteamRequest
-	14, // 14: layerg.api.LayerG.BanGroupUsers:input_type -> layerg.api.BanGroupUsersRequest
-	15, // 15: layerg.api.LayerG.BlockFriends:input_type -> layerg.api.BlockFriendsRequest
-	16, // 16: layerg.api.LayerG.CreateGroup:input_type -> layerg.api.CreateGroupRequest
-	17, // 17: layerg.api.LayerG.DeleteAccount:input_type -> google.protobuf.Empty
-	18, // 18: layerg.api.LayerG.DeleteFriends:input_type -> layerg.api.DeleteFriendsRequest
-	19, // 19: layerg.api.LayerG.DeleteGroup:input_type -> layerg.api.DeleteGroupRequest
-	20, // 20: layerg.api.LayerG.DeleteLeaderboardRecord:input_type -> layerg.api.DeleteLeaderboardRecordRequest
-	21, // 21: layerg.api.LayerG.DeleteNotifications:input_type -> layerg.api.DeleteNotificationsRequest
-	22, // 22: layerg.api.LayerG.DeleteTournamentRecord:input_type -> layerg.api.DeleteTournamentRecordRequest
-	23, // 23: layerg.api.LayerG.DeleteStorageObjects:input_type -> layerg.api.DeleteStorageObjectsRequest
-	24, // 24: layerg.api.LayerG.Event:input_type -> layerg.api.Event
-	17, // 25: layerg.api.LayerG.GetAccount:input_type -> google.protobuf.Empty
-	25, // 26: layerg.api.LayerG.GetUsers:input_type -> layerg.api.GetUsersRequest
-	26, // 27: layerg.api.LayerG.GetSubscription:input_type -> layerg.api.GetSubscriptionRequest
-	17, // 28: layerg.api.LayerG.GetMatchmakerStats:input_type -> google.protobuf.Empty
-	17, // 29: layerg.api.LayerG.Healthcheck:input_type -> google.protobuf.Empty
-	27, // 30: layerg.api.LayerG.ImportFacebookFriends:input_type -> layerg.api.ImportFacebookFriendsRequest
-	28, // 31: layerg.api.LayerG.ImportSteamFriends:input_type -> layerg.api.ImportSteamFriendsRequest
-	29, // 32: layerg.api.LayerG.JoinGroup:input_type -> layerg.api.JoinGroupRequest
-	30, // 33: layerg.api.LayerG.JoinTournament:input_type -> layerg.api.JoinTournamentRequest
-	31, // 34: layerg.api.LayerG.KickGroupUsers:input_type -> layerg.api.KickGroupUsersRequest
-	32, // 35: layerg.api.LayerG.LeaveGroup:input_type -> layerg.api.LeaveGroupRequest
-	33, // 36: layerg.api.LayerG.LinkApple:input_type -> layerg.api.AccountApple
-	34, // 37: layerg.api.LayerG.LinkCustom:input_type -> layerg.api.AccountCustom
-	35, // 38: layerg.api.LayerG.LinkDevice:input_type -> layerg.api.AccountDevice
-	36, // 39: layerg.api.LayerG.LinkEmail:input_type -> layerg.api.AccountEmail
-	37, // 40: layerg.api.LayerG.LinkFacebook:input_type -> layerg.api.LinkFacebookRequest
-	38, // 41: layerg.api.LayerG.LinkFacebookInstantGame:input_type -> layerg.api.AccountFacebookInstantGame
-	39, // 42: layerg.api.LayerG.LinkGameCenter:input_type -> layerg.api.AccountGameCenter
-	40, // 43: layerg.api.LayerG.LinkGoogle:input_type -> layerg.api.AccountGoogle
-	41, // 44: layerg.api.LayerG.LinkSteam:input_type -> layerg.api.LinkSteamRequest
-	42, // 45: layerg.api.LayerG.ListChannelMessages:input_type -> layerg.api.ListChannelMessagesRequest
-	43, // 46: layerg.api.LayerG.ListFriends:input_type -> layerg.api.ListFriendsRequest
-	44, // 47: layerg.api.LayerG.ListFriendsOfFriends:input_type -> layerg.api.ListFriendsOfFriendsRequest
-	45, // 48: layerg.api.LayerG.ListGroups:input_type -> layerg.api.ListGroupsRequest
-	46, // 49: layerg.api.LayerG.ListGroupUsers:input_type -> layerg.api.ListGroupUsersRequest
-	47, // 50: layerg.api.LayerG.ListLeaderboardRecords:input_type -> layerg.api.ListLeaderboardRecordsRequest
-	48, // 51: layerg.api.LayerG.ListLeaderboardRecordsAroundOwner:input_type -> layerg.api.ListLeaderboardRecordsAroundOwnerRequest
-	49, // 52: layerg.api.LayerG.ListMatches:input_type -> layerg.api.ListMatchesRequest
-	50, // 53: layerg.api.LayerG.ListNotifications:input_type -> layerg.api.ListNotificationsRequest
-	51, // 54: layerg.api.LayerG.ListStorageObjects:input_type -> layerg.api.ListStorageObjectsRequest
-	52, // 55: layerg.api.LayerG.ListSubscriptions:input_type -> layerg.api.ListSubscriptionsRequest
-	53, // 56: layerg.api.LayerG.ListTournaments:input_type -> layerg.api.ListTournamentsRequest
-	54, // 57: layerg.api.LayerG.ListTournamentRecords:input_type -> layerg.api.ListTournamentRecordsRequest
-	55, // 58: layerg.api.LayerG.ListTournamentRecordsAroundOwner:input_type -> layerg.api.ListTournamentRecordsAroundOwnerRequest
-	56, // 59: layerg.api.LayerG.ListUserGroups:input_type -> layerg.api.ListUserGroupsRequest
-	57, // 60: layerg.api.LayerG.PromoteGroupUsers:input_type -> layerg.api.PromoteGroupUsersRequest
-	58, // 61: layerg.api.LayerG.DemoteGroupUsers:input_type -> layerg.api.DemoteGroupUsersRequest
-	59, // 62: layerg.api.LayerG.ReadStorageObjects:input_type -> layerg.api.ReadStorageObjectsRequest
-	60, // 63: layerg.api.LayerG.RpcFunc:input_type -> layerg.api.Rpc
-	33, // 64: layerg.api.LayerG.UnlinkApple:input_type -> layerg.api.AccountApple
-	34, // 65: layerg.api.LayerG.UnlinkCustom:input_type -> layerg.api.AccountCustom
-	35, // 66: layerg.api.LayerG.UnlinkDevice:input_type -> layerg.api.AccountDevice
-	36, // 67: layerg.api.LayerG.UnlinkEmail:input_type -> layerg.api.AccountEmail
-	61, // 68: layerg.api.LayerG.UnlinkFacebook:input_type -> layerg.api.AccountFacebook
-	38, // 69: layerg.api.LayerG.UnlinkFacebookInstantGame:input_type -> layerg.api.AccountFacebookInstantGame
-	39, // 70: layerg.api.LayerG.UnlinkGameCenter:input_type -> layerg.api.AccountGameCenter
-	40, // 71: layerg.api.LayerG.UnlinkGoogle:input_type -> layerg.api.AccountGoogle
-	62, // 72: layerg.api.LayerG.UnlinkSteam:input_type -> layerg.api.AccountSteam
-	63, // 73: layerg.api.LayerG.UpdateAccount:input_type -> layerg.api.UpdateAccountRequest
-	64, // 74: layerg.api.LayerG.UpdateGroup:input_type -> layerg.api.UpdateGroupRequest
-	65, // 75: layerg.api.LayerG.ValidatePurchaseApple:input_type -> layerg.api.ValidatePurchaseAppleRequest
-	66, // 76: layerg.api.LayerG.ValidateSubscriptionApple:input_type -> layerg.api.ValidateSubscriptionAppleRequest
-	67, // 77: layerg.api.LayerG.ValidatePurchaseGoogle:input_type -> layerg.api.ValidatePurchaseGoogleRequest
-	68, // 78: layerg.api.LayerG.ValidateSubscriptionGoogle:input_type -> layerg.api.ValidateSubscriptionGoogleRequest
-	69, // 79: layerg.api.LayerG.ValidatePurchaseHuawei:input_type -> layerg.api.ValidatePurchaseHuaweiRequest
-	70, // 80: layerg.api.LayerG.ValidatePurchaseFacebookInstant:input_type -> layerg.api.ValidatePurchaseFacebookInstantRequest
-	71, // 81: layerg.api.LayerG.WriteLeaderboardRecord:input_type -> layerg.api.WriteLeaderboardRecordRequest
-	72, // 82: layerg.api.LayerG.WriteStorageObjects:input_type -> layerg.api.WriteStorageObjectsRequest
-	73, // 83: layerg.api.LayerG.WriteTournamentRecord:input_type -> layerg.api.WriteTournamentRecordRequest
-	17, // 84: layerg.api.LayerG.AddFriends:output_type -> google.protobuf.Empty
-	17, // 85: layerg.api.LayerG.AddGroupUsers:output_type -> google.protobuf.Empty
-	74, // 86: layerg.api.LayerG.SessionRefresh:output_type -> layerg.api.Session
-	17, // 87: layerg.api.LayerG.SessionLogout:output_type -> google.protobuf.Empty
-	74, // 88: layerg.api.LayerG.AuthenticateApple:output_type -> layerg.api.Session
-	74, // 89: layerg.api.LayerG.AuthenticateCustom:output_type -> layerg.api.Session
-	74, // 90: layerg.api.LayerG.AuthenticateDevice:output_type -> layerg.api.Session
-	74, // 91: layerg.api.LayerG.AuthenticateEmail:output_type -> layerg.api.Session
-	74, // 92: layerg.api.LayerG.AuthenticateFacebook:output_type -> layerg.api.Session
-	74, // 93: layerg.api.LayerG.AuthenticateFacebookInstantGame:output_type -> layerg.api.Session
-	74, // 94: layerg.api.LayerG.AuthenticateGameCenter:output_type -> layerg.api.Session
-	74, // 95: layerg.api.LayerG.AuthenticateGoogle:output_type -> layerg.api.Session
-	74, // 96: layerg.api.LayerG.AuthenticateTelegram:output_type -> layerg.api.Session
-	74, // 97: layerg.api.LayerG.AuthenticateSteam:output_type -> layerg.api.Session
-	17, // 98: layerg.api.LayerG.BanGroupUsers:output_type -> google.protobuf.Empty
-	17, // 99: layerg.api.LayerG.BlockFriends:output_type -> google.protobuf.Empty
-	75, // 100: layerg.api.LayerG.CreateGroup:output_type -> layerg.api.Group
-	17, // 101: layerg.api.LayerG.DeleteAccount:output_type -> google.protobuf.Empty
-	17, // 102: layerg.api.LayerG.DeleteFriends:output_type -> google.protobuf.Empty
-	17, // 103: layerg.api.LayerG.DeleteGroup:output_type -> google.protobuf.Empty
-	17, // 104: layerg.api.LayerG.DeleteLeaderboardRecord:output_type -> google.protobuf.Empty
-	17, // 105: layerg.api.LayerG.DeleteNotifications:output_type -> google.protobuf.Empty
-	17, // 106: layerg.api.LayerG.DeleteTournamentRecord:output_type -> google.protobuf.Empty
-	17, // 107: layerg.api.LayerG.DeleteStorageObjects:output_type -> google.protobuf.Empty
-	17, // 108: layerg.api.LayerG.Event:output_type -> google.protobuf.Empty
-	76, // 109: layerg.api.LayerG.GetAccount:output_type -> layerg.api.Account
-	77, // 110: layerg.api.LayerG.GetUsers:output_type -> layerg.api.Users
-	78, // 111: layerg.api.LayerG.GetSubscription:output_type -> layerg.api.ValidatedSubscription
-	79, // 112: layerg.api.LayerG.GetMatchmakerStats:output_type -> layerg.api.MatchmakerStats
-	17, // 113: layerg.api.LayerG.Healthcheck:output_type -> google.protobuf.Empty
-	17, // 114: layerg.api.LayerG.ImportFacebookFriends:output_type -> google.protobuf.Empty
-	17, // 115: layerg.api.LayerG.ImportSteamFriends:output_type -> google.protobuf.Empty
-	17, // 116: layerg.api.LayerG.JoinGroup:output_type -> google.protobuf.Empty
-	17, // 117: layerg.api.LayerG.JoinTournament:output_type -> google.protobuf.Empty
-	17, // 118: layerg.api.LayerG.KickGroupUsers:output_type -> google.protobuf.Empty
-	17, // 119: layerg.api.LayerG.LeaveGroup:output_type -> google.protobuf.Empty
-	17, // 120: layerg.api.LayerG.LinkApple:output_type -> google.protobuf.Empty
-	17, // 121: layerg.api.LayerG.LinkCustom:output_type -> google.protobuf.Empty
-	17, // 122: layerg.api.LayerG.LinkDevice:output_type -> google.protobuf.Empty
-	17, // 123: layerg.api.LayerG.LinkEmail:output_type -> google.protobuf.Empty
-	17, // 124: layerg.api.LayerG.LinkFacebook:output_type -> google.protobuf.Empty
-	17, // 125: layerg.api.LayerG.LinkFacebookInstantGame:output_type -> google.protobuf.Empty
-	17, // 126: layerg.api.LayerG.LinkGameCenter:output_type -> google.protobuf.Empty
-	17, // 127: layerg.api.LayerG.LinkGoogle:output_type -> google.protobuf.Empty
-	17, // 128: layerg.api.LayerG.LinkSteam:output_type -> google.protobuf.Empty
-	80, // 129: layerg.api.LayerG.ListChannelMessages:output_type -> layerg.api.ChannelMessageList
-	81, // 130: layerg.api.LayerG.ListFriends:output_type -> layerg.api.FriendList
-	82, // 131: layerg.api.LayerG.ListFriendsOfFriends:output_type -> layerg.api.FriendsOfFriendsList
-	83, // 132: layerg.api.LayerG.ListGroups:output_type -> layerg.api.GroupList
-	84, // 133: layerg.api.LayerG.ListGroupUsers:output_type -> layerg.api.GroupUserList
-	85, // 134: layerg.api.LayerG.ListLeaderboardRecords:output_type -> layerg.api.LeaderboardRecordList
-	85, // 135: layerg.api.LayerG.ListLeaderboardRecordsAroundOwner:output_type -> layerg.api.LeaderboardRecordList
-	86, // 136: layerg.api.LayerG.ListMatches:output_type -> layerg.api.MatchList
-	87, // 137: layerg.api.LayerG.ListNotifications:output_type -> layerg.api.NotificationList
-	88, // 138: layerg.api.LayerG.ListStorageObjects:output_type -> layerg.api.StorageObjectList
-	89, // 139: layerg.api.LayerG.ListSubscriptions:output_type -> layerg.api.SubscriptionList
-	90, // 140: layerg.api.LayerG.ListTournaments:output_type -> layerg.api.TournamentList
-	91, // 141: layerg.api.LayerG.ListTournamentRecords:output_type -> layerg.api.TournamentRecordList
-	91, // 142: layerg.api.LayerG.ListTournamentRecordsAroundOwner:output_type -> layerg.api.TournamentRecordList
-	92, // 143: layerg.api.LayerG.ListUserGroups:output_type -> layerg.api.UserGroupList
-	17, // 144: layerg.api.LayerG.PromoteGroupUsers:output_type -> google.protobuf.Empty
-	17, // 145: layerg.api.LayerG.DemoteGroupUsers:output_type -> google.protobuf.Empty
-	93, // 146: layerg.api.LayerG.ReadStorageObjects:output_type -> layerg.api.StorageObjects
-	60, // 147: layerg.api.LayerG.RpcFunc:output_type -> layerg.api.Rpc
-	17, // 148: layerg.api.LayerG.UnlinkApple:output_type -> google.protobuf.Empty
-	17, // 149: layerg.api.LayerG.UnlinkCustom:output_type -> google.protobuf.Empty
-	17, // 150: layerg.api.LayerG.UnlinkDevice:output_type -> google.protobuf.Empty
-	17, // 151: layerg.api.LayerG.UnlinkEmail:output_type -> google.protobuf.Empty
-	17, // 152: layerg.api.LayerG.UnlinkFacebook:output_type -> google.protobuf.Empty
-	17, // 153: layerg.api.LayerG.UnlinkFacebookInstantGame:output_type -> google.protobuf.Empty
-	17, // 154: layerg.api.LayerG.UnlinkGameCenter:output_type -> google.protobuf.Empty
-	17, // 155: layerg.api.LayerG.UnlinkGoogle:output_type -> google.protobuf.Empty
-	17, // 156: layerg.api.LayerG.UnlinkSteam:output_type -> google.protobuf.Empty
-	17, // 157: layerg.api.LayerG.UpdateAccount:output_type -> google.protobuf.Empty
-	17, // 158: layerg.api.LayerG.UpdateGroup:output_type -> google.protobuf.Empty
-	94, // 159: layerg.api.LayerG.ValidatePurchaseApple:output_type -> layerg.api.ValidatePurchaseResponse
-	95, // 160: layerg.api.LayerG.ValidateSubscriptionApple:output_type -> layerg.api.ValidateSubscriptionResponse
-	94, // 161: layerg.api.LayerG.ValidatePurchaseGoogle:output_type -> layerg.api.ValidatePurchaseResponse
-	95, // 162: layerg.api.LayerG.ValidateSubscriptionGoogle:output_type -> layerg.api.ValidateSubscriptionResponse
-	94, // 163: layerg.api.LayerG.ValidatePurchaseHuawei:output_type -> layerg.api.ValidatePurchaseResponse
-	94, // 164: layerg.api.LayerG.ValidatePurchaseFacebookInstant:output_type -> layerg.api.ValidatePurchaseResponse
-	96, // 165: layerg.api.LayerG.WriteLeaderboardRecord:output_type -> layerg.api.LeaderboardRecord
-	97, // 166: layerg.api.LayerG.WriteStorageObjects:output_type -> layerg.api.StorageObjectAcks
-	96, // 167: layerg.api.LayerG.WriteTournamentRecord:output_type -> layerg.api.LeaderboardRecord
-	84, // [84:168] is the sub-list for method output_type
-	0,  // [0:84] is the sub-list for method input_type
+	13, // 13: layerg.api.LayerG.AuthenticateEvm:input_type -> layerg.api.AuthenticateEvmRequest
+	14, // 14: layerg.api.LayerG.AuthenticateSteam:input_type -> layerg.api.AuthenticateSteamRequest
+	15, // 15: layerg.api.LayerG.BanGroupUsers:input_type -> layerg.api.BanGroupUsersRequest
+	16, // 16: layerg.api.LayerG.BlockFriends:input_type -> layerg.api.BlockFriendsRequest
+	17, // 17: layerg.api.LayerG.CreateGroup:input_type -> layerg.api.CreateGroupRequest
+	18, // 18: layerg.api.LayerG.DeleteAccount:input_type -> google.protobuf.Empty
+	19, // 19: layerg.api.LayerG.DeleteFriends:input_type -> layerg.api.DeleteFriendsRequest
+	20, // 20: layerg.api.LayerG.DeleteGroup:input_type -> layerg.api.DeleteGroupRequest
+	21, // 21: layerg.api.LayerG.DeleteLeaderboardRecord:input_type -> layerg.api.DeleteLeaderboardRecordRequest
+	22, // 22: layerg.api.LayerG.DeleteNotifications:input_type -> layerg.api.DeleteNotificationsRequest
+	23, // 23: layerg.api.LayerG.DeleteTournamentRecord:input_type -> layerg.api.DeleteTournamentRecordRequest
+	24, // 24: layerg.api.LayerG.DeleteStorageObjects:input_type -> layerg.api.DeleteStorageObjectsRequest
+	25, // 25: layerg.api.LayerG.Event:input_type -> layerg.api.Event
+	18, // 26: layerg.api.LayerG.GetAccount:input_type -> google.protobuf.Empty
+	26, // 27: layerg.api.LayerG.GetUsers:input_type -> layerg.api.GetUsersRequest
+	27, // 28: layerg.api.LayerG.GetSubscription:input_type -> layerg.api.GetSubscriptionRequest
+	18, // 29: layerg.api.LayerG.GetMatchmakerStats:input_type -> google.protobuf.Empty
+	18, // 30: layerg.api.LayerG.Healthcheck:input_type -> google.protobuf.Empty
+	28, // 31: layerg.api.LayerG.ImportFacebookFriends:input_type -> layerg.api.ImportFacebookFriendsRequest
+	29, // 32: layerg.api.LayerG.ImportSteamFriends:input_type -> layerg.api.ImportSteamFriendsRequest
+	30, // 33: layerg.api.LayerG.JoinGroup:input_type -> layerg.api.JoinGroupRequest
+	31, // 34: layerg.api.LayerG.JoinTournament:input_type -> layerg.api.JoinTournamentRequest
+	32, // 35: layerg.api.LayerG.KickGroupUsers:input_type -> layerg.api.KickGroupUsersRequest
+	33, // 36: layerg.api.LayerG.LeaveGroup:input_type -> layerg.api.LeaveGroupRequest
+	34, // 37: layerg.api.LayerG.LinkApple:input_type -> layerg.api.AccountApple
+	35, // 38: layerg.api.LayerG.LinkCustom:input_type -> layerg.api.AccountCustom
+	36, // 39: layerg.api.LayerG.LinkDevice:input_type -> layerg.api.AccountDevice
+	37, // 40: layerg.api.LayerG.LinkEmail:input_type -> layerg.api.AccountEmail
+	38, // 41: layerg.api.LayerG.LinkFacebook:input_type -> layerg.api.LinkFacebookRequest
+	39, // 42: layerg.api.LayerG.LinkFacebookInstantGame:input_type -> layerg.api.AccountFacebookInstantGame
+	40, // 43: layerg.api.LayerG.LinkGameCenter:input_type -> layerg.api.AccountGameCenter
+	41, // 44: layerg.api.LayerG.LinkGoogle:input_type -> layerg.api.AccountGoogle
+	42, // 45: layerg.api.LayerG.LinkSteam:input_type -> layerg.api.LinkSteamRequest
+	43, // 46: layerg.api.LayerG.ListChannelMessages:input_type -> layerg.api.ListChannelMessagesRequest
+	44, // 47: layerg.api.LayerG.ListFriends:input_type -> layerg.api.ListFriendsRequest
+	45, // 48: layerg.api.LayerG.ListFriendsOfFriends:input_type -> layerg.api.ListFriendsOfFriendsRequest
+	46, // 49: layerg.api.LayerG.ListGroups:input_type -> layerg.api.ListGroupsRequest
+	47, // 50: layerg.api.LayerG.ListGroupUsers:input_type -> layerg.api.ListGroupUsersRequest
+	48, // 51: layerg.api.LayerG.ListLeaderboardRecords:input_type -> layerg.api.ListLeaderboardRecordsRequest
+	49, // 52: layerg.api.LayerG.ListLeaderboardRecordsAroundOwner:input_type -> layerg.api.ListLeaderboardRecordsAroundOwnerRequest
+	50, // 53: layerg.api.LayerG.ListMatches:input_type -> layerg.api.ListMatchesRequest
+	51, // 54: layerg.api.LayerG.ListNotifications:input_type -> layerg.api.ListNotificationsRequest
+	52, // 55: layerg.api.LayerG.ListStorageObjects:input_type -> layerg.api.ListStorageObjectsRequest
+	53, // 56: layerg.api.LayerG.ListSubscriptions:input_type -> layerg.api.ListSubscriptionsRequest
+	54, // 57: layerg.api.LayerG.ListTournaments:input_type -> layerg.api.ListTournamentsRequest
+	55, // 58: layerg.api.LayerG.ListTournamentRecords:input_type -> layerg.api.ListTournamentRecordsRequest
+	56, // 59: layerg.api.LayerG.ListTournamentRecordsAroundOwner:input_type -> layerg.api.ListTournamentRecordsAroundOwnerRequest
+	57, // 60: layerg.api.LayerG.ListUserGroups:input_type -> layerg.api.ListUserGroupsRequest
+	58, // 61: layerg.api.LayerG.PromoteGroupUsers:input_type -> layerg.api.PromoteGroupUsersRequest
+	59, // 62: layerg.api.LayerG.DemoteGroupUsers:input_type -> layerg.api.DemoteGroupUsersRequest
+	60, // 63: layerg.api.LayerG.ReadStorageObjects:input_type -> layerg.api.ReadStorageObjectsRequest
+	61, // 64: layerg.api.LayerG.RpcFunc:input_type -> layerg.api.Rpc
+	34, // 65: layerg.api.LayerG.UnlinkApple:input_type -> layerg.api.AccountApple
+	35, // 66: layerg.api.LayerG.UnlinkCustom:input_type -> layerg.api.AccountCustom
+	36, // 67: layerg.api.LayerG.UnlinkDevice:input_type -> layerg.api.AccountDevice
+	37, // 68: layerg.api.LayerG.UnlinkEmail:input_type -> layerg.api.AccountEmail
+	62, // 69: layerg.api.LayerG.UnlinkFacebook:input_type -> layerg.api.AccountFacebook
+	39, // 70: layerg.api.LayerG.UnlinkFacebookInstantGame:input_type -> layerg.api.AccountFacebookInstantGame
+	40, // 71: layerg.api.LayerG.UnlinkGameCenter:input_type -> layerg.api.AccountGameCenter
+	41, // 72: layerg.api.LayerG.UnlinkGoogle:input_type -> layerg.api.AccountGoogle
+	63, // 73: layerg.api.LayerG.UnlinkSteam:input_type -> layerg.api.AccountSteam
+	64, // 74: layerg.api.LayerG.UpdateAccount:input_type -> layerg.api.UpdateAccountRequest
+	65, // 75: layerg.api.LayerG.UpdateGroup:input_type -> layerg.api.UpdateGroupRequest
+	66, // 76: layerg.api.LayerG.ValidatePurchaseApple:input_type -> layerg.api.ValidatePurchaseAppleRequest
+	67, // 77: layerg.api.LayerG.ValidateSubscriptionApple:input_type -> layerg.api.ValidateSubscriptionAppleRequest
+	68, // 78: layerg.api.LayerG.ValidatePurchaseGoogle:input_type -> layerg.api.ValidatePurchaseGoogleRequest
+	69, // 79: layerg.api.LayerG.ValidateSubscriptionGoogle:input_type -> layerg.api.ValidateSubscriptionGoogleRequest
+	70, // 80: layerg.api.LayerG.ValidatePurchaseHuawei:input_type -> layerg.api.ValidatePurchaseHuaweiRequest
+	71, // 81: layerg.api.LayerG.ValidatePurchaseFacebookInstant:input_type -> layerg.api.ValidatePurchaseFacebookInstantRequest
+	72, // 82: layerg.api.LayerG.WriteLeaderboardRecord:input_type -> layerg.api.WriteLeaderboardRecordRequest
+	73, // 83: layerg.api.LayerG.WriteStorageObjects:input_type -> layerg.api.WriteStorageObjectsRequest
+	74, // 84: layerg.api.LayerG.WriteTournamentRecord:input_type -> layerg.api.WriteTournamentRecordRequest
+	18, // 85: layerg.api.LayerG.AddFriends:output_type -> google.protobuf.Empty
+	18, // 86: layerg.api.LayerG.AddGroupUsers:output_type -> google.protobuf.Empty
+	75, // 87: layerg.api.LayerG.SessionRefresh:output_type -> layerg.api.Session
+	18, // 88: layerg.api.LayerG.SessionLogout:output_type -> google.protobuf.Empty
+	75, // 89: layerg.api.LayerG.AuthenticateApple:output_type -> layerg.api.Session
+	75, // 90: layerg.api.LayerG.AuthenticateCustom:output_type -> layerg.api.Session
+	75, // 91: layerg.api.LayerG.AuthenticateDevice:output_type -> layerg.api.Session
+	75, // 92: layerg.api.LayerG.AuthenticateEmail:output_type -> layerg.api.Session
+	75, // 93: layerg.api.LayerG.AuthenticateFacebook:output_type -> layerg.api.Session
+	75, // 94: layerg.api.LayerG.AuthenticateFacebookInstantGame:output_type -> layerg.api.Session
+	75, // 95: layerg.api.LayerG.AuthenticateGameCenter:output_type -> layerg.api.Session
+	75, // 96: layerg.api.LayerG.AuthenticateGoogle:output_type -> layerg.api.Session
+	75, // 97: layerg.api.LayerG.AuthenticateTelegram:output_type -> layerg.api.Session
+	75, // 98: layerg.api.LayerG.AuthenticateEvm:output_type -> layerg.api.Session
+	75, // 99: layerg.api.LayerG.AuthenticateSteam:output_type -> layerg.api.Session
+	18, // 100: layerg.api.LayerG.BanGroupUsers:output_type -> google.protobuf.Empty
+	18, // 101: layerg.api.LayerG.BlockFriends:output_type -> google.protobuf.Empty
+	76, // 102: layerg.api.LayerG.CreateGroup:output_type -> layerg.api.Group
+	18, // 103: layerg.api.LayerG.DeleteAccount:output_type -> google.protobuf.Empty
+	18, // 104: layerg.api.LayerG.DeleteFriends:output_type -> google.protobuf.Empty
+	18, // 105: layerg.api.LayerG.DeleteGroup:output_type -> google.protobuf.Empty
+	18, // 106: layerg.api.LayerG.DeleteLeaderboardRecord:output_type -> google.protobuf.Empty
+	18, // 107: layerg.api.LayerG.DeleteNotifications:output_type -> google.protobuf.Empty
+	18, // 108: layerg.api.LayerG.DeleteTournamentRecord:output_type -> google.protobuf.Empty
+	18, // 109: layerg.api.LayerG.DeleteStorageObjects:output_type -> google.protobuf.Empty
+	18, // 110: layerg.api.LayerG.Event:output_type -> google.protobuf.Empty
+	77, // 111: layerg.api.LayerG.GetAccount:output_type -> layerg.api.Account
+	78, // 112: layerg.api.LayerG.GetUsers:output_type -> layerg.api.Users
+	79, // 113: layerg.api.LayerG.GetSubscription:output_type -> layerg.api.ValidatedSubscription
+	80, // 114: layerg.api.LayerG.GetMatchmakerStats:output_type -> layerg.api.MatchmakerStats
+	18, // 115: layerg.api.LayerG.Healthcheck:output_type -> google.protobuf.Empty
+	18, // 116: layerg.api.LayerG.ImportFacebookFriends:output_type -> google.protobuf.Empty
+	18, // 117: layerg.api.LayerG.ImportSteamFriends:output_type -> google.protobuf.Empty
+	18, // 118: layerg.api.LayerG.JoinGroup:output_type -> google.protobuf.Empty
+	18, // 119: layerg.api.LayerG.JoinTournament:output_type -> google.protobuf.Empty
+	18, // 120: layerg.api.LayerG.KickGroupUsers:output_type -> google.protobuf.Empty
+	18, // 121: layerg.api.LayerG.LeaveGroup:output_type -> google.protobuf.Empty
+	18, // 122: layerg.api.LayerG.LinkApple:output_type -> google.protobuf.Empty
+	18, // 123: layerg.api.LayerG.LinkCustom:output_type -> google.protobuf.Empty
+	18, // 124: layerg.api.LayerG.LinkDevice:output_type -> google.protobuf.Empty
+	18, // 125: layerg.api.LayerG.LinkEmail:output_type -> google.protobuf.Empty
+	18, // 126: layerg.api.LayerG.LinkFacebook:output_type -> google.protobuf.Empty
+	18, // 127: layerg.api.LayerG.LinkFacebookInstantGame:output_type -> google.protobuf.Empty
+	18, // 128: layerg.api.LayerG.LinkGameCenter:output_type -> google.protobuf.Empty
+	18, // 129: layerg.api.LayerG.LinkGoogle:output_type -> google.protobuf.Empty
+	18, // 130: layerg.api.LayerG.LinkSteam:output_type -> google.protobuf.Empty
+	81, // 131: layerg.api.LayerG.ListChannelMessages:output_type -> layerg.api.ChannelMessageList
+	82, // 132: layerg.api.LayerG.ListFriends:output_type -> layerg.api.FriendList
+	83, // 133: layerg.api.LayerG.ListFriendsOfFriends:output_type -> layerg.api.FriendsOfFriendsList
+	84, // 134: layerg.api.LayerG.ListGroups:output_type -> layerg.api.GroupList
+	85, // 135: layerg.api.LayerG.ListGroupUsers:output_type -> layerg.api.GroupUserList
+	86, // 136: layerg.api.LayerG.ListLeaderboardRecords:output_type -> layerg.api.LeaderboardRecordList
+	86, // 137: layerg.api.LayerG.ListLeaderboardRecordsAroundOwner:output_type -> layerg.api.LeaderboardRecordList
+	87, // 138: layerg.api.LayerG.ListMatches:output_type -> layerg.api.MatchList
+	88, // 139: layerg.api.LayerG.ListNotifications:output_type -> layerg.api.NotificationList
+	89, // 140: layerg.api.LayerG.ListStorageObjects:output_type -> layerg.api.StorageObjectList
+	90, // 141: layerg.api.LayerG.ListSubscriptions:output_type -> layerg.api.SubscriptionList
+	91, // 142: layerg.api.LayerG.ListTournaments:output_type -> layerg.api.TournamentList
+	92, // 143: layerg.api.LayerG.ListTournamentRecords:output_type -> layerg.api.TournamentRecordList
+	92, // 144: layerg.api.LayerG.ListTournamentRecordsAroundOwner:output_type -> layerg.api.TournamentRecordList
+	93, // 145: layerg.api.LayerG.ListUserGroups:output_type -> layerg.api.UserGroupList
+	18, // 146: layerg.api.LayerG.PromoteGroupUsers:output_type -> google.protobuf.Empty
+	18, // 147: layerg.api.LayerG.DemoteGroupUsers:output_type -> google.protobuf.Empty
+	94, // 148: layerg.api.LayerG.ReadStorageObjects:output_type -> layerg.api.StorageObjects
+	61, // 149: layerg.api.LayerG.RpcFunc:output_type -> layerg.api.Rpc
+	18, // 150: layerg.api.LayerG.UnlinkApple:output_type -> google.protobuf.Empty
+	18, // 151: layerg.api.LayerG.UnlinkCustom:output_type -> google.protobuf.Empty
+	18, // 152: layerg.api.LayerG.UnlinkDevice:output_type -> google.protobuf.Empty
+	18, // 153: layerg.api.LayerG.UnlinkEmail:output_type -> google.protobuf.Empty
+	18, // 154: layerg.api.LayerG.UnlinkFacebook:output_type -> google.protobuf.Empty
+	18, // 155: layerg.api.LayerG.UnlinkFacebookInstantGame:output_type -> google.protobuf.Empty
+	18, // 156: layerg.api.LayerG.UnlinkGameCenter:output_type -> google.protobuf.Empty
+	18, // 157: layerg.api.LayerG.UnlinkGoogle:output_type -> google.protobuf.Empty
+	18, // 158: layerg.api.LayerG.UnlinkSteam:output_type -> google.protobuf.Empty
+	18, // 159: layerg.api.LayerG.UpdateAccount:output_type -> google.protobuf.Empty
+	18, // 160: layerg.api.LayerG.UpdateGroup:output_type -> google.protobuf.Empty
+	95, // 161: layerg.api.LayerG.ValidatePurchaseApple:output_type -> layerg.api.ValidatePurchaseResponse
+	96, // 162: layerg.api.LayerG.ValidateSubscriptionApple:output_type -> layerg.api.ValidateSubscriptionResponse
+	95, // 163: layerg.api.LayerG.ValidatePurchaseGoogle:output_type -> layerg.api.ValidatePurchaseResponse
+	96, // 164: layerg.api.LayerG.ValidateSubscriptionGoogle:output_type -> layerg.api.ValidateSubscriptionResponse
+	95, // 165: layerg.api.LayerG.ValidatePurchaseHuawei:output_type -> layerg.api.ValidatePurchaseResponse
+	95, // 166: layerg.api.LayerG.ValidatePurchaseFacebookInstant:output_type -> layerg.api.ValidatePurchaseResponse
+	97, // 167: layerg.api.LayerG.WriteLeaderboardRecord:output_type -> layerg.api.LeaderboardRecord
+	98, // 168: layerg.api.LayerG.WriteStorageObjects:output_type -> layerg.api.StorageObjectAcks
+	97, // 169: layerg.api.LayerG.WriteTournamentRecord:output_type -> layerg.api.LeaderboardRecord
+	85, // [85:170] is the sub-list for method output_type
+	0,  // [0:85] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name
