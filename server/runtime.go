@@ -1032,6 +1032,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		allBeforeReqFunctions.beforeAuthenticateEmailFunction = luaBeforeReqFns.beforeAuthenticateEmailFunction
 		startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "authenticateemail"))
 	}
+	if luaBeforeReqFns.beforeAuthenticateTelegramFunction != nil {
+		allBeforeReqFunctions.beforeAuthenticateTelegramFunction = luaBeforeReqFns.beforeAuthenticateTelegramFunction
+		startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "authenticatetelegram"))
+	}
 	if luaBeforeReqFns.beforeAuthenticateEvmFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateEvmFunction = luaBeforeReqFns.beforeAuthenticateEvmFunction
 		startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "authenticateevm"))
