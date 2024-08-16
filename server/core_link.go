@@ -200,7 +200,7 @@ WHERE (id = $1)
 AND (NOT EXISTS
     (SELECT id
      FROM users
-     WHERE email = $2 AND NOT id = $1))`,
+     WHERE onchain_id = $2 AND NOT id = $1))`,
 		userID,
 		address,
 	)
