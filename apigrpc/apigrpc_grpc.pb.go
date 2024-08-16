@@ -76,6 +76,7 @@ const (
 	LayerG_KickGroupUsers_FullMethodName                    = "/layerg.api.LayerG/KickGroupUsers"
 	LayerG_LeaveGroup_FullMethodName                        = "/layerg.api.LayerG/LeaveGroup"
 	LayerG_LinkApple_FullMethodName                         = "/layerg.api.LayerG/LinkApple"
+	LayerG_LinkEvm_FullMethodName                           = "/layerg.api.LayerG/LinkEvm"
 	LayerG_LinkCustom_FullMethodName                        = "/layerg.api.LayerG/LinkCustom"
 	LayerG_LinkDevice_FullMethodName                        = "/layerg.api.LayerG/LinkDevice"
 	LayerG_LinkEmail_FullMethodName                         = "/layerg.api.LayerG/LinkEmail"
@@ -158,7 +159,7 @@ type LayerGClient interface {
 	AuthenticateGoogle(ctx context.Context, in *api.AuthenticateGoogleRequest, opts ...grpc.CallOption) (*api.Session, error)
 	// Authenticate a user with Google against the server.
 	AuthenticateTelegram(ctx context.Context, in *api.AuthenticateTelegramRequest, opts ...grpc.CallOption) (*api.Session, error)
-	// Authenticate a user with Google against the server.
+	// Authenticate a user with Evm against the server.
 	AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest, opts ...grpc.CallOption) (*api.Session, error)
 	// Authenticate a user with Steam against the server.
 	AuthenticateSteam(ctx context.Context, in *api.AuthenticateSteamRequest, opts ...grpc.CallOption) (*api.Session, error)
@@ -208,6 +209,8 @@ type LayerGClient interface {
 	LeaveGroup(ctx context.Context, in *api.LeaveGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Add an Apple ID to the social profiles on the current user's account.
 	LinkApple(ctx context.Context, in *api.AccountApple, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Add an EVM to the social profiles on the current user's account.
+	LinkEvm(ctx context.Context, in *api.AccountEvm, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Add a custom ID to the social profiles on the current user's account.
 	LinkCustom(ctx context.Context, in *api.AccountCustom, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Add a device ID to the social profiles on the current user's account.
@@ -686,6 +689,16 @@ func (c *layerGClient) LinkApple(ctx context.Context, in *api.AccountApple, opts
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, LayerG_LinkApple_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *layerGClient) LinkEvm(ctx context.Context, in *api.AccountEvm, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, LayerG_LinkEvm_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1195,7 +1208,7 @@ type LayerGServer interface {
 	AuthenticateGoogle(context.Context, *api.AuthenticateGoogleRequest) (*api.Session, error)
 	// Authenticate a user with Google against the server.
 	AuthenticateTelegram(context.Context, *api.AuthenticateTelegramRequest) (*api.Session, error)
-	// Authenticate a user with Google against the server.
+	// Authenticate a user with Evm against the server.
 	AuthenticateEvm(context.Context, *api.AuthenticateEvmRequest) (*api.Session, error)
 	// Authenticate a user with Steam against the server.
 	AuthenticateSteam(context.Context, *api.AuthenticateSteamRequest) (*api.Session, error)
@@ -1245,6 +1258,8 @@ type LayerGServer interface {
 	LeaveGroup(context.Context, *api.LeaveGroupRequest) (*emptypb.Empty, error)
 	// Add an Apple ID to the social profiles on the current user's account.
 	LinkApple(context.Context, *api.AccountApple) (*emptypb.Empty, error)
+	// Add an EVM to the social profiles on the current user's account.
+	LinkEvm(context.Context, *api.AccountEvm) (*emptypb.Empty, error)
 	// Add a custom ID to the social profiles on the current user's account.
 	LinkCustom(context.Context, *api.AccountCustom) (*emptypb.Empty, error)
 	// Add a device ID to the social profiles on the current user's account.
@@ -1462,6 +1477,9 @@ func (UnimplementedLayerGServer) LeaveGroup(context.Context, *api.LeaveGroupRequ
 }
 func (UnimplementedLayerGServer) LinkApple(context.Context, *api.AccountApple) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LinkApple not implemented")
+}
+func (UnimplementedLayerGServer) LinkEvm(context.Context, *api.AccountEvm) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LinkEvm not implemented")
 }
 func (UnimplementedLayerGServer) LinkCustom(context.Context, *api.AccountCustom) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LinkCustom not implemented")
@@ -2305,6 +2323,24 @@ func _LayerG_LinkApple_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LayerGServer).LinkApple(ctx, req.(*api.AccountApple))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LayerG_LinkEvm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(api.AccountEvm)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LayerGServer).LinkEvm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LayerG_LinkEvm_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LayerGServer).LinkEvm(ctx, req.(*api.AccountEvm))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3313,6 +3349,10 @@ var LayerG_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LinkApple",
 			Handler:    _LayerG_LinkApple_Handler,
+		},
+		{
+			MethodName: "LinkEvm",
+			Handler:    _LayerG_LinkEvm_Handler,
 		},
 		{
 			MethodName: "LinkCustom",

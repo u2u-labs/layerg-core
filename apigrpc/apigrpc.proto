@@ -261,7 +261,7 @@ service LayerG {
       };
     }
 
-  // Authenticate a user with Google against the server.
+  // Authenticate a user with Evm against the server.
   rpc AuthenticateEvm (api.AuthenticateEvmRequest) returns (api.Session) {
       option (google.api.http) = {
         post: "/v2/account/authenticate/evm",
@@ -424,6 +424,14 @@ service LayerG {
   rpc LinkApple (api.AccountApple) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v2/account/link/apple",
+      body: "*"
+    };
+  }
+
+  // Add an EVM to the social profiles on the current user's account.
+  rpc LinkEvm (api.AccountEvm) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/account/link/evm",
       body: "*"
     };
   }

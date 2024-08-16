@@ -1193,7 +1193,7 @@ func AuthenticateEvm(ctx context.Context, logger *zap.Logger, db *sql.DB, addres
 		if err == sql.ErrNoRows {
 			found = false
 		} else if err != nil {
-			logger.Error("Error looking up user by Telegram ID.", zap.Error(err),
+			logger.Error("Error looking up user by EVM ID.", zap.Error(err),
 				zap.String("address", address),
 				zap.Bool("create", create))
 			return "", "", false, status.Error(codes.Internal, "Error finding user account.")

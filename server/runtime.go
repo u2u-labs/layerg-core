@@ -466,6 +466,7 @@ type RuntimeAfterReqFunctions struct {
 	afterWriteLeaderboardRecordFunction            RuntimeAfterWriteLeaderboardRecordFunction
 	afterListLeaderboardRecordsAroundOwnerFunction RuntimeAfterListLeaderboardRecordsAroundOwnerFunction
 	afterLinkAppleFunction                         RuntimeAfterLinkAppleFunction
+	afterLinkEvmFunction                           RuntimeAfterLinkEvmFunction
 	afterLinkCustomFunction                        RuntimeAfterLinkCustomFunction
 	afterLinkDeviceFunction                        RuntimeAfterLinkDeviceFunction
 	afterLinkEmailFunction                         RuntimeAfterLinkEmailFunction
@@ -3167,6 +3168,14 @@ func (r *Runtime) BeforeLinkApple() RuntimeBeforeLinkAppleFunction {
 
 func (r *Runtime) AfterLinkApple() RuntimeAfterLinkAppleFunction {
 	return r.afterReqFunctions.afterLinkAppleFunction
+}
+
+func (r *Runtime) BeforeLinkEvm() RuntimeBeforeLinkEvmFunction {
+	return r.beforeReqFunctions.beforeLinkEvmFunction
+}
+
+func (r *Runtime) AfterLinkEvm() RuntimeAfterLinkEvmFunction {
+	return r.afterReqFunctions.afterLinkEvmFunction
 }
 
 func (r *Runtime) BeforeLinkCustom() RuntimeBeforeLinkCustomFunction {

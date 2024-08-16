@@ -341,7 +341,7 @@
     },
     "/v2/account/authenticate/evm": {
       "post": {
-        "summary": "Authenticate a user with Google against the server.",
+        "summary": "Authenticate a user with Evm against the server.",
         "operationId": "LayerG_AuthenticateEvm",
         "responses": {
           "200": {
@@ -840,6 +840,41 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/apiAccountEmail"
+            }
+          }
+        ],
+        "tags": [
+          "LayerG"
+        ]
+      }
+    },
+    "/v2/account/link/evm": {
+      "post": {
+        "summary": "Add an EVM to the social profiles on the current user's account.",
+        "operationId": "LayerG_LinkEvm",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Send a Telegram token to the server. Used with authenticate/link/unlink.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiAccountEvm"
             }
           }
         ],
