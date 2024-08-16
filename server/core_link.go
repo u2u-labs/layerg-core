@@ -180,6 +180,40 @@ AND (NOT EXISTS
 	return nil
 }
 
+func LinkEvm(ctx context.Context, logger *zap.Logger, db *sql.DB, userID uuid.UUID, address, signature string) error {
+	if address == "" || signature == "" {
+		return status.Error(codes.InvalidArgument, "Wallet address and signature is required.")
+	}
+	// Validate the signature
+	valid, err := verifySignature("sample", address, signature)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, "Invalid signature.")
+	}
+	if !valid {
+		return status.Error(codes.Unauthenticated, "Signature does not match the address.")
+	}
+
+	res, err := db.ExecContext(ctx, `
+UPDATE users
+SET onchain_id = $2, update_time = now()
+WHERE (id = $1)
+AND (NOT EXISTS
+    (SELECT id
+     FROM users
+     WHERE onchain_id = $2 AND NOT id = $1))`,
+		userID,
+		address,
+	)
+
+	if err != nil {
+		logger.Error("Could not link wallet address.", zap.Error(err), zap.Any("input", address))
+		return status.Error(codes.Internal, "Error while trying to link wallet address.")
+	} else if count, _ := res.RowsAffected(); count == 0 {
+		return status.Error(codes.AlreadyExists, "Address is already in use.")
+	}
+	return nil
+}
+
 func LinkFacebook(ctx context.Context, logger *zap.Logger, db *sql.DB, socialClient *social.Client, tracker Tracker, router MessageRouter, userID uuid.UUID, username, appId, token string, sync bool) error {
 	if token == "" {
 		return status.Error(codes.InvalidArgument, "Facebook access token is required.")

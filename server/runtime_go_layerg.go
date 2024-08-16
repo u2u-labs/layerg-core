@@ -379,6 +379,36 @@ func (n *RuntimeGoLayerGModule) AuthenticateTelegram(ctx context.Context, telegr
 }
 
 // @group authenticate
+// @summary Authenticate user and create a session token using a Evm Address and signature.
+// @param ctx(type=context.Context) The context object represents information about the server and requester.
+// @param evmAddress(type=string) Wallet address.
+// @param signature(type=string) signature of the wallet.
+// @param username(type=string) The user's username. If left empty, one is generated.
+// @param create(type=bool) Create user if one didn't exist previously.
+// @return userID(string) The user ID of the authenticated user.
+// @return username(string) The username of the authenticated user.
+// @return create(bool) Value indicating if this account was just created or already existed.
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) AuthenticateEvm(ctx context.Context, evmAddress, signature, username string, create bool) (string, string, bool, error) {
+	if evmAddress == "" {
+		return "", "", false, errors.New("expects Wallet address string")
+	}
+	if signature == "" {
+		return "", "", false, errors.New("expects signature from wallet string")
+	}
+
+	if username == "" {
+		username = generateUsername()
+	} else if invalidUsernameRegex.MatchString(username) {
+		return "", "", false, errors.New("expects username to be valid, no spaces or control characters allowed")
+	} else if len(username) > 128 {
+		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
+	}
+
+	return AuthenticateEvm(ctx, n.logger, n.db, evmAddress, signature, username, create)
+}
+
+// @group authenticate
 // @summary Authenticate user and create a session token using a Steam account token.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
 // @param token(type=string) Steam token.
