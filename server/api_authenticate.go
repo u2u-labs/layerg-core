@@ -429,34 +429,40 @@ func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateE
 	var created bool
 	var err error
 
-	if attemptUsernameLogin {
-		// Attempting to log in with username/password. Create flag is ignored, creation is not possible here.
-		dbUserID, err = AuthenticateUsername(ctx, s.logger, s.db, username, email.Password)
-	} else {
-		// Attempting email authentication, may or may not create.
-		cleanEmail := strings.ToLower(email.Email)
-		create := in.Create == nil || in.Create.Value
+	// if attemptUsernameLogin {
+	// 	// Attempting to log in with username/password. Create flag is ignored, creation is not possible here.
+	// 	dbUserID, err = AuthenticateUsername(ctx, s.logger, s.db, username, email.Password)
+	// } else {
+	// 	// Attempting email authentication, may or may not create.
+	// 	cleanEmail := strings.ToLower(email.Email)
+	// 	create := in.Create == nil || in.Create.Value
 
-		dbUserID, username, created, err = AuthenticateEmail(ctx, s.logger, s.db, cleanEmail, email.Password, username, create)
-	}
-	if err != nil {
-		return nil, err
-	}
+	// 	dbUserID, username, created, err = AuthenticateEmail(ctx, s.logger, s.db, cleanEmail, email.Password, username, create)
+	// }
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// --------------------- CALL API AUTHENTICATOR ----------------------
 
 	if s.config.GetSession().SingleSession {
 		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
 	}
-
+	token, refreshToken, err := AuthenticateUser(in.Account.Email, in.Account.Password, in.Account.Vars)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Print("refresh token: ", refreshToken)
 	tokenID := uuid.Must(uuid.NewV4()).String()
-	token, exp := generateToken(s.config, tokenID, dbUserID, username, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, username, in.Account.Vars)
-	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
+	// token, exp := generateToken(s.config, tokenID, dbUserID, username, in.Account.Vars)
+	// refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, username, in.Account.Vars)
+	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), 60, tokenID, 3600, tokenID)
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
 	// After hook.
 	if fn := s.runtime.AfterAuthenticateEmail(); fn != nil {
 		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, username, in.Account.Vars, exp, clientIP, clientPort, session, in)
+			return fn(ctx, s.logger, dbUserID, username, in.Account.Vars, 60, clientIP, clientPort, session, in)
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.

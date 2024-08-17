@@ -3,12 +3,14 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/u2u-labs/go-layerg-common/api"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -33,8 +35,17 @@ func (s *ApiServer) GetAccount(ctx context.Context, in *emptypb.Empty) (*api.Acc
 			return nil, err
 		}
 	}
-
-	account, err := GetAccount(ctx, s.logger, s.db, s.statusRegistry, userID)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		status.Error(codes.Internal, "Cannot extract metadata from incoming context")
+		return nil, status.Error(codes.FailedPrecondition, "Cannot extract metadata from incoming context")
+	}
+	auth, ok := md["authorization"]
+	if !ok {
+		auth, ok = md["grpcgateway-authorization"]
+	}
+	fmt.Printf("%v", auth[0])
+	account, err := GetAccountRequest(auth[0])
 	if err != nil {
 		if err == ErrAccountNotFound {
 			return nil, status.Error(codes.NotFound, "Account not found.")
