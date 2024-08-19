@@ -1,10 +1,11 @@
 import {Component, Injectable, OnInit} from '@angular/core';
 import {
-  AddGroupUsersRequest,
+  ConsoleAddGroupUsersBody as AddGroupUsersRequest,
   ApiGroup,
   ApiGroupUserList,
   ConsoleService,
-  GroupUserListGroupUser, UpdateAccountRequest,
+  GroupUserListGroupUser, 
+  ConsoleUpdateAccountBody as UpdateAccountRequest,
   UserGroupListUserGroup,
   UserRole
 } from '../../console.service';

@@ -1,6 +1,6 @@
 import {AfterViewInit, Component, ElementRef, Injectable, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, ActivatedRouteSnapshot, Resolve, Router, RouterStateSnapshot} from '@angular/router';
-import {ApiEndpointDescriptor, ApiEndpointList, CallApiEndpointRequest, ConsoleService} from '../console.service';
+import {ApiEndpointDescriptor, ApiEndpointList, ConsoleCallApiEndpointBody as CallApiEndpointRequest, ConsoleService} from '../console.service';
 import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {Observable} from 'rxjs';
 import {JSONEditor, Mode, toJSONContent, toTextContent} from 'vanilla-jsoneditor';
