@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {ApiAccount, ConsoleService, UnlinkDeviceRequest, UpdateAccountRequest, UserRole} from '../../console.service';
+import {ApiAccount, ConsoleService, ConsoleUnlinkDeviceBody, ConsoleUpdateAccountBody, UserRole} from '../../console.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthenticationService} from '../../authentication.service';
 import {UntypedFormBuilder, UntypedFormGroup} from '@angular/forms';
@@ -55,7 +55,7 @@ export class AuthenticationComponent implements OnInit {
     this.updated = false;
     this.updating = true;
 
-    let body: UpdateAccountRequest = {email: this.f.email.value};
+    let body: ConsoleUpdateAccountBody = {email: this.f.email.value};
     if (this.f.password.dirty) {
       body.password = this.f.password.value;
     }
@@ -74,7 +74,7 @@ export class AuthenticationComponent implements OnInit {
     event.target.disabled = true;
     this.error = '';
 
-    const body: UnlinkDeviceRequest = {
+    const body: ConsoleUnlinkDeviceBody = {
       device_id: this.account.devices[this.f.selected_device_id_index.value].id,
     };
     this.consoleService.unlinkDevice('', this.account.user.id, body).subscribe(() => {

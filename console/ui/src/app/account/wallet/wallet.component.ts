@@ -2,7 +2,7 @@ import {AfterViewInit, Component, ElementRef, Injectable, OnInit, ViewChild} fro
 import {
   ApiAccount,
   ConsoleService,
-  UpdateAccountRequest,
+  ConsoleUpdateAccountBody as UpdateAccountRequest,
   UserRole,
   WalletLedger,
   WalletLedgerList,

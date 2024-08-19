@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {ApiAccount, ConsoleService, UpdateAccountRequest, UserRole} from '../../console.service';
+import {ApiAccount, ConsoleService,ConsoleUpdateAccountBody as UpdateAccountRequest, UserRole} from '../../console.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthenticationService} from '../../authentication.service';
 import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
