@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -15,7 +16,9 @@ import (
 	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/u2u-labs/go-layerg-common/api"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -42,6 +45,84 @@ func (stc *SessionTokenClaims) Valid() error {
 		return vErr
 	}
 	return nil
+}
+
+// func forwardToGlobalAuthenticator(ctx context.Context, url string, in interface{}) (*api.Session, error) {
+// 	requestBody, err := json.Marshal(in)
+// 	fmt.Printf("Forwarding request to global authenticator with body: %s\n", requestBody)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestBody))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	req.Header.Set("Content-Type", "application/json")
+
+// 	client := &http.Client{}
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusOK {
+// 		return nil, fmt.Errorf("failed to forward request, status code: %d", resp.StatusCode)
+// 	}
+
+// 	var session api.Session
+// 	err = json.NewDecoder(resp.Body).Decode(&session)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &session, nil
+// }
+
+func forwardToGlobalAuthenticator(ctx context.Context, address string, in interface{}) (*api.Session, error) {
+	// Set up a connection to the global authenticator server.
+	conn, err := grpc.NewClient(address, grpc.WithInsecure())
+	if err != nil {
+		return nil, fmt.Errorf("did not connect: %v", err)
+	}
+	defer conn.Close()
+
+	// Creating a client for the gRPC service
+	client := NewAuthenticatorServiceClient(conn)
+
+	encodedServerKey := base64.StdEncoding.EncodeToString([]byte("defaultkey:password"))
+
+	md := metadata.New(map[string]string{
+		// "grpc-authorization": encodedServerKey,
+		"authorization": "Basic " + encodedServerKey,
+	})
+
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	// Assuming the input `in` is a type that can be cast to the appropriate request type
+	switch v := in.(type) {
+	case *api.AuthenticateEmailRequest:
+		fmt.Printf("Forwarding request to global authenticator with body: %+v\n", v)
+		session, err := client.AuthenticateEmail(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
+
+	case *api.AuthenticateGoogleRequest:
+		fmt.Printf("Forwarding request to global authenticator with body: %+v\n", v)
+		session, err := client.AuthenticateGoogle(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
+
+	// Add other cases as needed for different request types
+
+	default:
+		return nil, fmt.Errorf("unsupported request type")
+	}
 }
 
 func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest) (*api.Session, error) {
@@ -366,6 +447,9 @@ func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.Authenticate
 }
 
 func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateEmailRequest) (*api.Session, error) {
+	if in.AuthGlobal.Value {
+		return forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateEmail(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
