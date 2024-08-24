@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"net/http"
@@ -135,6 +136,7 @@ func main() {
 	startupLogger.Info("Database connections", zap.Strings("dsns", redactedAddresses))
 
 	db := server.DbConnect(ctx, startupLogger, config, false)
+	go startPeriodicSync(ctx, db, logger)
 
 	// Check migration status and fail fast if the schema has diverged.
 	conn, err := db.Conn(context.Background())
@@ -269,4 +271,24 @@ func newOrLoadCookie(enabled bool, config server.Config) string {
 		_ = os.WriteFile(filePath, cookie.Bytes(), 0o644)
 	}
 	return cookie.String()
+}
+
+func startPeriodicSync(ctx context.Context, db *sql.DB, logger *zap.Logger) {
+	logger.Info("Starting syncing credential")
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	// Run the sync immediately on start
+	go server.SyncUsers(ctx, db)
+
+	for {
+		select {
+		case <-ticker.C:
+			go server.SyncUsers(ctx, db)
+		case <-ctx.Done():
+			logger.Info("Stopping periodic sync due to context cancellation")
+			return
+		}
+	}
 }
