@@ -136,7 +136,7 @@ func main() {
 	startupLogger.Info("Database connections", zap.Strings("dsns", redactedAddresses))
 
 	db := server.DbConnect(ctx, startupLogger, config, false)
-	go startPeriodicSync(ctx, db, logger)
+	// go startPeriodicSync(ctx, db, logger)
 
 	// Check migration status and fail fast if the schema has diverged.
 	conn, err := db.Conn(context.Background())

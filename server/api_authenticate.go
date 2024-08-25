@@ -81,16 +81,16 @@ func (stc *SessionTokenClaims) Valid() error {
 // }
 
 func forwardToGlobalAuthenticator(ctx context.Context, address string, in interface{}) (*api.Session, error) {
-	// Set up a connection to the global authenticator server.
+	// TODO: for requesting asset, get token from global and request to asset
 	conn, err := grpc.NewClient(address, grpc.WithInsecure())
 	if err != nil {
 		return nil, fmt.Errorf("did not connect: %v", err)
 	}
 	defer conn.Close()
 
-	// Creating a client for the gRPC service
 	client := NewAuthenticatorServiceClient(conn)
 
+	// Every game developer need to create an maintainer account on global credential and set here to perform action
 	encodedServerKey := base64.StdEncoding.EncodeToString([]byte("defaultkey:password"))
 
 	md := metadata.New(map[string]string{
@@ -100,7 +100,6 @@ func forwardToGlobalAuthenticator(ctx context.Context, address string, in interf
 
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
-	// Assuming the input `in` is a type that can be cast to the appropriate request type
 	switch v := in.(type) {
 	case *api.AuthenticateEmailRequest:
 		fmt.Printf("Forwarding request to global authenticator with body: %+v\n", v)
@@ -117,8 +116,60 @@ func forwardToGlobalAuthenticator(ctx context.Context, address string, in interf
 			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
 		}
 		return session, nil
-
-	// Add other cases as needed for different request types
+	case *api.AuthenticateAppleRequest:
+		session, err := client.AuthenticateApple(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
+	case *api.AuthenticateCustomRequest:
+		session, err := client.AuthenticateCustom(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
+	case *api.AuthenticateDeviceRequest:
+		session, err := client.AuthenticateDevice(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
+	case *api.AuthenticateFacebookRequest:
+		session, err := client.AuthenticateFacebook(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
+	case *api.AuthenticateFacebookInstantGameRequest:
+		session, err := client.AuthenticateFacebookInstantGame(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
+	case *api.AuthenticateGameCenterRequest:
+		session, err := client.AuthenticateGameCenter(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
+	case *api.AuthenticateSteamRequest:
+		session, err := client.AuthenticateSteam(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
+	case *api.AuthenticateEvmRequest:
+		session, err := client.AuthenticateEvm(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
+	case *api.AuthenticateTelegramRequest:
+		session, err := client.AuthenticateTelegram(ctx, v)
+		if err != nil {
+			return nil, status.Errorf(status.Code(err), "failed to forward request: %v", err)
+		}
+		return session, nil
 
 	default:
 		return nil, fmt.Errorf("unsupported request type")
@@ -126,6 +177,11 @@ func forwardToGlobalAuthenticator(ctx context.Context, address string, in interf
 }
 
 func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest) (*api.Session, error) {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateEvm(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -234,6 +290,11 @@ func verifySignature(message, address, signature string) (bool, error) {
 }
 
 func (s *ApiServer) AuthenticateApple(ctx context.Context, in *api.AuthenticateAppleRequest) (*api.Session, error) {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateApple(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -305,6 +366,11 @@ func (s *ApiServer) AuthenticateApple(ctx context.Context, in *api.AuthenticateA
 }
 
 func (s *ApiServer) AuthenticateCustom(ctx context.Context, in *api.AuthenticateCustomRequest) (*api.Session, error) {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateCustom(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -376,6 +442,11 @@ func (s *ApiServer) AuthenticateCustom(ctx context.Context, in *api.Authenticate
 }
 
 func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.AuthenticateDeviceRequest) (*api.Session, error) {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateDevice(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -447,9 +518,13 @@ func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.Authenticate
 }
 
 func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateEmailRequest) (*api.Session, error) {
-	if in.AuthGlobal.Value {
-		return forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// if in.AuthGlobal.Value {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
 	}
+
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateEmail(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -511,7 +586,7 @@ func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateE
 
 	var dbUserID string
 	var created bool
-	var err error
+	// var err error
 
 	if attemptUsernameLogin {
 		// Attempting to log in with username/password. Create flag is ignored, creation is not possible here.
@@ -551,6 +626,11 @@ func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateE
 }
 
 func (s *ApiServer) AuthenticateFacebook(ctx context.Context, in *api.AuthenticateFacebookRequest) (*api.Session, error) {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateFacebook(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -623,6 +703,11 @@ func (s *ApiServer) AuthenticateFacebook(ctx context.Context, in *api.Authentica
 }
 
 func (s *ApiServer) AuthenticateFacebookInstantGame(ctx context.Context, in *api.AuthenticateFacebookInstantGameRequest) (*api.Session, error) {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateFacebookInstantGame(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -690,6 +775,11 @@ func (s *ApiServer) AuthenticateFacebookInstantGame(ctx context.Context, in *api
 }
 
 func (s *ApiServer) AuthenticateGameCenter(ctx context.Context, in *api.AuthenticateGameCenterRequest) (*api.Session, error) {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateGameCenter(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -769,6 +859,11 @@ func (s *ApiServer) AuthenticateGameCenter(ctx context.Context, in *api.Authenti
 }
 
 func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.AuthenticateGoogleRequest) (*api.Session, error) {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateGoogle(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -836,6 +931,11 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 }
 
 func (s *ApiServer) AuthenticateSteam(ctx context.Context, in *api.AuthenticateSteamRequest) (*api.Session, error) {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateSteam(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -943,6 +1043,11 @@ func generateUsername() string {
 }
 
 func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.AuthenticateTelegramRequest) (*api.Session, error) {
+	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateTelegram(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
