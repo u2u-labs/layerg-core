@@ -91,7 +91,7 @@ func forwardToGlobalAuthenticator(ctx context.Context, address string, in interf
 	client := NewAuthenticatorServiceClient(conn)
 
 	// Every game developer need to create an maintainer account on global credential and set here to perform action
-	encodedServerKey := base64.StdEncoding.EncodeToString([]byte("defaultkey:password"))
+	encodedServerKey := base64.StdEncoding.EncodeToString([]byte("baohaha:Abc12345:5d2aecb0-0df8-4d46-8a3a-823d4433d096:4b7607caae421b7edd763cb0e883f6a6"))
 
 	md := metadata.New(map[string]string{
 		// "grpc-authorization": encodedServerKey,

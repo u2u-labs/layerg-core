@@ -113,8 +113,8 @@ func ParseArgs(logger *zap.Logger, args []string) Config {
 func ValidateConfig(logger *zap.Logger, c Config) map[string]string {
 	// Fail fast on invalid values.
 	ValidateConfigDatabase(logger, c)
-	if l := len(c.GetName()); l < 1 || l > 16 {
-		logger.Fatal("Name must be 1-16 characters", zap.String("param", "name"))
+	if l := len(c.GetName()); l < 1 || l > 64 {
+		logger.Fatal("Name must be 1-64 characters", zap.String("param", "name"))
 	}
 	if c.GetShutdownGraceSec() < 0 {
 		logger.Fatal("Shutdown grace period must be >= 0", zap.Int("shutdown_grace_sec", c.GetShutdownGraceSec()))
@@ -468,7 +468,7 @@ func NewConfig(logger *zap.Logger) *config {
 		logger.Fatal("Error getting current working directory.", zap.Error(err))
 	}
 	return &config{
-		Name:             "layerg",
+		Name:             "layerg", // id of project
 		Datadir:          filepath.Join(cwd, "data"),
 		ShutdownGraceSec: 0,
 		Logger:           NewLoggerConfig(),
