@@ -177,11 +177,6 @@ func forwardToGlobalAuthenticator(ctx context.Context, address string, in interf
 }
 
 func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest) (*api.Session, error) {
-	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
-	// }
-	if err != nil {
-		return nil, err
-	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateEvm(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -248,7 +243,14 @@ func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvm
 		}
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
-
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
+	if in.GetAccount().AuthGlobal.Value == true {
+		return global, nil
+	}
 	return session, nil
 }
 
@@ -290,11 +292,6 @@ func verifySignature(message, address, signature string) (bool, error) {
 }
 
 func (s *ApiServer) AuthenticateApple(ctx context.Context, in *api.AuthenticateAppleRequest) (*api.Session, error) {
-	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
-	// }
-	if err != nil {
-		return nil, err
-	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateApple(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -361,7 +358,14 @@ func (s *ApiServer) AuthenticateApple(ctx context.Context, in *api.AuthenticateA
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
-
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
+	if in.AuthGlobal.Value == true {
+		return global, nil
+	}
 	return session, nil
 }
 
@@ -438,15 +442,19 @@ func (s *ApiServer) AuthenticateCustom(ctx context.Context, in *api.Authenticate
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
-	return session, nil
-}
-
-func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.AuthenticateDeviceRequest) (*api.Session, error) {
-	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
 	// }
 	if err != nil {
 		return nil, err
 	}
+	if in.AuthGlobal.Value == true {
+		return global, nil
+	}
+
+	return session, nil
+}
+
+func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.AuthenticateDeviceRequest) (*api.Session, error) {
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateDevice(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -513,18 +521,18 @@ func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.Authenticate
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
-
-	return session, nil
-}
-
-func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateEmailRequest) (*api.Session, error) {
-	// if in.AuthGlobal.Value {
-	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
 	// }
 	if err != nil {
 		return nil, err
 	}
+	if in.AuthGlobal.Value == true {
+		return global, nil
+	}
+	return session, nil
+}
 
+func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateEmailRequest) (*api.Session, error) {
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateEmail(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -586,7 +594,7 @@ func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateE
 
 	var dbUserID string
 	var created bool
-	// var err error
+	var err error
 
 	if attemptUsernameLogin {
 		// Attempting to log in with username/password. Create flag is ignored, creation is not possible here.
@@ -621,16 +629,19 @@ func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateE
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
+	if in.AuthGlobal.Value == true {
+		return global, nil
+	}
 
 	return session, nil
 }
 
 func (s *ApiServer) AuthenticateFacebook(ctx context.Context, in *api.AuthenticateFacebookRequest) (*api.Session, error) {
-	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
-	// }
-	if err != nil {
-		return nil, err
-	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateFacebook(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -699,15 +710,19 @@ func (s *ApiServer) AuthenticateFacebook(ctx context.Context, in *api.Authentica
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
-	return session, nil
-}
-
-func (s *ApiServer) AuthenticateFacebookInstantGame(ctx context.Context, in *api.AuthenticateFacebookInstantGameRequest) (*api.Session, error) {
-	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
 	// }
 	if err != nil {
 		return nil, err
 	}
+	if in.AuthGlobal.Value == true {
+		return global, nil
+	}
+
+	return session, nil
+}
+
+func (s *ApiServer) AuthenticateFacebookInstantGame(ctx context.Context, in *api.AuthenticateFacebookInstantGameRequest) (*api.Session, error) {
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateFacebookInstantGame(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -770,16 +785,19 @@ func (s *ApiServer) AuthenticateFacebookInstantGame(ctx context.Context, in *api
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
+	if in.AuthGlobal.Value == true {
+		return global, nil
+	}
 
 	return session, nil
 }
 
 func (s *ApiServer) AuthenticateGameCenter(ctx context.Context, in *api.AuthenticateGameCenterRequest) (*api.Session, error) {
-	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
-	// }
-	if err != nil {
-		return nil, err
-	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateGameCenter(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -854,16 +872,19 @@ func (s *ApiServer) AuthenticateGameCenter(ctx context.Context, in *api.Authenti
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
+	if in.AuthGlobal.Value == true {
+		return global, nil
+	}
 
 	return session, nil
 }
 
 func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.AuthenticateGoogleRequest) (*api.Session, error) {
-	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
-	// }
-	if err != nil {
-		return nil, err
-	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateGoogle(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -926,16 +947,18 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
-
-	return session, nil
-}
-
-func (s *ApiServer) AuthenticateSteam(ctx context.Context, in *api.AuthenticateSteamRequest) (*api.Session, error) {
-	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
 	// }
 	if err != nil {
 		return nil, err
 	}
+	if in.AuthGlobal.Value == true {
+		return global, nil
+	}
+	return session, nil
+}
+
+func (s *ApiServer) AuthenticateSteam(ctx context.Context, in *api.AuthenticateSteamRequest) (*api.Session, error) {
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateSteam(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -1007,7 +1030,14 @@ func (s *ApiServer) AuthenticateSteam(ctx context.Context, in *api.AuthenticateS
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
-
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
+	if in.AuthGlobal.Value == true {
+		return global, nil
+	}
 	return session, nil
 }
 
@@ -1043,11 +1073,6 @@ func generateUsername() string {
 }
 
 func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.AuthenticateTelegramRequest) (*api.Session, error) {
-	_, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
-	// }
-	if err != nil {
-		return nil, err
-	}
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateTelegram(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -1108,6 +1133,14 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 		}
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	}
+	global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	if err != nil {
+		return nil, err
+	}
+	if in.AuthGlobal.Value == true {
+		return global, nil
 	}
 
 	return session, nil
