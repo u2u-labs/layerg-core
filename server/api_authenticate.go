@@ -618,6 +618,7 @@ func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateE
 	token, exp := generateToken(s.config, tokenID, dbUserID, username, in.Account.Vars)
 	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, username, in.Account.Vars)
 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
+	s.activeTokenCacheUser.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken, 0, "", 0, "")
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
 	// After hook.
@@ -634,6 +635,8 @@ func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateE
 	if err != nil {
 		return nil, err
 	}
+	s.activeTokenCacheUser.Add(uuid.FromStringOrNil(dbUserID), 0, "", 0, "", 60, global.Token, 3600, global.RefreshToken)
+
 	if in.AuthGlobal.Value == true {
 		return global, nil
 	}
