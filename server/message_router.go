@@ -1,6 +1,7 @@
 package server
 
 import (
+	ncapi "github.com/doublemo/nakama-cluster/api"
 	"github.com/u2u-labs/go-layerg-common/rtapi"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -46,7 +47,17 @@ func (r *LocalMessageRouter) SendToPresenceIDs(logger *zap.Logger, presenceIDs [
 	var payloadProtobuf []byte
 	var payloadJSON []byte
 
+	remoteSessions := make(map[string][]string, 0)
 	for _, presenceID := range presenceIDs {
+		if presenceID.Node != CC().NodeId() {
+			if _, ok := remoteSessions[presenceID.Node]; !ok {
+				remoteSessions[presenceID.Node] = make([]string, 0)
+			}
+
+			remoteSessions[presenceID.Node] = append(remoteSessions[presenceID.Node], presenceID.SessionID.String())
+			continue
+		}
+
 		session := r.sessionRegistry.Get(presenceID.SessionID)
 		if session == nil {
 			logger.Debug("No session to route to", zap.String("sid", presenceID.SessionID.String()))
@@ -81,6 +92,18 @@ func (r *LocalMessageRouter) SendToPresenceIDs(logger *zap.Logger, presenceIDs [
 		}
 		if err != nil {
 			logger.Error("Failed to route message", zap.String("sid", presenceID.SessionID.String()), zap.Error(err))
+		}
+	}
+
+	if len(remoteSessions) < 1 {
+		return
+	}
+
+	bytes, _ := proto.Marshal(envelope)
+	for node, sessions := range remoteSessions {
+		err := CC().Send(&ncapi.Envelope{Payload: &ncapi.Envelope_Message{Message: &ncapi.Message{SessionID: sessions, Content: bytes}}}, node)
+		if err != nil {
+			logger.Error("Failed to route message", zap.String("node", node), zap.Any("sid", sessions), zap.Error(err))
 		}
 	}
 }

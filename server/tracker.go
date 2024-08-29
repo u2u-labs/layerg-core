@@ -132,6 +132,11 @@ type Tracker interface {
 	// Remove the given session from any streams matching the given mode, except the specified stream.
 	UntrackLocalByModes(sessionID uuid.UUID, modes map[uint8]struct{}, skipStream PresenceStream)
 
+	UntrackByStreamFromNode(node string, stream PresenceStream)
+	UntrackByModes(sessionID uuid.UUID, modes map[uint8]struct{}, skipStream PresenceStream)
+	UntrackFromNode(node string, sessionID uuid.UUID, stream PresenceStream, userID uuid.UUID)
+	UntrackByModesFromNode(node string, sessionID uuid.UUID, modes map[uint8]struct{}, skipStream PresenceStream)
+
 	// List the nodes that have at least one presence for the given stream.
 	ListNodesForStream(stream PresenceStream) map[string]struct{}
 
@@ -154,6 +159,10 @@ type Tracker interface {
 	ListPresenceIDByStream(stream PresenceStream) []*PresenceID
 	// Fast lookup of presences for a set of user IDs + stream mode.
 	ListPresenceIDByStreams(fill map[PresenceStream][]*PresenceID)
+
+	TrackFromNode(ctx context.Context, node string, sessionID uuid.UUID, stream PresenceStream, userID uuid.UUID, meta PresenceMeta, allowIfFirstForSession bool) (bool, bool)
+	UntrackAllFromNode(node string, sessionID uuid.UUID, reason runtime.PresenceReason)
+	UpdateFromNode(ctx context.Context, node string, sessionID uuid.UUID, stream PresenceStream, userID uuid.UUID, meta PresenceMeta, allowIfFirstForSession bool) bool
 }
 
 type presenceCompact struct {

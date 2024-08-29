@@ -209,7 +209,12 @@ func main() {
 
 	apiServer := server.StartApiServer(logger, startupLogger, db, jsonpbMarshaler, jsonpbUnmarshaler, config, version, socialClient, storageIndex, leaderboardCache, leaderboardRankCache, sessionRegistry, sessionCache, statusRegistry, matchRegistry, matchmaker, tracker, router, streamManager, metrics, pipeline, runtime, activeSessionCache)
 	consoleServer := server.StartConsoleServer(logger, startupLogger, db, config, tracker, router, streamManager, metrics, sessionRegistry, sessionCache, consoleSessionCache, loginAttemptCache, statusRegistry, statusHandler, runtimeInfo, matchRegistry, configWarnings, semver, leaderboardCache, leaderboardRankCache, leaderboardScheduler, storageIndex, apiServer, runtime, cookie)
-
+	clusterServer := server.StartClusterServer(ctx, startupLogger, config)
+	clusterServer.SetSessionRegistry(sessionRegistry)
+	clusterServer.SetStatusRegistry(statusRegistry)
+	clusterServer.SetTracker(tracker)
+	clusterServer.SetPartyRegistry(partyRegistry)
+	clusterServer.SetMatchRegistry(matchRegistry)
 	if telemetryEnabled {
 		const telemetryKey = "YU1bIKUhjQA9WC0O6ouIRIWTaPlJ5kFs"
 		_ = se.Start(telemetryKey, cookie, semver, "layerg")
@@ -233,6 +238,7 @@ func main() {
 	ctxCancelFn()
 
 	// Gracefully stop remaining server components.
+	clusterServer.Stop()
 	apiServer.Stop()
 	consoleServer.Stop()
 	matchmaker.Stop()
