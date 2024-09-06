@@ -51,9 +51,10 @@ type RuntimeGoLayerGModule struct {
 	satori               runtime.Satori
 	fleetManager         runtime.FleetManager
 	storageIndex         StorageIndex
+	activeTokenCacheUser ActiveTokenCache
 }
 
-func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex) *RuntimeGoLayerGModule {
+func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache) *RuntimeGoLayerGModule {
 	return &RuntimeGoLayerGModule{
 		logger:               logger,
 		db:                   db,
@@ -72,6 +73,7 @@ func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler
 		streamManager:        streamManager,
 		router:               router,
 		storageIndex:         storageIndex,
+		activeTokenCacheUser: activeCache,
 
 		node: config.GetName(),
 

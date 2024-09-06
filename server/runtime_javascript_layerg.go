@@ -66,6 +66,7 @@ type runtimeJavascriptLayerGModule struct {
 	streamManager        StreamManager
 	router               MessageRouter
 	storageIndex         StorageIndex
+	activeTokenCacheUser ActiveTokenCache
 
 	node          string
 	matchCreateFn RuntimeMatchCreateFunction
@@ -74,7 +75,7 @@ type runtimeJavascriptLayerGModule struct {
 	satori runtime.Satori
 }
 
-func NewRuntimeJavascriptLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, rankCache LeaderboardRankCache, storageIndex StorageIndex, localCache *RuntimeJavascriptLocalCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, eventFn RuntimeEventCustomFunction, matchCreateFn RuntimeMatchCreateFunction) *runtimeJavascriptLayerGModule {
+func NewRuntimeJavascriptLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, rankCache LeaderboardRankCache, storageIndex StorageIndex, localCache *RuntimeJavascriptLocalCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, eventFn RuntimeEventCustomFunction, matchCreateFn RuntimeMatchCreateFunction, activeCache ActiveTokenCache) *runtimeJavascriptLayerGModule {
 	return &runtimeJavascriptLayerGModule{
 		ctx:                  context.Background(),
 		logger:               logger,
@@ -98,6 +99,7 @@ func NewRuntimeJavascriptLayerGModule(logger *zap.Logger, db *sql.DB, protojsonM
 		httpClient:           &http.Client{},
 		httpClientInsecure:   &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}},
 		storageIndex:         storageIndex,
+		activeTokenCacheUser: activeCache,
 
 		node:          config.GetName(),
 		eventFn:       eventFn,
