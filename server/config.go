@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	nakamacluster "github.com/doublemo/nakama-cluster"
 	"github.com/u2u-labs/layerg-core/flags"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -39,6 +40,7 @@ type Config interface {
 	GetSatori() *SatoriConfig
 	GetStorage() *StorageConfig
 	GetLimit() int
+	GetCluster() *ClusterConfig
 
 	Clone() (Config, error)
 }
@@ -397,6 +399,9 @@ func ValidateConfig(logger *zap.Logger, c Config) map[string]string {
 	}
 
 	c.GetSatori().Validate(logger)
+	if c.GetCluster().Addr == "" {
+		c.GetCluster().Addr = "0.0.0.0"
+	}
 
 	return configWarnings
 }
@@ -459,6 +464,7 @@ type config struct {
 	Satori           *SatoriConfig      `yaml:"satori" json:"satori" usage:"Satori integration settings."`
 	Storage          *StorageConfig     `yaml:"storage" json:"storage" usage:"Storage settings."`
 	Limit            int                `json:"-"` // Only used for migrate command.
+	Cluster          *ClusterConfig     `yaml:"cluster" json:"cluster" usage:"Cluster settings."`
 }
 
 // NewConfig constructs a Config struct which represents server settings, and populates it with default values.
@@ -488,6 +494,7 @@ func NewConfig(logger *zap.Logger) *config {
 		Satori:           NewSatoriConfig(),
 		Storage:          NewStorageConfig(),
 		Limit:            -1,
+		Cluster:          NewClusterConfig(),
 	}
 }
 
@@ -508,6 +515,7 @@ func (c *config) Clone() (Config, error) {
 	configSatori := *(c.Satori)
 	configStorage := *(c.Storage)
 	configGoogleAuth := *(c.GoogleAuth)
+	configCluster := *(c.Cluster)
 	nc := &config{
 		Name:             c.Name,
 		Datadir:          c.Datadir,
@@ -528,6 +536,7 @@ func (c *config) Clone() (Config, error) {
 		Satori:           &configSatori,
 		GoogleAuth:       &configGoogleAuth,
 		Storage:          &configStorage,
+		Cluster:          &configCluster,
 	}
 	nc.Socket.CertPEMBlock = make([]byte, len(c.Socket.CertPEMBlock))
 	copy(nc.Socket.CertPEMBlock, c.Socket.CertPEMBlock)
@@ -632,6 +641,10 @@ func (c *config) GetStorage() *StorageConfig {
 
 func (c *config) GetLimit() int {
 	return c.Limit
+}
+
+func (c *config) GetCluster() *ClusterConfig {
+	return c.Cluster
 }
 
 // LoggerConfig is configuration relevant to logging levels and output.
@@ -1101,4 +1114,29 @@ type StorageConfig struct {
 
 func NewStorageConfig() *StorageConfig {
 	return &StorageConfig{}
+}
+
+type ClusterConfig struct {
+	nakamacluster.Config `yaml:"server" json:"server" usage:"Server settings"`
+	Etcd                 *EtcdConfig `yaml:"etcd" json:"etcd" usage:"Etcd settings"`
+}
+
+type EtcdConfig struct {
+	Endpoints     []string `yaml:"endpoints" json:"endpoints" usage:"Endpoints is a list of URLs."`
+	Cert          string   `yaml:"cert" json:"cert" usage:"Cert is the _server_ cert, it will also be used as a _client_ certificate if ClientCertFile is empty"`
+	Key           string   `yaml:"key" json:"key" usage:"Key is the key for the Cert."`
+	CACert        string   `yaml:"ca_cert" json:"ca_cert" usage:"CACert is the key for the Cert."`
+	DialTimeout   int      `yaml:"dial_timeout" json:"dial_timeout" usage:"DialTimeout is the timeout for failing to establish a connection."`
+	DialKeepAlive int      `yaml:"dial_keep_alive" json:"dial_keep_alive" usage:"DialKeepAliveTime is the time after which client pings the server to see if transport is alive."`
+	Username      string   `yaml:"username" json:"username" usage:"Username is a user name for authentication."`
+	Password      string   `yaml:"password" json:"password" usage:"Password is a password for authentication."`
+}
+
+func NewClusterConfig() *ClusterConfig {
+	return &ClusterConfig{
+		Config: *nakamacluster.NewConfig(),
+		Etcd: &EtcdConfig{
+			Endpoints: []string{"127.0.0.1:2379"},
+		},
+	}
 }
