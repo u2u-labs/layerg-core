@@ -189,6 +189,41 @@ func (s *testMessageRouter) SendToAll(*zap.Logger, *rtapi.Envelope, bool)       
 // testTracker implements the Tracker interface and does nothing
 type testTracker struct{}
 
+// TrackFromNode implements Tracker.
+func (s *testTracker) TrackFromNode(ctx context.Context, node string, sessionID uuid.UUID, stream PresenceStream, userID uuid.UUID, meta PresenceMeta, allowIfFirstForSession bool) (bool, bool) {
+	panic("unimplemented")
+}
+
+// UntrackAllFromNode implements Tracker.
+func (s *testTracker) UntrackAllFromNode(node string, sessionID uuid.UUID, reason runtime.PresenceReason) {
+	panic("unimplemented")
+}
+
+// UntrackByModes implements Tracker.
+func (s *testTracker) UntrackByModes(sessionID uuid.UUID, modes map[uint8]struct{}, skipStream PresenceStream) {
+	panic("unimplemented")
+}
+
+// UntrackByModesFromNode implements Tracker.
+func (s *testTracker) UntrackByModesFromNode(node string, sessionID uuid.UUID, modes map[uint8]struct{}, skipStream PresenceStream) {
+	panic("unimplemented")
+}
+
+// UntrackByStreamFromNode implements Tracker.
+func (s *testTracker) UntrackByStreamFromNode(node string, stream PresenceStream) {
+	panic("unimplemented")
+}
+
+// UntrackFromNode implements Tracker.
+func (s *testTracker) UntrackFromNode(node string, sessionID uuid.UUID, stream PresenceStream, userID uuid.UUID) {
+	panic("unimplemented")
+}
+
+// UpdateFromNode implements Tracker.
+func (s *testTracker) UpdateFromNode(ctx context.Context, node string, sessionID uuid.UUID, stream PresenceStream, userID uuid.UUID, meta PresenceMeta, allowIfFirstForSession bool) bool {
+	panic("unimplemented")
+}
+
 func (s *testTracker) SetMatchJoinListener(func(id uuid.UUID, joins []*MatchPresence))   {}
 func (s *testTracker) SetMatchLeaveListener(func(id uuid.UUID, leaves []*MatchPresence)) {}
 func (s *testTracker) SetPartyJoinListener(func(id uuid.UUID, joins []*Presence))        {}

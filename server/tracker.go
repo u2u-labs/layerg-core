@@ -306,6 +306,9 @@ func (t *LocalTracker) Track(ctx context.Context, sessionID uuid.UUID, stream Pr
 	if !meta.Hidden {
 		t.queueEvent([]*Presence{p}, nil)
 	}
+	if err := CC().NotifyTrack(p); err != nil {
+		t.logger.Error("Failed to notify track", zap.Error(err))
+	}
 	return true, true
 }
 
@@ -326,6 +329,7 @@ func (t *LocalTracker) TrackMulti(ctx context.Context, sessionID uuid.UUID, ops 
 	default:
 	}
 
+	presences := make([]*Presence, 0, len(ops))
 	for _, op := range ops {
 		syncAtomic.StoreUint32(&op.Meta.Reason, uint32(runtime.PresenceReasonJoin))
 		pc := presenceCompact{ID: PresenceID{Node: t.name, SessionID: sessionID}, Stream: op.Stream, UserID: userID}
@@ -366,11 +370,15 @@ func (t *LocalTracker) TrackMulti(ctx context.Context, sessionID uuid.UUID, ops 
 		if !op.Meta.Hidden {
 			joins = append(joins, p)
 		}
+		presences = append(presences, p)
 	}
 	t.Unlock()
 
 	if len(joins) != 0 {
 		t.queueEvent(joins, nil)
+	}
+	if err := CC().NotifyTrack(presences...); err != nil {
+		t.logger.Error("Failed to notify track", zap.Error(err))
 	}
 	return true
 }
@@ -428,11 +436,15 @@ func (t *LocalTracker) Untrack(sessionID uuid.UUID, stream PresenceStream, userI
 		syncAtomic.StoreUint32(&p.Meta.Reason, uint32(runtime.PresenceReasonLeave))
 		t.queueEvent(nil, []*Presence{p})
 	}
+	if err := CC().NotifyUntrack(&Presence{ID: PresenceID{Node: t.name, SessionID: sessionID}, Stream: stream, UserID: userID}); err != nil {
+		t.logger.Error("Failed to notify untrack", zap.Error(err))
+	}
 }
 
 func (t *LocalTracker) UntrackMulti(sessionID uuid.UUID, streams []*PresenceStream, userID uuid.UUID) {
 	leaves := make([]*Presence, 0, len(streams))
 	t.Lock()
+	presences := make([]*Presence, 0, len(streams))
 
 	for _, stream := range streams {
 		pc := presenceCompact{ID: PresenceID{Node: t.name, SessionID: sessionID}, Stream: *stream, UserID: userID}
@@ -484,11 +496,15 @@ func (t *LocalTracker) UntrackMulti(sessionID uuid.UUID, streams []*PresenceStre
 			syncAtomic.StoreUint32(&p.Meta.Reason, uint32(runtime.PresenceReasonLeave))
 			leaves = append(leaves, p)
 		}
+		presences = append(presences, &Presence{ID: PresenceID{Node: t.name, SessionID: sessionID}, Stream: *stream, UserID: userID})
 	}
 	t.Unlock()
 
 	if len(leaves) != 0 {
 		t.queueEvent(nil, leaves)
+	}
+	if err := CC().NotifyUntrack(presences...); err != nil {
+		t.logger.Error("Failed to notify untrack", zap.Error(err))
 	}
 }
 
@@ -539,6 +555,9 @@ func (t *LocalTracker) UntrackAll(sessionID uuid.UUID, reason runtime.PresenceRe
 	t.Unlock()
 	if len(leaves) != 0 {
 		t.queueEvent(nil, leaves)
+	}
+	if err := CC().NotifyUntrackAll(sessionID, reason); err != nil {
+		t.logger.Error("Failed to notify untrack all", zap.Error(err))
 	}
 }
 
@@ -604,6 +623,9 @@ func (t *LocalTracker) Update(ctx context.Context, sessionID uuid.UUID, stream P
 		// Guaranteed joins and/or leaves are not empty or we wouldn't be inside this block.
 		t.queueEvent(joins, leaves)
 	}
+	if err := CC().NotifyTrack(p); err != nil {
+		t.logger.Error("Failed to notify track update", zap.Error(err))
+	}
 	return true
 }
 
@@ -640,6 +662,9 @@ func (t *LocalTracker) UntrackLocalByStream(stream PresenceStream) {
 	}
 
 	t.Unlock()
+	if err := CC().NotifyUntrackByStream(stream); err != nil {
+		t.logger.Error("Failed to notify UntrackByStream", zap.Error(err))
+	}
 }
 
 func (t *LocalTracker) UntrackByStream(stream PresenceStream) {

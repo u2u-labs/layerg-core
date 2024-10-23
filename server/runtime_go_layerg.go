@@ -281,6 +281,24 @@ func (n *RuntimeGoLayerGModule) AuthenticateFacebookInstantGame(ctx context.Cont
 	return AuthenticateFacebookInstantGame(ctx, n.logger, n.db, n.socialClient, n.config.GetSocial().FacebookInstantGame.AppSecret, signedPlayerInfo, username, create)
 }
 
+func (n *RuntimeGoLayerGModule) CCRPCCall(ctx context.Context, name, key, cid string, vars map[string]string, in []byte) ([]byte, error) {
+	return CC().RPCCall(ctx, name, key, cid, vars, in)
+}
+
+func (n *RuntimeGoLayerGModule) AuthenticateToken(ctx context.Context, token string) (userID string, username string, vars map[string]string, expiry int64, ok bool) {
+	uid, name, nvars, nexpiry, ntoken, isTokenAuth := parseBearerAuth([]byte(n.config.GetSession().EncryptionKey), token)
+	userID = uid.String()
+	username = name
+	vars = nvars
+	expiry = nexpiry
+	if !isTokenAuth || !n.sessionCache.IsValidSession(uid, expiry, ntoken) {
+		ok = false
+		return
+	}
+	ok = true
+	return
+}
+
 // @group authenticate
 // @summary Authenticate user and create a session token using Apple Game Center credentials.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
