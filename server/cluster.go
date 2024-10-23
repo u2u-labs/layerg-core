@@ -32,6 +32,17 @@ func CC() *ClusterServer {
 	return cc
 }
 
+// Helper function to generate a random character or string
+// func randomString(n int) string {
+// 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+// 	rand.Seed(time.Now().UnixNano())
+// 	b := make([]byte, n)
+// 	for i := range b {
+// 		b[i] = letters[rand.Intn(len(letters))]
+// 	}
+// 	return string(b)
+// }
+
 func StartClusterServer(ctx context.Context, logger *zap.Logger, config Config) *ClusterServer {
 	logger.Info("Initializing cluster")
 	clusterConfig := config.GetCluster()

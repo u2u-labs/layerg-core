@@ -4,11 +4,13 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	nakamacluster "github.com/doublemo/nakama-cluster"
 	"github.com/u2u-labs/layerg-core/flags"
@@ -467,6 +469,16 @@ type config struct {
 	Cluster          *ClusterConfig     `yaml:"cluster" json:"cluster" usage:"Cluster settings."`
 }
 
+func randomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	rand.Seed(time.Now().UnixNano())
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
 // NewConfig constructs a Config struct which represents server settings, and populates it with default values.
 func NewConfig(logger *zap.Logger) *config {
 	cwd, err := os.Getwd()
@@ -474,7 +486,7 @@ func NewConfig(logger *zap.Logger) *config {
 		logger.Fatal("Error getting current working directory.", zap.Error(err))
 	}
 	return &config{
-		Name:             "layerg", // id of project
+		Name:             "layerg-" + randomString(6), // id of project
 		Datadir:          filepath.Join(cwd, "data"),
 		ShutdownGraceSec: 0,
 		Logger:           NewLoggerConfig(),
@@ -1136,7 +1148,7 @@ func NewClusterConfig() *ClusterConfig {
 	return &ClusterConfig{
 		Config: *nakamacluster.NewConfig(),
 		Etcd: &EtcdConfig{
-			Endpoints: []string{"127.0.0.1:2379"},
+			Endpoints: []string{"http://etcd:2379"},
 		},
 	}
 }

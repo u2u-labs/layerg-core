@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/websocket"
+	lgruntime "github.com/u2u-labs/go-layerg-common/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -116,8 +117,18 @@ func NewSocketWsAcceptor(logger *zap.Logger, config Config, sessionRegistry Sess
 			go sessionRegistry.SingleSession(session.Context(), tracker, userID, sessionID)
 		}
 
+		err = CC().NotifySessionUp(sessionID, userID, username, format, true)
+		if err != nil {
+			logger.Warn("Could not notify to session up", zap.Error(err))
+		}
+
 		// Allow the server to begin processing incoming messages from this session.
 		session.Consume()
+
+		err = CC().NotifySessionDown(sessionID, userID, lgruntime.PresenceReasonDisconnect)
+		if err != nil {
+			logger.Warn("Could not notify to session up", zap.Error(err))
+		}
 
 		// Mark the end of the session.
 		metrics.CountWebsocketClosed(1)

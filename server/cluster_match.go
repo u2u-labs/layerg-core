@@ -77,6 +77,7 @@ func (s *ClusterServer) MatchJoinAttempt(ctx context.Context, id uuid.UUID, node
 }
 
 func (s *ClusterServer) onMatchJoinAttempt(node string, msg *ncapi.Envelope) (*ncapi.Envelope, error) {
+	s.logger.Info("Receiving on join attempt")
 	var request ncapi.RMatchJoinAttempt
 	if err := proto.Unmarshal(msg.GetBytes(), &request); err != nil {
 		return nil, err
