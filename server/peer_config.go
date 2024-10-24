@@ -129,9 +129,8 @@ func NewPeerConfig() *PeerConfig {
 		Addr:               "0.0.0.0",
 		Port:               7352,
 		BroadcastQueueSize: 128,
-		// Members:            make([]string, 0),
-		Members: []string{"layerg:7352"},
-		Grpc:    kit.NewGrpcConfig(),
+		Members:            make([]string, 0),
+		Grpc:               kit.NewGrpcConfig(),
 	}
 	// return &PeerConfig{
 	// 	Addr:                "0.0.0.0",

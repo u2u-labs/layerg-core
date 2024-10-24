@@ -488,7 +488,7 @@ func NewConfig(logger *zap.Logger) *config {
 		logger.Fatal("Error getting current working directory.", zap.Error(err))
 	}
 	return &config{
-		Name:             "nakama-" + randomString(6),
+		Name:             "layerg-" + randomString(6),
 		Datadir:          filepath.Join(cwd, "data"),
 		ShutdownGraceSec: 0,
 		Logger:           NewLoggerConfig(),

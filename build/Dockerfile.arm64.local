@@ -1,0 +1,45 @@
+FROM arm64v8/golang:1.22.5-bookworm as builder
+
+# ARG commit
+ARG version
+
+ENV GOOS linux
+ENV GOARCH arm64
+ENV CGO_ENABLED 1
+
+RUN apt-get update && \
+    apt-get -y upgrade && \
+    apt-get install -y --no-install-recommends ca-certificates gcc libc6-dev
+
+WORKDIR /go/build/layerg
+COPY . /go/build/layerg
+
+RUN go mod tidy && \
+    go mod vendor && \
+    go build -o /go/build-out/layerg -trimpath -mod=vendor -gcflags "-trimpath $PWD" -asmflags "-trimpath $PWD" -ldflags "-s -w -X main.version=$version"
+
+FROM arm64v8/debian:bookworm-slim
+
+MAINTAINER Heroic Labs <support@heroiclabs.com>
+
+ARG version
+
+LABEL version=$version
+LABEL variant=layerg
+LABEL description="Distributed server for social and realtime games and apps."
+
+RUN mkdir -p /layerg/data/modules && \
+    apt-get update && \
+    apt-get -y upgrade && \
+    apt-get install -y --no-install-recommends ca-certificates tzdata iproute2 tini && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /layerg/
+COPY --from=builder "/go/build-out/layerg" /layerg/
+EXPOSE 7349 7350 7351
+
+ENTRYPOINT ["tini", "--", "/layerg/layerg"]
+
+HEALTHCHECK --interval=30s --timeout=10s \
+  CMD /layerg/layerg healthcheck || exit 1

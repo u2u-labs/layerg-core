@@ -199,6 +199,12 @@ func main() {
 	runtime.SetPeer(peer)
 	tracker.SetPeer(peer)
 	router.SetPeer(peer)
+
+	numMembers, err := peer.Join(config.GetCluster().Members...)
+	if err != nil {
+		startupLogger.Fatal("failed to join cluster", zap.Error(err))
+	}
+
 	storageIndex.RegisterFilters(runtime)
 	go func() {
 		if err = storageIndex.Load(ctx); err != nil {
@@ -231,7 +237,7 @@ func main() {
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	startupLogger.Info("Startup done")
+	startupLogger.Info("Startup done", zap.Int("numMembers", numMembers))
 
 	// Wait for a termination signal.
 	<-c
