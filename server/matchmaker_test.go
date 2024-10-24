@@ -1,3 +1,17 @@
+// Copyright 2021 The Nakama Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package server
 
 import (
@@ -8,11 +22,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/u2u-labs/go-layerg-common/api"
-
 	"github.com/blugelabs/bluge"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/u2u-labs/go-layerg-common/api"
 	"github.com/u2u-labs/go-layerg-common/rtapi"
 	"github.com/u2u-labs/go-layerg-common/runtime"
 	"go.uber.org/atomic"
@@ -1610,7 +1623,7 @@ func TestGroupIndexes(t *testing.T) {
 // to ensure proper resource management
 func createTestMatchmaker(t fatalable, logger *zap.Logger, tickerActive bool, messageCallback func(presences []*PresenceID, envelope *rtapi.Envelope)) (*LocalMatchmaker, func() error, error) {
 	cfg := NewConfig(logger)
-	cfg.Database.Addresses = []string{"postgres:postgres@localhost:5432/layerg"}
+	cfg.Database.Addresses = []string{"postgres:postgres@localhost:5432/nakama"}
 	cfg.Matchmaker.IntervalSec = 1
 	cfg.Matchmaker.MaxIntervals = 5
 	cfg.Matchmaker.RevPrecision = true
@@ -1643,7 +1656,7 @@ func createTestMatchmaker(t fatalable, logger *zap.Logger, tickerActive bool, me
 		t.Fatalf("error creating test match registry: %v", err)
 	}
 
-	runtime, _, err := NewRuntime(context.Background(), logger, logger, nil, jsonpbMarshaler, jsonpbUnmarshaler, cfg, "", nil, nil, nil, nil, sessionRegistry, nil, nil, nil, tracker, metrics, nil, messageRouter, storageIdx, nil)
+	runtime, _, err := NewRuntime(context.Background(), logger, logger, nil, jsonpbMarshaler, jsonpbUnmarshaler, cfg, "", nil, nil, nil, nil, sessionRegistry, nil, nil, nil, tracker, metrics, nil, messageRouter, storageIdx, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1702,14 +1715,14 @@ func NewLocalBenchMatchmaker(logger, startupLogger *zap.Logger, config Config, r
 		ctx:         ctx,
 		ctxCancelFn: ctxCancelFn,
 
-		indexWriter:    indexWriter,
-		stats:          NewStats(10),
-		statsSnapshot:  atomic.NewPointer[api.MatchmakerStats](&api.MatchmakerStats{}),
-		sessionTickets: make(map[string]map[string]struct{}),
-		partyTickets:   make(map[string]map[string]struct{}),
-		indexes:        make(map[string]*MatchmakerIndex),
-		activeIndexes:  make(map[string]*MatchmakerIndex),
-		revCache:       &MapOf[string, map[string]bool]{},
+		indexWriter:      indexWriter,
+		statsCompletions: NewBuffer(10),
+		statsSnapshot:    atomic.NewPointer[api.MatchmakerStats](&api.MatchmakerStats{}),
+		sessionTickets:   make(map[string]map[string]struct{}),
+		partyTickets:     make(map[string]map[string]struct{}),
+		indexes:          make(map[string]*MatchmakerIndex),
+		activeIndexes:    make(map[string]*MatchmakerIndex),
+		revCache:         &MapOf[string, map[string]bool]{},
 	}
 
 	if tickerActive {

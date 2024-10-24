@@ -1,3 +1,17 @@
+// Copyright 2017 The Nakama Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package server
 
 import (
@@ -54,6 +68,7 @@ func (d *DummyMessageRouter) SendToPresenceIDs(*zap.Logger, []*PresenceID, *rtap
 }
 func (d *DummyMessageRouter) SendToStream(*zap.Logger, PresenceStream, *rtapi.Envelope, bool) {}
 func (d *DummyMessageRouter) SendToAll(*zap.Logger, *rtapi.Envelope, bool)                    {}
+func (d *DummyMessageRouter) SetPeer(peer Peer)                                               {}
 
 type DummySession struct {
 	messages []*rtapi.Envelope
@@ -157,8 +172,8 @@ func NewConsoleLogger(output *os.File, verbose bool) *zap.Logger {
 }
 
 func NewDB(t *testing.T) *sql.DB {
-	//dbUrl := "postgresql://postgres@127.0.0.1:5432/layerg?sslmode=disable"
-	dbUrl := "postgresql://root@127.0.0.1:26257/layerg?sslmode=disable"
+	//dbUrl := "postgresql://postgres@127.0.0.1:5432/nakama?sslmode=disable"
+	dbUrl := "postgresql://root@127.0.0.1:26257/nakama?sslmode=disable"
 	if dbUrlEnv := os.Getenv("TEST_DB_URL"); len(dbUrlEnv) > 0 {
 		dbUrl = dbUrlEnv
 	}
@@ -210,10 +225,11 @@ func NewAPIServer(t *testing.T, runtime *Runtime) (*ApiServer, *Pipeline) {
 	db := NewDB(t)
 	router := &DummyMessageRouter{}
 	sessionCache := NewLocalSessionCache(3_600, 7_200)
+	activeSessionCache := NewLocalActiveTokenCache(3_600, 7_200)
 	sessionRegistry := NewLocalSessionRegistry(metrics)
 	tracker := &LocalTracker{sessionRegistry: sessionRegistry}
 	pipeline := NewPipeline(logger, cfg, db, protojsonMarshaler, protojsonUnmarshaler, sessionRegistry, nil, nil, nil, nil, tracker, router, runtime)
-	apiServer := StartApiServer(logger, logger, db, protojsonMarshaler, protojsonUnmarshaler, cfg, "3.0.0", nil, storageIdx, nil, nil, sessionRegistry, sessionCache, nil, nil, nil, tracker, router, nil, metrics, pipeline, runtime, nil)
+	apiServer := StartApiServer(logger, logger, db, protojsonMarshaler, protojsonUnmarshaler, cfg, "3.0.0", nil, storageIdx, nil, nil, sessionRegistry, sessionCache, nil, nil, nil, tracker, router, nil, metrics, pipeline, runtime, activeSessionCache)
 
 	WaitForSocket(nil, cfg)
 	return apiServer, pipeline
