@@ -55,6 +55,7 @@ type SessionRegistry interface {
 	Disconnect(ctx context.Context, sessionID uuid.UUID, ban bool, reason ...runtime.PresenceReason) error
 	SingleSession(ctx context.Context, tracker Tracker, userID, sessionID uuid.UUID)
 	Range(fn func(session Session) bool)
+	SetPeer(peer Peer)
 }
 
 type LocalSessionRegistry struct {
@@ -62,6 +63,7 @@ type LocalSessionRegistry struct {
 
 	sessions     *MapOf[uuid.UUID, Session]
 	sessionCount *atomic.Int32
+	peer         Peer
 }
 
 func NewLocalSessionRegistry(metrics Metrics) SessionRegistry {
@@ -70,7 +72,12 @@ func NewLocalSessionRegistry(metrics Metrics) SessionRegistry {
 
 		sessions:     &MapOf[uuid.UUID, Session]{},
 		sessionCount: atomic.NewInt32(0),
+		peer:         nil,
 	}
+}
+
+func (r *LocalSessionRegistry) SetPeer(peer Peer) {
+	r.peer = peer
 }
 
 func (r *LocalSessionRegistry) Stop() {}
