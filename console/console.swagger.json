@@ -2608,6 +2608,46 @@
       },
       "title": "Module information"
     },
+    "StatusListServiceStatus": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Node name."
+        },
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "ip": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "role": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "weight": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "balancer": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "allow_stream": {
+          "type": "boolean"
+        }
+      }
+    },
     "UserGroupListUserGroup": {
       "type": "object",
       "properties": {
@@ -3642,6 +3682,13 @@
           "type": "string",
           "format": "date-time",
           "title": "Timestamp"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/StatusListServiceStatus"
+          }
         }
       },
       "description": "List of nodes and their stats."

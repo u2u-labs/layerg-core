@@ -1,3 +1,17 @@
+// Copyright 2021 The Nakama Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package server
 
 import (
@@ -45,9 +59,10 @@ type PartyHandler struct {
 	joinRequests          []*PartyJoinRequest
 
 	members *PartyPresenceList
+	peer    Peer
 }
 
-func NewPartyHandler(logger *zap.Logger, partyRegistry PartyRegistry, matchmaker Matchmaker, tracker Tracker, streamManager StreamManager, router MessageRouter, id uuid.UUID, node string, open bool, maxSize int, presence *rtapi.UserPresence) *PartyHandler {
+func NewPartyHandler(logger *zap.Logger, partyRegistry PartyRegistry, matchmaker Matchmaker, tracker Tracker, streamManager StreamManager, router MessageRouter, id uuid.UUID, node string, open bool, maxSize int, presence *rtapi.UserPresence, peer Peer) *PartyHandler {
 	idStr := fmt.Sprintf("%v.%v", id.String(), node)
 	ctx, ctxCancelFn := context.WithCancel(context.Background())
 	return &PartyHandler{
@@ -73,6 +88,7 @@ func NewPartyHandler(logger *zap.Logger, partyRegistry PartyRegistry, matchmaker
 		joinRequests:          make([]*PartyJoinRequest, 0, maxSize),
 
 		members: NewPartyPresenceList(maxSize),
+		peer:    peer,
 	}
 }
 
@@ -81,6 +97,9 @@ func (p *PartyHandler) stop() {
 	p.partyRegistry.Delete(p.ID)
 	p.tracker.UntrackByStream(p.Stream)
 	_ = p.matchmaker.RemovePartyAll(p.IDStr)
+	if p.peer != nil {
+		p.peer.MatchmakerRemovePartyAll(p.IDStr)
+	}
 }
 
 func (p *PartyHandler) JoinRequest(presence *Presence) (bool, error) {
@@ -104,6 +123,9 @@ func (p *PartyHandler) JoinRequest(presence *Presence) (bool, error) {
 		}
 		// The party membership has changed, stop any ongoing matchmaking processes.
 		_ = p.matchmaker.RemovePartyAll(p.IDStr)
+		if p.peer != nil {
+			p.peer.MatchmakerRemovePartyAll(p.IDStr)
+		}
 		return true, nil
 	}
 	// Check if party has room for more join requests.
@@ -307,6 +329,9 @@ func (p *PartyHandler) Leave(presences []*Presence) {
 
 	// The party membership has changed, stop any ongoing matchmaking processes.
 	_ = p.matchmaker.RemovePartyAll(p.IDStr)
+	if p.peer != nil {
+		p.peer.MatchmakerRemovePartyAll(p.IDStr)
+	}
 }
 
 func (p *PartyHandler) Promote(sessionID, node string, presence *rtapi.UserPresence) error {
@@ -420,7 +445,9 @@ func (p *PartyHandler) Accept(sessionID, node string, presence *rtapi.UserPresen
 
 	// The party membership has changed, stop any ongoing matchmaking processes.
 	_ = p.matchmaker.RemovePartyAll(p.IDStr)
-
+	if p.peer != nil {
+		p.peer.MatchmakerRemovePartyAll(p.IDStr)
+	}
 	return nil
 }
 
@@ -476,6 +503,9 @@ func (p *PartyHandler) Remove(sessionID, node string, presence *rtapi.UserPresen
 
 	// The party membership has changed, stop any ongoing matchmaking processes.
 	_ = p.matchmaker.RemovePartyAll(p.IDStr)
+	if p.peer != nil {
+		p.peer.MatchmakerRemovePartyAll(p.IDStr)
+	}
 
 	p.members.Leave([]*Presence{removeMember.Presence})
 
@@ -578,6 +608,20 @@ func (p *PartyHandler) MatchmakerAdd(sessionID, node, query string, minCount, ma
 	if err != nil {
 		return "", nil, err
 	}
+
+	if p.peer != nil {
+		p.peer.MatchmakerAdd(matchmakerExtract2pb(&MatchmakerExtract{
+			Presences:         presences,
+			SessionID:         "",
+			PartyId:           p.IDStr,
+			Query:             query,
+			MinCount:          minCount,
+			MaxCount:          maxCount,
+			CountMultiple:     countMultiple,
+			StringProperties:  stringProperties,
+			NumericProperties: numericProperties,
+		}))
+	}
 	return ticket, memberPresenceIDs, nil
 }
 
@@ -596,7 +640,14 @@ func (p *PartyHandler) MatchmakerRemove(sessionID, node, ticket string) error {
 
 	p.RUnlock()
 
-	return p.matchmaker.RemoveParty(p.IDStr, ticket)
+	if err := p.matchmaker.RemoveParty(p.IDStr, ticket); err != nil {
+		return err
+	}
+
+	if p.peer != nil {
+		p.peer.MatchmakerRemoveParty(p.IDStr, ticket)
+	}
+	return nil
 }
 
 func (p *PartyHandler) DataSend(sessionID, node string, opCode int64, data []byte) error {

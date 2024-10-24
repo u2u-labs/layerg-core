@@ -17,6 +17,7 @@ import (
 	"github.com/u2u-labs/go-layerg-common/api"
 	"github.com/u2u-labs/go-layerg-common/rtapi"
 	"github.com/u2u-labs/go-layerg-common/runtime"
+	"github.com/u2u-labs/layerg-kit/pb"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -107,6 +108,8 @@ type MatchRegistry interface {
 	Signal(ctx context.Context, id, data string) (string, error)
 	// Get a snapshot of the match state in a string representation.
 	GetState(ctx context.Context, id uuid.UUID, node string) ([]*rtapi.UserPresence, int64, string, error)
+
+	SetPeer(peer Peer)
 }
 
 type LocalMatchRegistry struct {
@@ -130,6 +133,7 @@ type LocalMatchRegistry struct {
 
 	stopped   *atomic.Bool
 	stoppedCh chan struct{}
+	peer      *atomic.Pointer[Peer]
 }
 
 func NewLocalMatchRegistry(logger, startupLogger *zap.Logger, config Config, sessionRegistry SessionRegistry, tracker Tracker, router MessageRouter, metrics Metrics, node string) MatchRegistry {
@@ -162,6 +166,7 @@ func NewLocalMatchRegistry(logger, startupLogger *zap.Logger, config Config, ses
 
 		stopped:   atomic.NewBool(false),
 		stoppedCh: make(chan struct{}, 2),
+		peer:      &atomic.Pointer[Peer]{},
 	}
 
 	go func() {
@@ -283,7 +288,18 @@ func (r *LocalMatchRegistry) GetMatch(ctx context.Context, id string) (*api.Matc
 
 	// Authoritative match.
 	if idComponents[1] != r.node {
-		return nil, "", nil
+		// return nil, "", nil
+		peer, endpoint, ok := r.getEndpoint(idComponents[1])
+		if !ok {
+			return nil, "", nil
+		}
+
+		resp, err := peer.Request(ctx, endpoint, &pb.Request{Payload: &pb.Request_MatchId{MatchId: id}})
+		if err != nil {
+			return nil, "", err
+		}
+
+		return resp.GetMatch(), idComponents[1], nil
 	}
 
 	mh, ok := r.matches.Load(matchID)
@@ -680,7 +696,42 @@ func (r *LocalMatchRegistry) Count() int {
 
 func (r *LocalMatchRegistry) JoinAttempt(ctx context.Context, id uuid.UUID, node string, userID, sessionID uuid.UUID, username string, sessionExpiry int64, vars map[string]string, clientIP, clientPort, fromNode string, metadata map[string]string) (bool, bool, bool, string, string, []*MatchPresence) {
 	if node != r.node {
-		return false, false, false, "", "", nil
+		// return false, false, false, "", "", nil
+		peer, endpoint, ok := r.getEndpoint(node)
+		if !ok {
+			return false, false, false, "", "", nil
+		}
+
+		resp, err := peer.Request(ctx, endpoint, &pb.Request{Payload: &pb.Request_MatchJoinAttempt{
+			MatchJoinAttempt: &pb.Match_JoinAttempt{
+				Id:            id.String(),
+				UserId:        userID.String(),
+				SessionId:     sessionID.String(),
+				Username:      username,
+				SessionExpiry: sessionExpiry,
+				Vars:          vars,
+				ClientIP:      clientIP,
+				ClientPort:    clientPort,
+				FromNode:      fromNode,
+				Metadata:      metadata,
+			},
+		}})
+		if err != nil {
+			return false, false, false, "", "", nil
+		}
+
+		ret := resp.GetMathJoinAttempt()
+		presences := make([]*MatchPresence, len(ret.Presences))
+		for k, v := range ret.Presences {
+			presences[k] = &MatchPresence{
+				Node:      v.GetNode(),
+				UserID:    uuid.FromStringOrNil(v.GetUserId()),
+				SessionID: uuid.FromStringOrNil(v.GetSessionId()),
+				Username:  v.GetUsername(),
+				Reason:    runtime.PresenceReason(v.GetReason()),
+			}
+		}
+		return ret.Found, ret.Allow, ret.IsNew, ret.Reason, ret.Label, presences
 	}
 
 	mh, ok := r.matches.Load(id)
@@ -744,6 +795,28 @@ func (r *LocalMatchRegistry) Kick(stream PresenceStream, presences []*MatchPrese
 
 func (r *LocalMatchRegistry) SendData(id uuid.UUID, node string, userID, sessionID uuid.UUID, username, fromNode string, opCode int64, data []byte, reliable bool, receiveTime int64) {
 	if node != r.node {
+		// return
+		peer, endpoint, ok := r.getEndpoint(node)
+		if !ok {
+			return
+		}
+
+		_, err := peer.Request(context.Background(), endpoint, &pb.Request{Payload: &pb.Request_MatchSendData{
+			MatchSendData: &pb.Match_SendData{
+				Id:          id.String(),
+				UserId:      userID.String(),
+				SessionId:   sessionID.String(),
+				Username:    username,
+				FromNode:    fromNode,
+				OpCode:      opCode,
+				Data:        data,
+				Reliable:    reliable,
+				ReceiveTime: receiveTime,
+			}}})
+
+		if err != nil {
+			r.logger.Error("Failed to SendData", zap.Error(err))
+		}
 		return
 	}
 
@@ -782,7 +855,24 @@ func (r *LocalMatchRegistry) Signal(ctx context.Context, id, data string) (strin
 
 	// Authoritative match.
 	if idComponents[1] != r.node {
-		return "", runtime.ErrMatchNotFound
+		// return "", runtime.ErrMatchNotFound
+		peer, endpoint, ok := r.getEndpoint(idComponents[1])
+		if !ok {
+			return "", runtime.ErrMatchNotFound
+		}
+
+		resp, err := peer.Request(context.Background(), endpoint, &pb.Request{Payload: &pb.Request_MatchSignal{
+			MatchSignal: &pb.Match_Signal{
+				Id:   id,
+				Data: data,
+			},
+		}})
+
+		if err != nil {
+			r.logger.Error("Failed to send Signal", zap.Error(err))
+			return "", err
+		}
+		return resp.GetMatchSignal(), nil
 	}
 
 	mh, ok := r.matches.Load(matchID)
@@ -820,7 +910,23 @@ func (r *LocalMatchRegistry) Signal(ctx context.Context, id, data string) (strin
 
 func (r *LocalMatchRegistry) GetState(ctx context.Context, id uuid.UUID, node string) ([]*rtapi.UserPresence, int64, string, error) {
 	if node != r.node {
-		return nil, 0, "", nil
+		// return nil, 0, "", nil
+		peer, endpoint, ok := r.getEndpoint(node)
+		if !ok {
+			return nil, 0, "", nil
+		}
+
+		resp, err := peer.Request(context.Background(), endpoint, &pb.Request{Payload: &pb.Request_MatchState{
+			MatchState: id.String(),
+		}})
+
+		if err != nil {
+			r.logger.Error("Failed to send Signal", zap.Error(err))
+			return nil, 0, "", err
+		}
+
+		ret := resp.GetMatchState()
+		return ret.GetUserPresence(), ret.GetTick(), ret.GetState(), nil
 	}
 
 	mh, ok := r.matches.Load(id)
@@ -875,4 +981,30 @@ func MapMatchIndexEntry(id string, in *MatchIndexEntry) (*bluge.Document, error)
 	}
 
 	return rv, nil
+}
+
+func (r *LocalMatchRegistry) SetPeer(peer Peer) {
+	r.peer.Store(&peer)
+}
+
+func (p *LocalMatchRegistry) getPeer() (Peer, bool) {
+	if p.peer == nil {
+		return nil, false
+	}
+
+	peer := p.peer.Load()
+	if peer == nil || *peer == nil {
+		return nil, false
+	}
+	return *peer, true
+}
+
+func (p *LocalMatchRegistry) getEndpoint(node string) (Peer, Endpoint, bool) {
+	peer, ok := p.getPeer()
+	if !ok {
+		return nil, nil, false
+	}
+
+	endpoint, ok := peer.Member(node)
+	return peer, endpoint, ok
 }
