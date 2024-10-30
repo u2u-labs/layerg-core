@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/u2u-labs/go-layerg-common/rtapi"
+	"github.com/u2u-labs/layerg-kit/pb"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -21,12 +22,14 @@ type MessageRouter interface {
 	SendToStream(*zap.Logger, PresenceStream, *rtapi.Envelope, bool)
 	SendDeferred(*zap.Logger, []*DeferredMessage)
 	SendToAll(*zap.Logger, *rtapi.Envelope, bool)
+	SetPeer(peer Peer)
 }
 
 type LocalMessageRouter struct {
 	protojsonMarshaler *protojson.MarshalOptions
 	sessionRegistry    SessionRegistry
 	tracker            Tracker
+	peer               Peer
 }
 
 func NewLocalMessageRouter(sessionRegistry SessionRegistry, tracker Tracker, protojsonMarshaler *protojson.MarshalOptions) MessageRouter {
@@ -34,6 +37,7 @@ func NewLocalMessageRouter(sessionRegistry SessionRegistry, tracker Tracker, pro
 		protojsonMarshaler: protojsonMarshaler,
 		sessionRegistry:    sessionRegistry,
 		tracker:            tracker,
+		peer:               nil,
 	}
 }
 
@@ -46,10 +50,24 @@ func (r *LocalMessageRouter) SendToPresenceIDs(logger *zap.Logger, presenceIDs [
 	var payloadProtobuf []byte
 	var payloadJSON []byte
 
+	toRemote := make(map[string][]*pb.Recipienter)
 	for _, presenceID := range presenceIDs {
+		// group
+		if presenceID.Node != r.peer.Local().Name() {
+			if _, ok := toRemote[presenceID.Node]; !ok {
+				toRemote[presenceID.Node] = make([]*pb.Recipienter, 0)
+			}
+
+			toRemote[presenceID.Node] = append(toRemote[presenceID.Node], &pb.Recipienter{
+				Action:  pb.Recipienter_SESSIONID,
+				Payload: &pb.Recipienter_Token{Token: presenceID.SessionID.String()},
+			})
+			continue
+		}
+
 		session := r.sessionRegistry.Get(presenceID.SessionID)
 		if session == nil {
-			logger.Debug("No session to route to", zap.String("sid", presenceID.SessionID.String()))
+			logger.Debug("No session to route to", zap.String("sid", presenceID.SessionID.String()), zap.Any("envelope", envelope))
 			continue
 		}
 
@@ -83,11 +101,52 @@ func (r *LocalMessageRouter) SendToPresenceIDs(logger *zap.Logger, presenceIDs [
 			logger.Error("Failed to route message", zap.String("sid", presenceID.SessionID.String()), zap.Error(err))
 		}
 	}
+
+	// send to remote
+	if r.peer == nil {
+		return
+	}
+
+	for remoteNode, sessions := range toRemote {
+		endpoint, ok := r.peer.Member(remoteNode)
+		if !ok {
+			continue
+		}
+
+		m := &pb.Request{
+			Payload: &pb.Request_Out{Out: &pb.ResponseWriter{
+				Recipient: sessions,
+				Payload:   &pb.ResponseWriter_Envelope{Envelope: envelope},
+			}},
+		}
+
+		if err := r.peer.Send(endpoint, m, reliable); err != nil {
+			logger.Error("Failed to route message", zap.String("node", remoteNode), zap.Error(err))
+		}
+	}
 }
 
 func (r *LocalMessageRouter) SendToStream(logger *zap.Logger, stream PresenceStream, envelope *rtapi.Envelope, reliable bool) {
-	presenceIDs := r.tracker.ListPresenceIDByStream(stream)
+	presenceIDs := r.tracker.ListLocalPresenceIDByStream(stream)
 	r.SendToPresenceIDs(logger, presenceIDs, envelope, reliable)
+
+	if r.peer == nil {
+		return
+	}
+
+	recipient := &pb.Recipienter{
+		Action:  pb.Recipienter_STREAM,
+		Payload: &pb.Recipienter_Stream{Stream: presenceStream2PB(stream)},
+	}
+
+	r.peer.Broadcast(&pb.Request{
+		Payload: &pb.Request_Out{
+			Out: &pb.ResponseWriter{
+				Recipient: []*pb.Recipienter{recipient},
+				Payload:   &pb.ResponseWriter_Envelope{Envelope: envelope},
+			},
+		},
+	}, reliable)
 }
 
 func (r *LocalMessageRouter) SendDeferred(logger *zap.Logger, messages []*DeferredMessage) {
@@ -133,4 +192,21 @@ func (r *LocalMessageRouter) SendToAll(logger *zap.Logger, envelope *rtapi.Envel
 		}
 		return true
 	})
+
+	if r.peer == nil {
+		return
+	}
+
+	r.peer.Broadcast(&pb.Request{
+		Payload: &pb.Request_Out{
+			Out: &pb.ResponseWriter{
+				Recipient: make([]*pb.Recipienter, 0),
+				Payload:   &pb.ResponseWriter_Envelope{Envelope: envelope},
+			},
+		},
+	}, reliable)
+}
+
+func (r *LocalMessageRouter) SetPeer(peer Peer) {
+	r.peer = peer
 }

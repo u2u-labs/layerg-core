@@ -189,6 +189,21 @@ func main() {
 	partyRegistry := server.NewLocalPartyRegistry(logger, config, matchmaker, tracker, streamManager, router, config.GetName())
 	tracker.SetPartyJoinListener(partyRegistry.Join)
 	tracker.SetPartyLeaveListener(partyRegistry.Leave)
+	statusHandler := server.NewLocalStatusHandler(logger, sessionRegistry, matchRegistry, tracker, metrics, config.GetName())
+
+	peer := server.NewLocalPeer(logger, config.GetName(), make(map[string]string), metrics, sessionRegistry, tracker, router, matchRegistry, matchmaker, partyRegistry, jsonpbMarshaler, jsonpbUnmarshaler, config.GetCluster())
+	sessionRegistry.SetPeer(peer)
+	statusHandler.SetPeer(peer)
+	matchRegistry.SetPeer(peer)
+	partyRegistry.SetPeer(peer)
+	runtime.SetPeer(peer)
+	tracker.SetPeer(peer)
+	router.SetPeer(peer)
+
+	numMembers, err := peer.Join(config.GetCluster().Members...)
+	if err != nil {
+		startupLogger.Fatal("failed to join cluster", zap.Error(err))
+	}
 
 	storageIndex.RegisterFilters(runtime)
 	go func() {
@@ -201,7 +216,7 @@ func main() {
 	googleRefundScheduler.Start(runtime)
 
 	pipeline := server.NewPipeline(logger, config, db, jsonpbMarshaler, jsonpbUnmarshaler, sessionRegistry, statusRegistry, matchRegistry, partyRegistry, matchmaker, tracker, router, runtime)
-	statusHandler := server.NewLocalStatusHandler(logger, sessionRegistry, matchRegistry, tracker, metrics, config.GetName())
+	// statusHandler := server.NewLocalStatusHandler(logger, sessionRegistry, matchRegistry, tracker, metrics, config.GetName())
 
 	telemetryEnabled := len(os.Getenv("LAYERG_TELEMETRY")) < 1
 	console.UIFS.Nt = !telemetryEnabled
@@ -222,7 +237,7 @@ func main() {
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	startupLogger.Info("Startup done")
+	startupLogger.Info("Startup done", zap.Int("numMembers", numMembers))
 
 	// Wait for a termination signal.
 	<-c

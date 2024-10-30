@@ -4,11 +4,13 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/u2u-labs/layerg-core/flags"
 	"go.uber.org/zap"
@@ -17,7 +19,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config interface is the LayerG core configuration.
 type Config interface {
 	GetName() string
 	GetDataDir() string
@@ -38,7 +39,9 @@ type Config interface {
 	GetGoogleAuth() *GoogleAuthConfig
 	GetSatori() *SatoriConfig
 	GetStorage() *StorageConfig
+	GetMFA() *MFAConfig
 	GetLimit() int
+	GetCluster() *PeerConfig
 
 	Clone() (Config, error)
 }
@@ -113,8 +116,8 @@ func ParseArgs(logger *zap.Logger, args []string) Config {
 func ValidateConfig(logger *zap.Logger, c Config) map[string]string {
 	// Fail fast on invalid values.
 	ValidateConfigDatabase(logger, c)
-	if l := len(c.GetName()); l < 1 || l > 64 {
-		logger.Fatal("Name must be 1-64 characters", zap.String("param", "name"))
+	if l := len(c.GetName()); l < 1 || l > 16 {
+		logger.Fatal("Name must be 1-16 characters", zap.String("param", "name"))
 	}
 	if c.GetShutdownGraceSec() < 0 {
 		logger.Fatal("Shutdown grace period must be >= 0", zap.Int("shutdown_grace_sec", c.GetShutdownGraceSec()))
@@ -397,6 +400,11 @@ func ValidateConfig(logger *zap.Logger, c Config) map[string]string {
 	}
 
 	c.GetSatori().Validate(logger)
+	c.GetCluster().Validate(logger)
+
+	if k := c.GetMFA().StorageEncryptionKey; k != "" && len(k) != 32 {
+		logger.Fatal("MFA encryption key has to be 32 bits long")
+	}
 
 	return configWarnings
 }
@@ -458,7 +466,19 @@ type config struct {
 	GoogleAuth       *GoogleAuthConfig  `yaml:"google_auth" json:"google_auth" usage:"Google's auth settings."`
 	Satori           *SatoriConfig      `yaml:"satori" json:"satori" usage:"Satori integration settings."`
 	Storage          *StorageConfig     `yaml:"storage" json:"storage" usage:"Storage settings."`
+	MFA              *MFAConfig         `yaml:"mfa" json:"mfa" usage:"MFA settings."`
 	Limit            int                `json:"-"` // Only used for migrate command.
+	Cluster          *PeerConfig        `yaml:"cluster" json:"cluster" usage:"Cluster settings."`
+}
+
+func randomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	rand.Seed(time.Now().UnixNano())
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
 
 // NewConfig constructs a Config struct which represents server settings, and populates it with default values.
@@ -468,7 +488,7 @@ func NewConfig(logger *zap.Logger) *config {
 		logger.Fatal("Error getting current working directory.", zap.Error(err))
 	}
 	return &config{
-		Name:             "layerg", // id of project
+		Name:             "layerg-" + randomString(6),
 		Datadir:          filepath.Join(cwd, "data"),
 		ShutdownGraceSec: 0,
 		Logger:           NewLoggerConfig(),
@@ -487,7 +507,9 @@ func NewConfig(logger *zap.Logger) *config {
 		GoogleAuth:       NewGoogleAuthConfig(),
 		Satori:           NewSatoriConfig(),
 		Storage:          NewStorageConfig(),
+		MFA:              NewMFAConfig(),
 		Limit:            -1,
+		Cluster:          NewPeerConfig(),
 	}
 }
 
@@ -528,6 +550,7 @@ func (c *config) Clone() (Config, error) {
 		Satori:           &configSatori,
 		GoogleAuth:       &configGoogleAuth,
 		Storage:          &configStorage,
+		Cluster:          c.Cluster.Clone(),
 	}
 	nc.Socket.CertPEMBlock = make([]byte, len(c.Socket.CertPEMBlock))
 	copy(nc.Socket.CertPEMBlock, c.Socket.CertPEMBlock)
@@ -630,8 +653,16 @@ func (c *config) GetStorage() *StorageConfig {
 	return c.Storage
 }
 
+func (c *config) GetMFA() *MFAConfig {
+	return c.MFA
+}
+
 func (c *config) GetLimit() int {
 	return c.Limit
+}
+
+func (c *config) GetCluster() *PeerConfig {
+	return c.Cluster
 }
 
 // LoggerConfig is configuration relevant to logging levels and output.
@@ -944,16 +975,17 @@ func NewTrackerConfig() *TrackerConfig {
 
 // ConsoleConfig is configuration relevant to the embedded console.
 type ConsoleConfig struct {
-	Port                int    `yaml:"port" json:"port" usage:"The port for accepting connections for the embedded console, listening on all interfaces."`
-	Address             string `yaml:"address" json:"address" usage:"The IP address of the interface to listen for console traffic on. Default listen on all available addresses/interfaces."`
-	MaxMessageSizeBytes int64  `yaml:"max_message_size_bytes" json:"max_message_size_bytes" usage:"Maximum amount of data in bytes allowed to be read from the client socket per message."`
-	ReadTimeoutMs       int    `yaml:"read_timeout_ms" json:"read_timeout_ms" usage:"Maximum duration in milliseconds for reading the entire request."`
-	WriteTimeoutMs      int    `yaml:"write_timeout_ms" json:"write_timeout_ms" usage:"Maximum duration in milliseconds before timing out writes of the response."`
-	IdleTimeoutMs       int    `yaml:"idle_timeout_ms" json:"idle_timeout_ms" usage:"Maximum amount of time in milliseconds to wait for the next request when keep-alives are enabled."`
-	Username            string `yaml:"username" json:"username" usage:"Username for the embedded console. Default username is 'admin'."`
-	Password            string `yaml:"password" json:"password" usage:"Password for the embedded console. Default password is 'password'."`
-	TokenExpirySec      int64  `yaml:"token_expiry_sec" json:"token_expiry_sec" usage:"Token expiry in seconds. Default 86400."`
-	SigningKey          string `yaml:"signing_key" json:"signing_key" usage:"Key used to sign console session tokens."`
+	Port                int        `yaml:"port" json:"port" usage:"The port for accepting connections for the embedded console, listening on all interfaces."`
+	Address             string     `yaml:"address" json:"address" usage:"The IP address of the interface to listen for console traffic on. Default listen on all available addresses/interfaces."`
+	MaxMessageSizeBytes int64      `yaml:"max_message_size_bytes" json:"max_message_size_bytes" usage:"Maximum amount of data in bytes allowed to be read from the client socket per message."`
+	ReadTimeoutMs       int        `yaml:"read_timeout_ms" json:"read_timeout_ms" usage:"Maximum duration in milliseconds for reading the entire request."`
+	WriteTimeoutMs      int        `yaml:"write_timeout_ms" json:"write_timeout_ms" usage:"Maximum duration in milliseconds before timing out writes of the response."`
+	IdleTimeoutMs       int        `yaml:"idle_timeout_ms" json:"idle_timeout_ms" usage:"Maximum amount of time in milliseconds to wait for the next request when keep-alives are enabled."`
+	Username            string     `yaml:"username" json:"username" usage:"Username for the embedded console. Default username is 'admin'."`
+	Password            string     `yaml:"password" json:"password" usage:"Password for the embedded console. Default password is 'password'."`
+	TokenExpirySec      int64      `yaml:"token_expiry_sec" json:"token_expiry_sec" usage:"Token expiry in seconds. Default 86400."`
+	SigningKey          string     `yaml:"signing_key" json:"signing_key" usage:"Key used to sign console session tokens."`
+	MFA                 *MFAConfig `yaml:"mfa" json:"mfa" usage:"MFA settings."`
 }
 
 func NewConsoleConfig() *ConsoleConfig {
@@ -967,6 +999,7 @@ func NewConsoleConfig() *ConsoleConfig {
 		Password:            "password",
 		TokenExpirySec:      86400,
 		SigningKey:          "defaultsigningkey",
+		MFA:                 NewMFAConfig(),
 	}
 }
 
@@ -1101,4 +1134,16 @@ type StorageConfig struct {
 
 func NewStorageConfig() *StorageConfig {
 	return &StorageConfig{}
+}
+
+type MFAConfig struct {
+	StorageEncryptionKey string `yaml:"storage_encryption_key" json:"storage_encryption_key" usage:"The encryption key to be used when persisting MFA related data. Has to be 32 bytes long."`
+	AdminAccountOn       bool   `yaml:"admin_account_enabled" json:"admin_account_enabled" usage:"Require MFA for the Console Admin account."`
+}
+
+func NewMFAConfig() *MFAConfig {
+	return &MFAConfig{
+		StorageEncryptionKey: "the-key-has-to-be-32-bytes-long!", // Has to be 32 bit long.
+		AdminAccountOn:       false,
+	}
 }
