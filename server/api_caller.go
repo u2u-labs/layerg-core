@@ -89,9 +89,13 @@ func (s *ApiServer) POST(ctx context.Context, endpoint string, token string, bod
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		respBody, _ := ioutil.ReadAll(resp.Body)
 		return errors.New("POST request failed with status " + resp.Status + ": " + string(respBody))
+	}
+
+	if responseStruct == nil {
+		return nil
 	}
 
 	// Read and unmarshal response into provided struct
