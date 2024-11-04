@@ -309,6 +309,14 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 		}
 	}()
 
+	go func() {
+		ctx := context.Background()
+		err := s.loginAndCacheToken(ctx)
+		if err != nil {
+			logger.Error("Error initializing token cache", zap.Error(err))
+		}
+	}()
+
 	return s
 }
 
