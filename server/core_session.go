@@ -35,7 +35,7 @@ func SessionRefresh(ctx context.Context, logger *zap.Logger, db *sql.DB, config 
 		RefreshToken: token,
 	}
 	var response RefreshUATokenResponse
-	err := POST(ctx, endpoint, token, request, &response)
+	err := POST(ctx, endpoint, "", request, &response)
 	if err != nil {
 		// return uuid.Nil, "", nil, "", status.Error(codes.Aborted, "Refresh token fetch failed")
 		// TODO: call refresh token api UA, if đéo valid thì đi tiếp flow dưới
@@ -92,6 +92,7 @@ func SessionRefresh(ctx context.Context, logger *zap.Logger, db *sql.DB, config 
 		logger.Info("User account is disabled.", zap.String("id", userID.String()))
 		return uuid.Nil, "", nil, "", RefreshUATokenResponse{}, status.Error(codes.PermissionDenied, "User account banned.")
 	}
+	logger.Info("new refresh: ", zap.String("token", response.RefreshToken))
 
 	return userID, dbUsername, make(map[string]string), tokenID, response, nil // I want return that struct here
 

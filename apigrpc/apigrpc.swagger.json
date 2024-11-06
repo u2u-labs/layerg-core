@@ -5605,6 +5605,9 @@
         "jwt": {
           "type": "string"
         },
+        "refreshJwt": {
+          "type": "string"
+        },
         "vars": {
           "type": "object",
           "additionalProperties": {

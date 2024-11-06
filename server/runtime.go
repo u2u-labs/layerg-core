@@ -780,6 +780,9 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if allBeforeReqFunctions.beforeAuthenticateTelegramFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticatetelegram"))
 	}
+	if allBeforeReqFunctions.beforeAuthenticateUAFunction != nil {
+		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticateua"))
+	}
 	if allBeforeReqFunctions.beforeAuthenticateEvmFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticateevm"))
 	}
@@ -1371,6 +1374,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if goBeforeReqFns.beforeAuthenticateTelegramFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateTelegramFunction = goBeforeReqFns.beforeAuthenticateTelegramFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticatetelegram"))
+	}
+	if goBeforeReqFns.beforeAuthenticateUAFunction != nil {
+		allBeforeReqFunctions.beforeAuthenticateUAFunction = goBeforeReqFns.beforeAuthenticateUAFunction
+		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticateua"))
 	}
 	if goBeforeReqFns.beforeAuthenticateEvmFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateEvmFunction = goBeforeReqFns.beforeAuthenticateEvmFunction

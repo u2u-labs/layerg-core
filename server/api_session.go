@@ -42,6 +42,7 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 
 	userID, username, vars, tokenId, uaResponse, err := SessionRefresh(ctx, s.logger, s.db, s.config, s.sessionCache, in.Token)
 	if err != nil {
+		s.logger.Error("Error refreshing session.", zap.Error(err))
 		return nil, err
 	}
 
@@ -61,8 +62,14 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 
 	// token, tokenExp := generateToken(s.config, tokenId, userIDStr, username, useVars)
 	// refreshToken, refreshTokenExp := generateRefreshToken(s.config, tokenId, userIDStr, username, useVars)
-	tokenExp, _ := time.Parse(time.RFC3339Nano, uaResponse.AccessTokenExpires)
-	refreshExp, _ := time.Parse(time.RFC3339Nano, uaResponse.RefreshTokenExpires)
+	tokenExp, err := time.Parse(time.RFC3339Nano, uaResponse.AccessTokenExpires)
+	if err != nil {
+		return nil, err
+	}
+	refreshExp, err := time.Parse(time.RFC3339Nano, uaResponse.RefreshTokenExpires)
+	if err != nil {
+		return nil, err
+	}
 
 	s.sessionCache.Add(userID, tokenExp.Unix(), tokenId, refreshExp.Unix(), tokenId)
 	session := &api.Session{Created: false, Token: uaResponse.AccessToken, RefreshToken: uaResponse.RefreshToken}
@@ -76,7 +83,6 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
-
 	return session, nil
 }
 
