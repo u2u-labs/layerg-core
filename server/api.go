@@ -423,7 +423,7 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 		}
 		if len(auth) != 1 {
 			// Value of "authorization" or "grpc-authorization" was empty or repeated.
-			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+			return nil, status.Error(codes.Unauthenticated, "Auth token invalid 1")
 		}
 		userID1, username1, vars1, exp1, tokenId1, ok1 := parseBearerAuth1(config.GetConsole().PublicKey, auth[0])
 		if !ok1 {
@@ -435,10 +435,10 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 			logger.Info("", zap.Bool("ok: ", ok))
 			if !ok {
 				// Value of "authorization" or "grpc-authorization" was malformed or expired.
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 2")
 			}
 			if !sessionCache.IsValidSession(userID, exp, tokenId) {
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 3")
 			}
 			ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
 		} else {
@@ -449,10 +449,10 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 			logger.Info("", zap.Bool("ok: ", ok1))
 			if !ok {
 				// Value of "authorization" or "grpc-authorization" was malformed or expired.
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 4")
 			}
 			if !sessionCache.IsValidSession(userID1, exp1, tokenId1) {
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 5")
 			}
 			ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID1), ctxUsernameKey{}, username1), ctxVarsKey{}, vars1), ctxExpiryKey{}, exp1)
 		}
@@ -473,17 +473,36 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 		}
 		if len(auth) != 1 {
 			// Value of "authorization" or "grpc-authorization" was empty or repeated.
-			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+			return nil, status.Error(codes.Unauthenticated, "Auth token invalid 6")
 		}
-		userID, username, vars, exp, tokenId, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
-		if !ok {
-			// Value of "authorization" or "grpc-authorization" was malformed or expired.
-			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+
+		userID1, username1, vars1, exp1, tokenId1, ok1 := parseBearerAuth1(config.GetConsole().PublicKey, auth[0])
+		if !ok1 {
+
+			userID, username, vars, exp, tokenId, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
+			if !ok {
+				// Value of "authorization" or "grpc-authorization" was malformed or expired.
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 7")
+			}
+			if !sessionCache.IsValidSession(userID, exp, tokenId) {
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 8")
+			}
+			ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
+		} else {
+			logger.Info("", zap.String("userID: ", userID1.String()))
+			logger.Info("", zap.String("username: ", username1))
+			logger.Info("", zap.Int("exp: ", int(exp1)))
+			logger.Info("", zap.String("tokenID: ", tokenId1))
+			logger.Info("", zap.Bool("ok: ", ok1))
+			if !ok {
+				// Value of "authorization" or "grpc-authorization" was malformed or expired.
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 4")
+			}
+			if !sessionCache.IsValidSession(userID1, exp1, tokenId1) {
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 5")
+			}
+			ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID1), ctxUsernameKey{}, username1), ctxVarsKey{}, vars1), ctxExpiryKey{}, exp1)
 		}
-		if !sessionCache.IsValidSession(userID, exp, tokenId) {
-			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
-		}
-		ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
 	}
 	return context.WithValue(ctx, ctxFullMethodKey{}, info.FullMethod), nil
 }
