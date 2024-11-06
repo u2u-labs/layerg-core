@@ -60,7 +60,7 @@ func (s *ApiServer) GET(ctx context.Context, endpoint string, token string, para
 }
 
 // POST function with dynamic response unmarshaling and handling for nil body
-func (s *ApiServer) POST(ctx context.Context, endpoint string, token string, body interface{}, responseStruct interface{}) error {
+func POST(ctx context.Context, endpoint string, token string, body interface{}, responseStruct interface{}) error {
 	// If body is nil, set to empty JSON
 	var jsonBody []byte
 	var err error

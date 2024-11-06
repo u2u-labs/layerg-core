@@ -526,9 +526,7 @@ func parseBearerAuth1(publicKey, auth string) (userID uuid.UUID, username string
 	if !strings.HasPrefix(auth, prefix) {
 		return
 	}
-	tokenID := uuid.Must(uuid.NewV4()).String()
-
-	userID, wallet, exp, valid := validateJWT(publicKey, auth[len(prefix):])
+	userID, wallet, exp, tokenID, valid := validateJWT(publicKey, auth[len(prefix):])
 	return userID, wallet, make(map[string]string), exp, tokenID, valid
 }
 
@@ -537,6 +535,7 @@ type JWTClaims struct {
 	Wallet    string `json:"wallet"`
 	Exp       int64  `json:"exp"`
 	Iat       int64  `json:"iat"`
+	TokenID   string `json:"token_id"`
 	Signature struct {
 		R   string `json:"r"`
 		S   string `json:"s"`
@@ -544,7 +543,7 @@ type JWTClaims struct {
 	} `json:"signature"`
 }
 
-func validateJWT(publicKeyHex, tokenString string) (userID uuid.UUID, wallet string, exp int64, valid bool) {
+func validateJWT(publicKeyHex, tokenString string) (userID uuid.UUID, wallet string, exp int64, tokenID string, valid bool) {
 	// Decode base64 JWT (example assumes payload in JWT's middle part is base64 encoded JSON)
 
 	// Predefined public key from the service entity (in PEM format)
@@ -612,7 +611,7 @@ func validateJWT(publicKeyHex, tokenString string) (userID uuid.UUID, wallet str
 		fmt.Println("Invalid UUID format:", err)
 		return
 	}
-	return userID, claims.Wallet, claims.Exp, true
+	return userID, claims.Wallet, claims.Exp, claims.TokenID, true
 
 }
 

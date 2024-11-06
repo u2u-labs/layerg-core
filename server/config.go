@@ -1131,9 +1131,10 @@ type GoogleAuthConfig struct {
 }
 
 type LayerGCoreConfig struct {
-	ApiKey   string `yaml:"api_key" json:"api_key" usage:"api key to communicate with core server"`
-	ApiKeyID string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
-	URL      string `yaml:"url" json:"url" usage:"url of core server"`
+	ApiKey              string `yaml:"api_key" json:"api_key" usage:"api key to communicate with core server"`
+	ApiKeyID            string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
+	URL                 string `yaml:"url" json:"url" usage:"url of core server"`
+	UniversalAccountURL string `yaml:"ua_url" json:"ua_url" usage:"ua_url of core server"`
 }
 
 func NewGoogleAuthConfig() *GoogleAuthConfig {
@@ -1165,8 +1166,9 @@ func NewMFAConfig() *MFAConfig {
 
 func NewLayerGCore() *LayerGCoreConfig {
 	return &LayerGCoreConfig{
-		ApiKey:   "v13lx3ykszi3gi7j000oa2",
-		ApiKeyID: "d3e94d1b-3959-498b-9971-b5df93adfd28",
-		URL:      "http://localhost:3000",
+		ApiKey:              "v13lx3ykszi3gi7j000oa2",
+		ApiKeyID:            "d3e94d1b-3959-498b-9971-b5df93adfd28",
+		URL:                 "http://localhost:3000",
+		UniversalAccountURL: "https://ua-api-dev.layerg.xyz",
 	}
 }

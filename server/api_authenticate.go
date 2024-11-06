@@ -1169,7 +1169,7 @@ func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.AuthenticateUA) 
 		}
 	}
 
-	userID, wallet, exp, valid := validateJWT(s.config.GetConsole().PublicKey, in.Jwt)
+	userID, wallet, exp, tokenId, valid := validateJWT(s.config.GetConsole().PublicKey, in.Jwt)
 	if !valid {
 		return nil, status.Error(codes.Canceled, "Requested resource was not found.")
 
@@ -1184,7 +1184,7 @@ func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.AuthenticateUA) 
 		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
 	}
 
-	// tokenID := uuid.Must(uuid.NewV4()).String()
+	s.sessionCache.Add(userID, exp, in.Jwt, exp+603900000, tokenId)
 	session := &api.Session{Created: created, Token: in.Jwt, RefreshToken: in.RefreshJwt}
 
 	// After hook.
