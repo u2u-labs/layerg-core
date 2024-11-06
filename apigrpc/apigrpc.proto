@@ -261,6 +261,21 @@ service LayerG {
       };
     }
 
+  rpc AuthenticateUA (api.AuthenticateUA) returns (api.Session) {
+      option (google.api.http) = {
+        post: "/v2/account/authenticate/ua",
+        body: "*"
+      };
+      option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+        security: {
+          security_requirement: {
+            key: "BasicAuth";
+            value: {};
+          }
+        }
+      };
+    }
+
   // Authenticate a user with Evm against the server.
   rpc AuthenticateEvm (api.AuthenticateEvmRequest) returns (api.Session) {
       option (google.api.http) = {

@@ -708,6 +708,43 @@
         ]
       }
     },
+    "/v2/account/authenticate/ua": {
+      "post": {
+        "operationId": "LayerG_AuthenticateUA",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiSession"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/layergapiAuthenticateUA"
+            }
+          }
+        ],
+        "tags": [
+          "LayerG"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/v2/account/link/apple": {
       "post": {
         "summary": "Add an Apple ID to the social profiles on the current user's account.",
@@ -870,7 +907,7 @@
         "parameters": [
           {
             "name": "body",
-            "description": "Send a Telegram token to the server. Used with authenticate/link/unlink.",
+            "description": "Send a Evm token to the server. Used with authenticate/link/unlink.",
             "in": "body",
             "required": true,
             "schema": {
@@ -4021,7 +4058,7 @@
           "description": "Extra information that will be bundled in the session token."
         }
       },
-      "description": "Send a Telegram token to the server. Used with authenticate/link/unlink."
+      "description": "Send a Evm token to the server. Used with authenticate/link/unlink."
     },
     "apiAccountFacebook": {
       "type": "object",
@@ -4045,7 +4082,7 @@
       "properties": {
         "signedPlayerInfo": {
           "type": "string",
-          "title": "The OAuth token received from a Facebook Instant Game that may be decoded with the Application Secret (must be available with the layerG configuration)"
+          "title": "The OAuth token received from a Facebook Instant Game that may be decoded with the Application Secret (must be available with the nakama configuration)"
         },
         "vars": {
           "type": "object",
@@ -5561,6 +5598,23 @@
         }
       },
       "description": "Write objects to the storage engine."
+    },
+    "layergapiAuthenticateUA": {
+      "type": "object",
+      "properties": {
+        "jwt": {
+          "type": "string"
+        },
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "create": {
+          "type": "boolean"
+        }
+      }
     },
     "layergapiEvent": {
       "type": "object",

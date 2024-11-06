@@ -5,12 +5,17 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math"
+	"math/big"
 	"net"
 	"net/http"
 	"strings"
@@ -412,15 +417,37 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 			// Value of "authorization" or "grpc-authorization" was empty or repeated.
 			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
 		}
-		userID, username, vars, exp, tokenId, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
-		if !ok {
-			// Value of "authorization" or "grpc-authorization" was malformed or expired.
-			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+		userID1, username1, vars1, exp1, tokenId1, ok1 := parseBearerAuth1(config.GetConsole().PublicKey, auth[0])
+		if !ok1 {
+			userID, username, vars, exp, tokenId, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
+			logger.Info("", zap.String("userID: ", userID.String()))
+			logger.Info("", zap.String("username: ", username))
+			logger.Info("", zap.Int("exp: ", int(exp)))
+			logger.Info("", zap.String("tokenID: ", tokenId))
+			logger.Info("", zap.Bool("ok: ", ok))
+			if !ok {
+				// Value of "authorization" or "grpc-authorization" was malformed or expired.
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+			}
+			if !sessionCache.IsValidSession(userID, exp, tokenId) {
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+			}
+			ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
+		} else {
+			logger.Info("", zap.String("userID: ", userID1.String()))
+			logger.Info("", zap.String("username: ", username1))
+			logger.Info("", zap.Int("exp: ", int(exp1)))
+			logger.Info("", zap.String("tokenID: ", tokenId1))
+			logger.Info("", zap.Bool("ok: ", ok1))
+			if !ok {
+				// Value of "authorization" or "grpc-authorization" was malformed or expired.
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+			}
+			if !sessionCache.IsValidSession(userID1, exp1, tokenId1) {
+				return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+			}
+			ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID1), ctxUsernameKey{}, username1), ctxVarsKey{}, vars1), ctxExpiryKey{}, exp1)
 		}
-		if !sessionCache.IsValidSession(userID, exp, tokenId) {
-			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
-		}
-		ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
 	default:
 		// Unless explicitly defined above, handlers require full user authentication.
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -482,6 +509,103 @@ func parseBearerAuth(hmacSecretByte []byte, auth string) (userID uuid.UUID, user
 		return
 	}
 	return parseToken(hmacSecretByte, auth[len(prefix):])
+}
+func parseBearerAuth1(publicKey, auth string) (userID uuid.UUID, username string, vars map[string]string, exp int64, tokenId string, ok bool) {
+	if auth == "" {
+		return
+	}
+	const prefix = "Bearer "
+	if !strings.HasPrefix(auth, prefix) {
+		return
+	}
+	tokenID := uuid.Must(uuid.NewV4()).String()
+
+	userID, wallet, exp, valid := validateJWT(publicKey, auth[len(prefix):])
+	return userID, wallet, make(map[string]string), exp, tokenID, valid
+}
+
+type JWTClaims struct {
+	UserId    string `json:"user_id"`
+	Wallet    string `json:"wallet"`
+	Exp       int64  `json:"exp"`
+	Iat       int64  `json:"iat"`
+	Signature struct {
+		R   string `json:"r"`
+		S   string `json:"s"`
+		Msg string `json:"msg"`
+	} `json:"signature"`
+}
+
+func validateJWT(publicKeyHex, tokenString string) (userID uuid.UUID, wallet string, exp int64, valid bool) {
+	// Decode base64 JWT (example assumes payload in JWT's middle part is base64 encoded JSON)
+
+	// Predefined public key from the service entity (in PEM format)
+	// publicKeyHex := config.GetConsole().PublicKey
+
+	parts := strings.Split(tokenString, ".")
+	if len(parts) != 3 {
+		fmt.Println("Invalid JWT format")
+		return
+	}
+
+	// Decode the payload (the second part) from base64
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		fmt.Println("Failed to decode JWT payload:", err)
+		return
+	}
+
+	// Unmarshal the JSON payload into the JWTClaims struct
+	var claims JWTClaims
+	err = json.Unmarshal(payload, &claims)
+	if err != nil {
+		fmt.Println("Failed to parse JWT claims:", err)
+		return
+	}
+
+	// Decode the public key hex into X and Y coordinates
+	pubKeyBytes, err := hex.DecodeString(publicKeyHex)
+	if err != nil {
+		fmt.Println("Failed to decode public key hex:", err)
+		return
+	}
+
+	x := new(big.Int).SetBytes(pubKeyBytes[1:33]) // X coordinate
+	y := new(big.Int).SetBytes(pubKeyBytes[33:])  // Y coordinate
+	ecdsaPubKey := &ecdsa.PublicKey{Curve: elliptic.P256(), X: x, Y: y}
+
+	// Convert r and s from strings to big.Int (try base 10, fallback to base 16)
+	r := new(big.Int)
+	s := new(big.Int)
+	if _, ok := r.SetString(claims.Signature.R, 10); !ok {
+		if _, ok = r.SetString(claims.Signature.R, 16); !ok {
+			fmt.Println("Failed to parse r value")
+			return
+		}
+	}
+	if _, ok := s.SetString(claims.Signature.S, 10); !ok {
+		if _, ok = s.SetString(claims.Signature.S, 16); !ok {
+			fmt.Println("Failed to parse s value")
+			return
+		}
+	}
+
+	// Verify the signature with ECDSA
+	msgHash := []byte(claims.Signature.Msg) // Hash this if it was hashed in the original signing process
+	isValid := ecdsa.Verify(ecdsaPubKey, msgHash, r, s)
+	if !isValid {
+		fmt.Println("Signature verification failed")
+		return
+	}
+
+	// Return user info if verification succeeded
+	userID, err = uuid.FromString(claims.UserId)
+	if err != nil {
+		fmt.Println("Invalid UUID format:", err)
+		return
+	}
+	return userID, claims.Wallet, claims.Exp, true
+
 }
 
 func parseToken(hmacSecretByte []byte, tokenString string) (userID uuid.UUID, username string, vars map[string]string, exp int64, tokenId string, ok bool) {

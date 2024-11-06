@@ -986,6 +986,7 @@ type ConsoleConfig struct {
 	TokenExpirySec      int64      `yaml:"token_expiry_sec" json:"token_expiry_sec" usage:"Token expiry in seconds. Default 86400."`
 	SigningKey          string     `yaml:"signing_key" json:"signing_key" usage:"Key used to sign console session tokens."`
 	MFA                 *MFAConfig `yaml:"mfa" json:"mfa" usage:"MFA settings."`
+	PublicKey           string     `yaml:"ua_public_key" json:"ua_public_key" usage:"UA Public key."`
 }
 
 func NewConsoleConfig() *ConsoleConfig {
@@ -1000,6 +1001,7 @@ func NewConsoleConfig() *ConsoleConfig {
 		TokenExpirySec:      86400,
 		SigningKey:          "defaultsigningkey",
 		MFA:                 NewMFAConfig(),
+		PublicKey:           "042a92e6c4624df5f0fbd6c6a4cecb6a6d2dcd6e6ae7790d8467c0f59a9d35bd64829a8e462a36fa793ac5a390d48c847c68fdfe570ed7e7cee5a1983398fc8201",
 	}
 }
 
