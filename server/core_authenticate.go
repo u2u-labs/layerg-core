@@ -1221,3 +1221,62 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, t
 
 	return userID, username, true, nil
 }
+func AuthenticateUA(ctx context.Context, logger *zap.Logger, db *sql.DB, userID, username, wallet string, create bool) (string, string, bool, error) {
+	//TODO: verify telegram invalid
+	// Look for an existing account
+	query := "SELECT id, username, wallet FROM users WHERE id = $1"
+	var dbUserID string
+	var dbUsername string
+	var dbWallet sql.NullString
+	err := db.QueryRowContext(ctx, query, userID).Scan(&dbUserID, &dbUsername, &dbWallet)
+	found := true
+	if err != nil {
+		if err == sql.ErrNoRows {
+			found = false
+		} else if err != nil {
+			logger.Error("Error looking up user by Telegram ID.", zap.Error(err),
+				zap.String("userID", userID),
+				zap.String("wallet", wallet),
+				zap.Bool("create", create))
+			return "", "", false, status.Error(codes.Internal, "Error finding user account.")
+		}
+	}
+
+	// Existing account found.
+	if found {
+		return dbUserID, dbUsername, false, nil
+	}
+
+	if !create {
+		// No user account found, and creation is not allowed.
+		return "", "", false, status.Error(codes.NotFound, "User account not found.")
+	}
+
+	// Create a new account.
+	// userID := uuid.Must(uuid.NewV4()).String()
+	query = "INSERT INTO users (id, username, onchain_id, display_name, create_time, update_time) VALUES ($1, $2, $3, $4, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, username, wallet, username)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
+			if strings.Contains(pgErr.Message, "users_username_key") {
+				// Username is already in use by a different account.
+				logger.Info("Username is already in use.", zap.Error(err), zap.String("userID", userID), zap.String("onchain_id", wallet))
+				return "", "", false, status.Error(codes.AlreadyExists, "Username is already in use.")
+			} else if strings.Contains(pgErr.Message, "users_telegram_id_key") {
+				// A concurrent write has inserted this Telegram ID.
+				logger.Info("Did not insert new user as Telegram ID already exists.", zap.Error(err), zap.String("userID", userID), zap.String("onchain_id", wallet), zap.Bool("create", create))
+				return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+			}
+		}
+		logger.Error("Cannot find or create user with Telegram ID.", zap.Error(err), zap.String("userID", userID), zap.String("onchain_id", wallet), zap.Bool("create", create))
+		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
+		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
+		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	return userID, username, true, nil
+}

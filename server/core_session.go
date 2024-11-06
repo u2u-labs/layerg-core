@@ -18,6 +18,8 @@ var (
 )
 
 func SessionRefresh(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, sessionCache SessionCache, token string) (uuid.UUID, string, map[string]string, string, error) {
+
+	// TODO: call refresh token api UA, if đéo valid thì đi tiếp flow dưới
 	userID, _, vars, exp, tokenId, ok := parseToken([]byte(config.GetSession().RefreshEncryptionKey), token)
 	if !ok {
 		return uuid.Nil, "", nil, "", status.Error(codes.Unauthenticated, "Refresh token invalid or expired.")

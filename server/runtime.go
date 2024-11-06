@@ -65,6 +65,8 @@ type (
 	RuntimeAfterAuthenticateGoogleFunction                 func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateGoogleRequest) error
 	RuntimeBeforeAuthenticateTelegramFunction              func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateTelegramRequest) (*api.AuthenticateTelegramRequest, error, codes.Code)
 	RuntimeAfterAuthenticateTelegramFunction               func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateTelegramRequest) error
+	RuntimeBeforeAuthenticateUAFunction                    func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateUA) (*api.AuthenticateUA, error, codes.Code)
+	RuntimeAfterAuthenticateUAFunction                     func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateUA) error
 	RuntimeBeforeAuthenticateEvmFunction                   func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateEvmRequest) (*api.AuthenticateEvmRequest, error, codes.Code)
 	RuntimeAfterAuthenticateEvmFunction                    func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateEvmRequest) error
 	RuntimeBeforeAuthenticateSteamFunction                 func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateSteamRequest) (*api.AuthenticateSteamRequest, error, codes.Code)
@@ -351,6 +353,7 @@ type RuntimeBeforeReqFunctions struct {
 	beforeAuthenticateGameCenterFunction            RuntimeBeforeAuthenticateGameCenterFunction
 	beforeAuthenticateGoogleFunction                RuntimeBeforeAuthenticateGoogleFunction
 	beforeAuthenticateTelegramFunction              RuntimeBeforeAuthenticateTelegramFunction
+	beforeAuthenticateUAFunction                    RuntimeBeforeAuthenticateUAFunction
 	beforeAuthenticateSteamFunction                 RuntimeBeforeAuthenticateSteamFunction
 	beforeListChannelMessagesFunction               RuntimeBeforeListChannelMessagesFunction
 	beforeListFriendsFunction                       RuntimeBeforeListFriendsFunction
@@ -437,6 +440,7 @@ type RuntimeAfterReqFunctions struct {
 	afterAuthenticateGameCenterFunction            RuntimeAfterAuthenticateGameCenterFunction
 	afterAuthenticateGoogleFunction                RuntimeAfterAuthenticateGoogleFunction
 	afterAuthenticateTelegramFunction              RuntimeAfterAuthenticateTelegramFunction
+	afterAuthenticateUAFunction                    RuntimeAfterAuthenticateUAFunction
 	afterAuthenticateEvmFunction                   RuntimeAfterAuthenticateEvmFunction
 	afterAuthenticateSteamFunction                 RuntimeAfterAuthenticateSteamFunction
 	afterListChannelMessagesFunction               RuntimeAfterListChannelMessagesFunction
@@ -2939,9 +2943,15 @@ func (r *Runtime) AfterAuthenticateGoogle() RuntimeAfterAuthenticateGoogleFuncti
 func (r *Runtime) BeforeAuthenticateTelegram() RuntimeBeforeAuthenticateTelegramFunction {
 	return r.beforeReqFunctions.beforeAuthenticateTelegramFunction
 }
+func (r *Runtime) BeforeAuthenticateUA() RuntimeBeforeAuthenticateUAFunction {
+	return r.beforeReqFunctions.beforeAuthenticateUAFunction
+}
 
 func (r *Runtime) AfterAuthenticateTelegram() RuntimeAfterAuthenticateTelegramFunction {
 	return r.afterReqFunctions.afterAuthenticateTelegramFunction
+}
+func (r *Runtime) AfterAuthenticateUA() RuntimeAfterAuthenticateUAFunction {
+	return r.afterReqFunctions.afterAuthenticateUAFunction
 }
 
 func (r *Runtime) BeforeAuthenticateEvm() RuntimeBeforeAuthenticateEvmFunction {
