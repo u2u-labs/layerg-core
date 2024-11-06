@@ -42,6 +42,7 @@ type Config interface {
 	GetMFA() *MFAConfig
 	GetLimit() int
 	GetCluster() *PeerConfig
+	GetLayerGCoreConfig() *LayerGCoreConfig
 
 	Clone() (Config, error)
 }
@@ -469,6 +470,7 @@ type config struct {
 	MFA              *MFAConfig         `yaml:"mfa" json:"mfa" usage:"MFA settings."`
 	Limit            int                `json:"-"` // Only used for migrate command.
 	Cluster          *PeerConfig        `yaml:"cluster" json:"cluster" usage:"Cluster settings."`
+	LayerGCore       *LayerGCoreConfig  `yaml:"layerg_core" json:"layerg_core" usage:"LayerG core server config."`
 }
 
 func randomString(n int) string {
@@ -510,6 +512,7 @@ func NewConfig(logger *zap.Logger) *config {
 		MFA:              NewMFAConfig(),
 		Limit:            -1,
 		Cluster:          NewPeerConfig(),
+		LayerGCore:       NewLayerGCore(),
 	}
 }
 
@@ -663,6 +666,10 @@ func (c *config) GetLimit() int {
 
 func (c *config) GetCluster() *PeerConfig {
 	return c.Cluster
+}
+
+func (c *config) GetLayerGCoreConfig() *LayerGCoreConfig {
+	return c.LayerGCore
 }
 
 // LoggerConfig is configuration relevant to logging levels and output.
@@ -1121,6 +1128,12 @@ type GoogleAuthConfig struct {
 	OAuthConfig     *oauth2.Config `yaml:"-" json:"-"`
 }
 
+type LayerGCoreConfig struct {
+	ApiKey   string `yaml:"api_key" json:"api_key" usage:"api key to communicate with core server"`
+	ApiKeyID string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
+	URL      string `yaml:"url" json:"url" usage:"url of core server"`
+}
+
 func NewGoogleAuthConfig() *GoogleAuthConfig {
 	return &GoogleAuthConfig{
 		CredentialsJSON: "",
@@ -1145,5 +1158,13 @@ func NewMFAConfig() *MFAConfig {
 	return &MFAConfig{
 		StorageEncryptionKey: "the-key-has-to-be-32-bytes-long!", // Has to be 32 bit long.
 		AdminAccountOn:       false,
+	}
+}
+
+func NewLayerGCore() *LayerGCoreConfig {
+	return &LayerGCoreConfig{
+		ApiKey:   "v13lx3ykszi3gi7j000oa2",
+		ApiKeyID: "d3e94d1b-3959-498b-9971-b5df93adfd28",
+		URL:      "http://localhost:3000",
 	}
 }
