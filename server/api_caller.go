@@ -32,7 +32,9 @@ func GET(ctx context.Context, endpoint string, token string, params map[string]s
 	if err != nil {
 		return fmt.Errorf("failed to create GET request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}

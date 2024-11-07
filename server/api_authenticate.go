@@ -1169,13 +1169,13 @@ func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.AuthenticateUA) 
 		}
 	}
 
-	userID, wallet, exp, tokenId, valid := validateJWT(s.config.GetConsole().PublicKey, in.Jwt)
+	userID, _, exp, tokenId, valid := validateJWT(s.config.GetConsole().PublicKey, in.Jwt)
 	if !valid {
 		return nil, status.Error(codes.Canceled, "Requested resource was not found.")
 
 	}
 	create := in.Create == nil || in.Create.Value
-	dbUserID, dbUsername, created, err := AuthenticateUA(ctx, s.logger, s.db, userID.String(), wallet, wallet, create)
+	dbUserID, dbUsername, created, err := AuthenticateUA(ctx, s.logger, s.db, s.config, in.Jwt, create)
 	if err != nil {
 		return nil, err
 	}
