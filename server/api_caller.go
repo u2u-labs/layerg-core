@@ -12,7 +12,7 @@ import (
 )
 
 // GET function with dynamic response unmarshaling and handling for nil params
-func (s *ApiServer) GET(ctx context.Context, endpoint string, token string, params map[string]string, responseStruct interface{}) error {
+func GET(ctx context.Context, endpoint string, token string, params map[string]string, responseStruct interface{}) error {
 	baseURL, err := url.Parse(endpoint)
 	if err != nil {
 		return fmt.Errorf("invalid URL: %w", err)

@@ -129,7 +129,7 @@ func (s *ApiServer) GetNFTs(ctx context.Context, token string, params NFTQueryPa
 
 	// Execute GET request and unmarshal response
 	var response NFTResponse
-	err = s.GET(ctx, endpoint, token, queryParams, &response)
+	err = GET(ctx, endpoint, token, queryParams, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get NFT details: %w", err)
 	}
