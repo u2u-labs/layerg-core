@@ -60,7 +60,7 @@ func (s *ApiServer) GET(ctx context.Context, endpoint string, token string, para
 }
 
 // POST function with dynamic response unmarshaling and handling for nil body
-func (s *ApiServer) POST(ctx context.Context, endpoint string, token string, body interface{}, responseStruct interface{}) error {
+func POST(ctx context.Context, endpoint string, token string, body interface{}, responseStruct interface{}) error {
 	// If body is nil, set to empty JSON
 	var jsonBody []byte
 	var err error
@@ -78,7 +78,9 @@ func (s *ApiServer) POST(ctx context.Context, endpoint string, token string, bod
 	if err != nil {
 		return fmt.Errorf("failed to create POST request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	// Execute request

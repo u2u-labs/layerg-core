@@ -993,6 +993,7 @@ type ConsoleConfig struct {
 	TokenExpirySec      int64      `yaml:"token_expiry_sec" json:"token_expiry_sec" usage:"Token expiry in seconds. Default 86400."`
 	SigningKey          string     `yaml:"signing_key" json:"signing_key" usage:"Key used to sign console session tokens."`
 	MFA                 *MFAConfig `yaml:"mfa" json:"mfa" usage:"MFA settings."`
+	PublicKey           string     `yaml:"ua_public_key" json:"ua_public_key" usage:"UA Public key."`
 }
 
 func NewConsoleConfig() *ConsoleConfig {
@@ -1007,6 +1008,7 @@ func NewConsoleConfig() *ConsoleConfig {
 		TokenExpirySec:      86400,
 		SigningKey:          "defaultsigningkey",
 		MFA:                 NewMFAConfig(),
+		PublicKey:           "042a92e6c4624df5f0fbd6c6a4cecb6a6d2dcd6e6ae7790d8467c0f59a9d35bd64829a8e462a36fa793ac5a390d48c847c68fdfe570ed7e7cee5a1983398fc8201",
 	}
 }
 
@@ -1129,9 +1131,10 @@ type GoogleAuthConfig struct {
 }
 
 type LayerGCoreConfig struct {
-	ApiKey   string `yaml:"api_key" json:"api_key" usage:"api key to communicate with core server"`
-	ApiKeyID string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
-	URL      string `yaml:"url" json:"url" usage:"url of core server"`
+	ApiKey              string `yaml:"api_key" json:"api_key" usage:"api key to communicate with core server"`
+	ApiKeyID            string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
+	URL                 string `yaml:"url" json:"url" usage:"url of core server"`
+	UniversalAccountURL string `yaml:"ua_url" json:"ua_url" usage:"ua_url of core server"`
 }
 
 func NewGoogleAuthConfig() *GoogleAuthConfig {
@@ -1163,8 +1166,9 @@ func NewMFAConfig() *MFAConfig {
 
 func NewLayerGCore() *LayerGCoreConfig {
 	return &LayerGCoreConfig{
-		ApiKey:   "v13lx3ykszi3gi7j000oa2",
-		ApiKeyID: "d3e94d1b-3959-498b-9971-b5df93adfd28",
-		URL:      "http://localhost:3000",
+		ApiKey:              "v13lx3ykszi3gi7j000oa2",
+		ApiKeyID:            "d3e94d1b-3959-498b-9971-b5df93adfd28",
+		URL:                 "http://localhost:3000",
+		UniversalAccountURL: "https://ua-api-dev.layerg.xyz",
 	}
 }

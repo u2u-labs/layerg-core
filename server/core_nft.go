@@ -163,7 +163,7 @@ func (s *ApiServer) CreateAssetNFT(ctx context.Context, token string, request Cr
 	endpoint := baseUrl + "/api/asset-nft/create"
 
 	var response CreateAssetNFTResponse
-	err := s.POST(ctx, endpoint, token, request, &response)
+	err := POST(ctx, endpoint, token, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
 	}
@@ -196,7 +196,7 @@ func (s *ApiServer) TransferNFT(ctx context.Context, token string, request Trans
 
 	endpoint := baseUrl + "/api/transaction/transfer-nft"
 
-	err := s.POST(ctx, endpoint, token, request, nil)
+	err := POST(ctx, endpoint, token, request, nil)
 	if err != nil {
 		return fmt.Errorf("failed to transfer NFT: %w", err)
 	}
@@ -208,7 +208,7 @@ func (s *ApiServer) MintNFT(ctx context.Context, token string, request MintNFTRe
 	baseUrl := s.config.GetLayerGCoreConfig().URL
 	endpoint := baseUrl + "/api/transaction/mint-nft"
 
-	err := s.POST(ctx, endpoint, token, request, nil)
+	err := POST(ctx, endpoint, token, request, nil)
 	if err != nil {
 		return fmt.Errorf("failed to mint NFT: %w", err)
 	}

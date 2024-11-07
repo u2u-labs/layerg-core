@@ -1145,3 +1145,64 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 
 	return session, nil
 }
+func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.AuthenticateUA) (*api.Session, error) {
+	// Before hook.
+	if fn := s.runtime.BeforeAuthenticateUA(); fn != nil {
+		beforeFn := func(clientIP, clientPort string) error {
+			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+			if err != nil {
+				return status.Error(code, err.Error())
+			}
+			if result == nil {
+				// If result is nil, requested resource is disabled.
+				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+				return status.Error(codes.NotFound, "Requested resource was not found.")
+			}
+			in = result
+			return nil
+		}
+
+		// Execute the before function lambda wrapped in a trace for stats measurement.
+		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	userID, wallet, exp, tokenId, valid := validateJWT(s.config.GetConsole().PublicKey, in.Jwt)
+	if !valid {
+		return nil, status.Error(codes.Canceled, "Requested resource was not found.")
+
+	}
+	create := in.Create == nil || in.Create.Value
+	dbUserID, dbUsername, created, err := AuthenticateUA(ctx, s.logger, s.db, userID.String(), wallet, wallet, create)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.config.GetSession().SingleSession {
+		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
+	}
+
+	s.sessionCache.Add(userID, exp, in.Jwt, exp+603900000, tokenId)
+	session := &api.Session{Created: created, Token: in.Jwt, RefreshToken: in.RefreshJwt}
+
+	// After hook.
+	if fn := s.runtime.AfterAuthenticateUA(); fn != nil {
+		afterFn := func(clientIP, clientPort string) error {
+			return fn(ctx, s.logger, dbUserID, dbUsername, in.Vars, exp, clientIP, clientPort, session, in)
+		}
+		// Execute the after function lambda wrapped in a trace for stats measurement.
+		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	}
+	// global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if in.AuthGlobal.Value == true {
+	// 	return global, nil
+	// }
+
+	return session, nil
+}

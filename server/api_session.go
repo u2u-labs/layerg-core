@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/u2u-labs/go-layerg-common/api"
@@ -39,8 +40,9 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 		return nil, status.Error(codes.InvalidArgument, "Refresh token is required.")
 	}
 
-	userID, username, vars, tokenId, err := SessionRefresh(ctx, s.logger, s.db, s.config, s.sessionCache, in.Token)
+	userID, username, vars, tokenId, uaResponse, err := SessionRefresh(ctx, s.logger, s.db, s.config, s.sessionCache, in.Token)
 	if err != nil {
+		s.logger.Error("Error refreshing session.", zap.Error(err))
 		return nil, err
 	}
 
@@ -58,21 +60,29 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 	//s.sessionCache.Add(userID, tokenExp, newTokenId, refreshTokenExp, newTokenId)
 	//session := &api.Session{Created: false, Token: token, RefreshToken: refreshToken}
 
-	token, tokenExp := generateToken(s.config, tokenId, userIDStr, username, useVars)
-	refreshToken, refreshTokenExp := generateRefreshToken(s.config, tokenId, userIDStr, username, useVars)
-	s.sessionCache.Add(userID, tokenExp, tokenId, refreshTokenExp, tokenId)
-	session := &api.Session{Created: false, Token: token, RefreshToken: refreshToken}
+	// token, tokenExp := generateToken(s.config, tokenId, userIDStr, username, useVars)
+	// refreshToken, refreshTokenExp := generateRefreshToken(s.config, tokenId, userIDStr, username, useVars)
+	tokenExp, err := time.Parse(time.RFC3339Nano, uaResponse.AccessTokenExpires)
+	if err != nil {
+		return nil, err
+	}
+	refreshExp, err := time.Parse(time.RFC3339Nano, uaResponse.RefreshTokenExpires)
+	if err != nil {
+		return nil, err
+	}
+
+	s.sessionCache.Add(userID, tokenExp.Unix(), tokenId, refreshExp.Unix(), tokenId)
+	session := &api.Session{Created: false, Token: uaResponse.AccessToken, RefreshToken: uaResponse.RefreshToken}
 
 	// After hook.
 	if fn := s.runtime.AfterSessionRefresh(); fn != nil {
 		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, userIDStr, username, useVars, tokenExp, clientIP, clientPort, session, in)
+			return fn(ctx, s.logger, userIDStr, username, useVars, tokenExp.Unix(), clientIP, clientPort, session, in)
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
-
 	return session, nil
 }
 
