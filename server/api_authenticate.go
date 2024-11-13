@@ -1169,7 +1169,7 @@ func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.AuthenticateUA) 
 		}
 	}
 
-	userID, _, exp, tokenId, valid := validateJWT(s.config.GetConsole().PublicKey, in.Jwt)
+	_, _, exp, _, valid := validateJWT(s.config.GetConsole().PublicKey, in.Jwt)
 	if !valid {
 		return nil, status.Error(codes.Canceled, "Requested resource was not found.")
 
@@ -1184,8 +1184,15 @@ func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.AuthenticateUA) 
 		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
 	}
 
-	s.sessionCache.Add(userID, exp, in.Jwt, exp+603900000, tokenId)
-	session := &api.Session{Created: created, Token: in.Jwt, RefreshToken: in.RefreshJwt}
+	// s.sessionCache.Add(userID, exp, in.Jwt, exp+603900000, tokenId)
+	// session := &api.Session{Created: created, Token: in.Jwt, RefreshToken: in.RefreshJwt}
+
+	tokenID := uuid.Must(uuid.NewV4()).String()
+	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Vars)
+	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Vars)
+	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
+	s.activeTokenCacheUser.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken, 0, "", 0, "")
+	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
 	// After hook.
 	if fn := s.runtime.AfterAuthenticateUA(); fn != nil {
