@@ -5,6 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/u2u-labs/go-layerg-common/runtime"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Struct for the POST request response
@@ -58,6 +62,7 @@ type NFTData struct {
 	OffChainBalance   string   `json:"offChainBalance"`
 	OnChainBalance    string   `json:"onChainBalance"`
 	OwnerAddress      string   `json:"ownerAddress"`
+	Type              string   `json:"type"`
 }
 
 // Struct to represent pagination information
@@ -108,8 +113,9 @@ func buildQueryParams(v interface{}) (map[string]string, error) {
 				params[tag] = v
 			}
 		case []string:
-			for idx, id := range v {
-				params[fmt.Sprintf("%s[%d]", tag, idx)] = id
+			for _, id := range v {
+				// Add each item in the slice as a separate entry with the same key
+				params[tag+"[]"] = id
 			}
 		}
 	}
@@ -117,19 +123,21 @@ func buildQueryParams(v interface{}) (map[string]string, error) {
 	return params, nil
 }
 
-func (s *ApiServer) GetNFTs(ctx context.Context, token string, params NFTQueryParams) (*NFTResponse, error) {
+func GetNFTs(ctx context.Context, params runtime.NFTQueryParams, config Config) (*runtime.NFTResponse, error) {
 	// Build query parameters from struct
+	if params.CollectionAddress == "" {
+		return nil, status.Error(codes.InvalidArgument, "CollectionAddress is required.")
+	}
 	queryParams, err := buildQueryParams(params)
 	if err != nil {
 		return nil, err
 	}
-
-	baseUrl := s.config.GetLayerGCoreConfig().URL
+	baseUrl := config.GetLayerGCoreConfig().URL
 	endpoint := baseUrl + "/api/nft"
 
 	// Execute GET request and unmarshal response
-	var response NFTResponse
-	err = GET(ctx, endpoint, token, queryParams, &response)
+	var response runtime.NFTResponse
+	err = GET(ctx, endpoint, "", queryParams, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get NFT details: %w", err)
 	}
@@ -158,8 +166,8 @@ type CreateAssetNFTRequest struct {
 	} `json:"metadata"`
 }
 
-func (s *ApiServer) CreateAssetNFT(ctx context.Context, token string, request CreateAssetNFTRequest) (*CreateAssetNFTResponse, error) {
-	baseUrl := s.config.GetLayerGCoreConfig().URL
+func CreateAssetNFT(ctx context.Context, token string, request CreateAssetNFTRequest, config Config) (*CreateAssetNFTResponse, error) {
+	baseUrl := config.GetLayerGCoreConfig().URL
 	endpoint := baseUrl + "/api/asset-nft/create"
 
 	var response CreateAssetNFTResponse
@@ -191,8 +199,8 @@ type MintNFTRequest struct {
 	NFTTransactionDetails
 }
 
-func (s *ApiServer) TransferNFT(ctx context.Context, token string, request TransferNFTRequest) error {
-	baseUrl := s.config.GetLayerGCoreConfig().URL
+func TransferNFT(ctx context.Context, token string, request TransferNFTRequest, config Config) error {
+	baseUrl := config.GetLayerGCoreConfig().URL
 
 	endpoint := baseUrl + "/api/transaction/transfer-nft"
 
@@ -204,8 +212,8 @@ func (s *ApiServer) TransferNFT(ctx context.Context, token string, request Trans
 	return nil
 }
 
-func (s *ApiServer) MintNFT(ctx context.Context, token string, request MintNFTRequest) error {
-	baseUrl := s.config.GetLayerGCoreConfig().URL
+func MintNFT(ctx context.Context, token string, request MintNFTRequest, config Config) error {
+	baseUrl := config.GetLayerGCoreConfig().URL
 	endpoint := baseUrl + "/api/transaction/mint-nft"
 
 	err := POST(ctx, endpoint, token, request, nil)
