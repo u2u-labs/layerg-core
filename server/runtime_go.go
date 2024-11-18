@@ -583,7 +583,7 @@ func (ri *RuntimeGoInitializer) RegisterAfterAuthenticateTelegram(fn func(ctx co
 func (ri *RuntimeGoInitializer) RegisterAfterAuthenticateUA(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, out *api.Session, in *api.AuthenticateUA) error) error {
 	ri.afterReq.afterAuthenticateUAFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateUA) error {
 		ctx = NewRuntimeGoContext(ctx, ri.node, ri.version, ri.env, RuntimeExecutionModeAfter, nil, nil, expiry, userID, username, vars, "", clientIP, clientPort, "")
-		loggerFields := map[string]interface{}{"api_id": "authenticatetelegram", "mode": RuntimeExecutionModeAfter.String()}
+		loggerFields := map[string]interface{}{"api_id": "authenticateua", "mode": RuntimeExecutionModeAfter.String()}
 		return fn(ctx, ri.logger.WithFields(loggerFields), ri.db, ri.nk, out, in)
 	}
 	return nil

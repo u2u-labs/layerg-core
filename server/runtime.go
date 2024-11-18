@@ -1702,6 +1702,9 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if allAfterReqFunctions.afterAuthenticateEvmFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticateevm"))
 	}
+	if allAfterReqFunctions.afterAuthenticateUAFunction != nil {
+		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticateua"))
+	}
 	if allAfterReqFunctions.afterAuthenticateFacebookFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticatefacebook"))
 	}
@@ -2283,6 +2286,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if goAfterReqFns.afterAuthenticateEvmFunction != nil {
 		allAfterReqFunctions.afterAuthenticateEvmFunction = goAfterReqFns.afterAuthenticateEvmFunction
 		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "authenticateevm"))
+	}
+	if goAfterReqFns.afterAuthenticateUAFunction != nil {
+		allAfterReqFunctions.afterAuthenticateUAFunction = goAfterReqFns.afterAuthenticateUAFunction
+		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "authenticateua"))
 	}
 	if goAfterReqFns.afterAuthenticateFacebookFunction != nil {
 		allAfterReqFunctions.afterAuthenticateFacebookFunction = goAfterReqFns.afterAuthenticateFacebookFunction
