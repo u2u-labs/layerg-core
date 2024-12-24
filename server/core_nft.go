@@ -145,6 +145,28 @@ func GetNFTs(ctx context.Context, params runtime.NFTQueryParams, config Config) 
 	return &response, nil
 }
 
+func GetCollectionAsset(ctx context.Context, params runtime.CollectionAssetQueryParams, token string, config Config) (*runtime.CollectionAssetResponse, error) {
+	// Build query parameters from struct
+	if params.CollectionId == "" {
+		return nil, status.Error(codes.InvalidArgument, "CollectionId is required.")
+	}
+	queryParams, err := buildQueryParams(params)
+	if err != nil {
+		return nil, err
+	}
+	baseUrl := config.GetLayerGCoreConfig().URL
+	endpoint := baseUrl + "/api/asset-nft"
+
+	// Execute GET request and unmarshal response
+	var response runtime.CollectionAssetResponse
+	err = GET(ctx, endpoint, token, queryParams, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get NFT details: %w", err)
+	}
+
+	return &response, nil
+}
+
 // Struct for the POST request body
 type CreateAssetNFTRequest struct {
 	Name         string `json:"name"`

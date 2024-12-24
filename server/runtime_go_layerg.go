@@ -4294,12 +4294,39 @@ func (n *RuntimeGoLayerGModule) ChannelMessagesList(ctx context.Context, channel
 // @nft
 // @summary Get NFTs from core server.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
-// @param token(type=string) server token
 // @return error(error) An optional error value if an error occurred.
 func (n *RuntimeGoLayerGModule) GetNFTs(ctx context.Context, params runtime.NFTQueryParams) (*runtime.NFTResponse, error) {
 	queryResult, err := GetNFTs(ctx, params, n.config)
 	if err != nil {
 		return nil, err
+	}
+
+	return queryResult, nil
+}
+
+// @nft
+// @summary Get Asset metadata from core server.
+// @param ctx(type=context.Context) The context object represents information about the server and requester.
+// @param token(type=string) server token
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) GetCollectionAsset(ctx context.Context, params runtime.CollectionAssetQueryParams, token string) (*runtime.CollectionAssetResponse, error) {
+	queryResult, err := GetCollectionAsset(ctx, params, token, n.config)
+	if err != nil {
+		return nil, err
+	}
+
+	return queryResult, nil
+}
+
+// @agg
+// @summary Get access token of api key from core server.
+// @param ctx(type=context.Context) The context object represents information about the server and requester.
+// @param token(type=string) server token
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) GetAggToken(ctx context.Context) (string, error) {
+	queryResult, err := GetAccessToken(ctx, n.logger, n.activeTokenCacheUser, n.config)
+	if err != nil {
+		return "", err
 	}
 
 	return queryResult, nil

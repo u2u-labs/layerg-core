@@ -38,11 +38,11 @@ type Claims struct {
 // func (s *ApiServer) AuthenticateLayerGCore(ctx context.Context) error {
 // }
 
-func (s *ApiServer) loginAndCacheToken(ctx context.Context) error {
+func LoginAndCacheToken(ctx context.Context, logger *zap.Logger, config Config, activeCache ActiveTokenCache) error {
 	defaultUuid := uuid.FromStringOrNil("00000000-0000-0000-0000-000000000000")
-	apiKey := s.config.GetLayerGCoreConfig().ApiKey
-	apiKeyID := s.config.GetLayerGCoreConfig().ApiKeyID
-	loginURL := s.config.GetLayerGCoreConfig().URL
+	apiKey := config.GetLayerGCoreConfig().ApiKey
+	apiKeyID := config.GetLayerGCoreConfig().ApiKeyID
+	loginURL := config.GetLayerGCoreConfig().URL
 	reqBody, err := json.Marshal(LoginRequest{ApiKey: apiKey, ApiKeyID: apiKeyID})
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (s *ApiServer) loginAndCacheToken(ctx context.Context) error {
 	if resp.StatusCode != http.StatusCreated {
 		body, _ := ioutil.ReadAll(resp.Body)
 
-		s.logger.Error("Failed to login", zap.String("responseBody", string(body)))
+		logger.Error("Failed to login", zap.String("responseBody", string(body)))
 
 		return errors.New("failed to login")
 	}
@@ -89,9 +89,9 @@ func (s *ApiServer) loginAndCacheToken(ctx context.Context) error {
 		return err
 	}
 
-	s.activeTokenCacheUser.Add(defaultUuid, 0, "", 0, "", accessExp, loginResp.AccessToken, refreshExp, loginResp.RefreshToken)
+	activeCache.Add(defaultUuid, 0, "", 0, "", accessExp, loginResp.AccessToken, refreshExp, loginResp.RefreshToken)
 
-	go s.refreshToken(ctx, refreshExp)
+	go refreshToken(ctx, logger, config, activeCache, refreshExp)
 
 	return nil
 }
@@ -109,13 +109,13 @@ func decodeJWT(tokenStr string) (*Claims, int64, error) {
 	return nil, 0, errors.New("invalid token")
 }
 
-func (s *ApiServer) refreshToken(ctx context.Context, exp int64) {
+func refreshToken(ctx context.Context, logger *zap.Logger, config Config, activeCache ActiveTokenCache, exp int64) {
 
 	for {
 		waitTime := time.Until(time.Unix(exp, 0))
 		select {
 		case <-time.After(waitTime):
-			if err := s.loginAndCacheToken(ctx); err != nil {
+			if err := LoginAndCacheToken(ctx, logger, config, activeCache); err != nil {
 				fmt.Println("Failed to refresh token:", err)
 			}
 		case <-ctx.Done():
@@ -124,25 +124,25 @@ func (s *ApiServer) refreshToken(ctx context.Context, exp int64) {
 	}
 }
 
-func (s *ApiServer) getAccessToken(ctx context.Context) (string, error) {
+func GetAccessToken(ctx context.Context, logger *zap.Logger, s ActiveTokenCache, config Config) (string, error) {
 	defaultUuid := uuid.FromStringOrNil("00000000-0000-0000-0000-000000000000")
 
-	_, _, globalSessionToken, _, _, _, globalSessionExp, _ := s.activeTokenCacheUser.GetActiveTokens(defaultUuid)
+	_, _, globalSessionToken, _, _, _, globalSessionExp, _ := s.GetActiveTokens(defaultUuid)
 
 	// Determine the most recent token and its expiration
 	var accessToken = globalSessionToken
 	var tokenExp = globalSessionExp
-	s.logger.Info(accessToken)
-	s.logger.Info(strconv.Itoa(int(tokenExp)))
+	logger.Info(accessToken)
+	logger.Info(strconv.Itoa(int(tokenExp)))
 	// Check if the token is still valid
 	if time.Now().Unix() >= tokenExp {
 		// If expired, refresh the token
-		if err := s.loginAndCacheToken(ctx); err != nil {
+		if err := LoginAndCacheToken(ctx, logger, config, s); err != nil {
 			return "", fmt.Errorf("failed to refresh token: %w", err)
 		}
 
 		// Re-fetch the updated token from the cache
-		_, _, globalSessionToken, _, _, _, globalSessionExp, _ = s.activeTokenCacheUser.GetActiveTokens(defaultUuid)
+		_, _, globalSessionToken, _, _, _, globalSessionExp, _ = s.GetActiveTokens(defaultUuid)
 		accessToken = globalSessionToken
 	}
 
