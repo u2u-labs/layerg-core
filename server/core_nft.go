@@ -32,8 +32,8 @@ type Media struct {
 
 // Struct to represent individual metadata attributes
 type Attribute struct {
-	Value     string `json:"value"`
-	TraitType string `json:"trait_type"`
+	Value     interface{} `json:"value"`
+	TraitType string      `json:"trait_type"`
 }
 
 // Struct to represent metadata details
@@ -163,7 +163,7 @@ func GetCollectionAsset(ctx context.Context, params runtime.CollectionAssetQuery
 	if err != nil {
 		return nil, fmt.Errorf("failed to get NFT details: %w", err)
 	}
-
+	fmt.Print(response)
 	return &response, nil
 }
 
@@ -179,11 +179,8 @@ type CreateAssetNFTRequest struct {
 	} `json:"media"`
 	Metadata struct {
 		Metadata struct {
-			Creator    string `json:"creator"`
-			Attributes []struct {
-				TraitType string `json:"trait_type"`
-				Value     string `json:"value"`
-			} `json:"attributes"`
+			Creator    string      `json:"creator"`
+			Attributes []Attribute `json:"attributes"`
 		} `json:"metadata"`
 	} `json:"metadata"`
 }

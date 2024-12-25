@@ -26,7 +26,7 @@ func GET(ctx context.Context, endpoint string, token string, params map[string]s
 		}
 		baseURL.RawQuery = query.Encode()
 	}
-
+	fmt.Print(baseURL.String())
 	// Create GET request
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL.String(), nil)
 	if err != nil {

@@ -292,8 +292,8 @@ github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8
 github.com/twmb/murmur3 v1.1.5/go.mod h1:Qq/R7NUyOfr65zD+6Q5IHKsJLwP7exErjN6lyyq3OSQ=
 github.com/twmb/murmur3 v1.1.8 h1:8Yt9taO/WN3l08xErzjeschgZU2QSrwm1kclYq+0aRg=
 github.com/twmb/murmur3 v1.1.8/go.mod h1:Qq/R7NUyOfr65zD+6Q5IHKsJLwP7exErjN6lyyq3OSQ=
-github.com/u2u-labs/go-layerg-common v0.0.0-20241224195904-7ec6a935665a h1:onD4EnRhJv0bfNLZjUB+4O0quPrGLNdlQuqpZ3OuMjI=
-github.com/u2u-labs/go-layerg-common v0.0.0-20241224195904-7ec6a935665a/go.mod h1:4Ffe744TwUF0Be0Nw42qj/gJastDpdJqC6V+aI4+EEk=
+github.com/u2u-labs/go-layerg-common v0.0.0-20241225084413-4e1828d76cb4 h1:DtQey3a0gsY4IEDT+zdPi2rUnS4fTKygvGugoB5mLjE=
+github.com/u2u-labs/go-layerg-common v0.0.0-20241225084413-4e1828d76cb4/go.mod h1:4Ffe744TwUF0Be0Nw42qj/gJastDpdJqC6V+aI4+EEk=
 github.com/u2u-labs/layerg-kit v0.0.0-20241023235723-b6a14baaaa29 h1:2zhD/69ajY2mfytYTUI1ZOTQCbKJzNA+bE3MeUV/ilc=
 github.com/u2u-labs/layerg-kit v0.0.0-20241023235723-b6a14baaaa29/go.mod h1:IU5LI6gUwpf/8OQkf6V2fLMaaU/leR5PBYBlNKSGkmc=
 github.com/uber-go/tally/v4 v4.1.16 h1:by2hveWRh/cUReButk6ns1sHK/hiKry7BuOV6iY16XI=
