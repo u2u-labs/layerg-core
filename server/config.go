@@ -43,7 +43,7 @@ type Config interface {
 	GetLimit() int
 	GetCluster() *PeerConfig
 	GetLayerGCoreConfig() *LayerGCoreConfig
-
+	GetRedisDbConfig() *RedisConfig
 	Clone() (Config, error)
 }
 
@@ -471,6 +471,7 @@ type config struct {
 	Limit            int                `json:"-"` // Only used for migrate command.
 	Cluster          *PeerConfig        `yaml:"cluster" json:"cluster" usage:"Cluster settings."`
 	LayerGCore       *LayerGCoreConfig  `yaml:"layerg_core" json:"layerg_core" usage:"LayerG core server config."`
+	RedisDb          *RedisConfig       `yaml:"redis_db" json:"redis_db" usage:"RedisDB server config."`
 }
 
 func randomString(n int) string {
@@ -670,6 +671,10 @@ func (c *config) GetCluster() *PeerConfig {
 
 func (c *config) GetLayerGCoreConfig() *LayerGCoreConfig {
 	return c.LayerGCore
+}
+
+func (c *config) GetRedisDbConfig() *RedisConfig {
+	return c.RedisDb
 }
 
 // LoggerConfig is configuration relevant to logging levels and output.
@@ -1137,6 +1142,12 @@ type LayerGCoreConfig struct {
 	UniversalAccountURL string `yaml:"ua_url" json:"ua_url" usage:"ua_url of core server"`
 }
 
+type RedisConfig struct {
+	Url      string `yaml:"url" json:"api_key" usage:"api key to communicate with core server"`
+	Db       string `yaml:"db" json:"api_key_id" usage:"api key id to communicate with core server"`
+	Password string `yaml:"password" json:"url" usage:"url of core server"`
+}
+
 func NewGoogleAuthConfig() *GoogleAuthConfig {
 	return &GoogleAuthConfig{
 		CredentialsJSON: "",
@@ -1170,5 +1181,12 @@ func NewLayerGCore() *LayerGCoreConfig {
 		ApiKeyID:            "d3e94d1b-3959-498b-9971-b5df93adfd28",
 		URL:                 "http://localhost:3000",
 		UniversalAccountURL: "https://ua-api-dev.layerg.xyz",
+	}
+}
+func NewRedisDb() *RedisConfig {
+	return &RedisConfig{
+		Url:      "v13lx3ykszi3gi7j000oa2",
+		Db:       "d3e94d1b-3959-498b-9971-b5df93adfd28",
+		Password: "http://localhost:3000",
 	}
 }

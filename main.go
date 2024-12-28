@@ -18,11 +18,15 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/jackc/pgx/v5/stdlib" // Blank import to register SQL driver
+	"github.com/redis/go-redis/v9"
 	"github.com/u2u-labs/layerg-core/console"
 	"github.com/u2u-labs/layerg-core/migrate"
 	"github.com/u2u-labs/layerg-core/se"
 	"github.com/u2u-labs/layerg-core/server"
+	"github.com/u2u-labs/layerg-core/server/crawler"
+	"github.com/u2u-labs/layerg-core/server/crawler/utils"
 	"github.com/u2u-labs/layerg-core/social"
+	"github.com/unicornultrafoundation/go-u2u/accounts/abi"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -304,6 +308,57 @@ func startPeriodicSync(ctx context.Context, db *sql.DB, logger *zap.Logger) {
 			go server.SyncUsers(ctx, db)
 		case <-ctx.Done():
 			logger.Info("Stopping periodic sync due to context cancellation")
+			return
+		}
+	}
+}
+
+func startCrawlerProcess(ctx context.Context, logger *zap.Logger, db *sql.DB, config server.Config) {
+
+	// Initialize Redis client using the existing config structure
+	redisConfig := config.GetRedisDbConfig()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     redisConfig.Url,      // Redis server address
+		Password: redisConfig.Password, // Redis password
+		DB:       0,                    // Default database
+	})
+
+	var err error
+	// Initialize ABIs
+	if utils.ERC20ABI, err = abi.JSON(strings.NewReader(utils.ERC20ABIStr)); err != nil {
+		logger.Fatal("Failed to initialize ERC20 ABI", zap.Error(err))
+		return
+	}
+	if utils.ERC721ABI, err = abi.JSON(strings.NewReader(utils.ERC721ABIStr)); err != nil {
+		logger.Fatal("Failed to initialize ERC721 ABI", zap.Error(err))
+		return
+	}
+	if utils.ERC1155ABI, err = abi.JSON(strings.NewReader(utils.ERC1155ABIStr)); err != nil {
+		logger.Fatal("Failed to initialize ERC1155 ABI", zap.Error(err))
+		return
+	}
+
+	// Start initial crawl of supported chains
+	err = crawler.CrawlSupportedChains(ctx, logger, db, rdb)
+	if err != nil {
+		logger.Error("Error initializing supported chains", zap.Error(err))
+		return
+	}
+
+	// Start the continuous processing loop
+	timer := time.NewTimer(2 * time.Second) // Import from layerg-crawler config
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-timer.C:
+			// Process new chains
+			crawler.ProcessNewChains(ctx, logger, rdb, db)
+			// Process new assets
+			crawler.ProcessNewChainAssets(ctx, logger, rdb)
+			timer.Reset(2 * time.Second)
+		case <-ctx.Done():
+			logger.Info("Stopping crawler process due to context cancellation")
 			return
 		}
 	}
