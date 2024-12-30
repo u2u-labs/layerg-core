@@ -1185,8 +1185,8 @@ func NewLayerGCore() *LayerGCoreConfig {
 }
 func NewRedisDb() *RedisConfig {
 	return &RedisConfig{
-		Url:      "v13lx3ykszi3gi7j000oa2",
-		Db:       "d3e94d1b-3959-498b-9971-b5df93adfd28",
-		Password: "http://localhost:3000",
+		Url:      "http://localhost:6379",
+		Db:       "",
+		Password: "",
 	}
 }

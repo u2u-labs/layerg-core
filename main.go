@@ -141,6 +141,7 @@ func main() {
 
 	db := server.DbConnect(ctx, startupLogger, config, false)
 	// go startPeriodicSync(ctx, db, logger)
+	go startCrawlerProcess(ctx, logger, db, config)
 
 	// Check migration status and fail fast if the schema has diverged.
 	conn, err := db.Conn(context.Background())
@@ -314,52 +315,52 @@ func startPeriodicSync(ctx context.Context, db *sql.DB, logger *zap.Logger) {
 }
 
 func startCrawlerProcess(ctx context.Context, logger *zap.Logger, db *sql.DB, config server.Config) {
+	logger.Info("Initializing crawler")
 
 	// Initialize Redis client using the existing config structure
 	redisConfig := config.GetRedisDbConfig()
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     redisConfig.Url,      // Redis server address
-		Password: redisConfig.Password, // Redis password
-		DB:       0,                    // Default database
+		Addr:     redisConfig.Url,
+		Password: redisConfig.Password,
+		DB:       0,
 	})
 
-	var err error
 	// Initialize ABIs
-	if utils.ERC20ABI, err = abi.JSON(strings.NewReader(utils.ERC20ABIStr)); err != nil {
-		logger.Fatal("Failed to initialize ERC20 ABI", zap.Error(err))
+	initializeABI := func(abiStr string, abiRef *abi.ABI, name string) error {
+		parsedABI, err := abi.JSON(strings.NewReader(abiStr))
+		if err != nil {
+			logger.Fatal("Failed to initialize "+name+" ABI", zap.Error(err))
+			return err
+		}
+		*abiRef = parsedABI
+		return nil
+	}
+
+	if err := initializeABI(utils.ERC20ABIStr, &utils.ERC20ABI, "ERC20"); err != nil {
 		return
 	}
-	if utils.ERC721ABI, err = abi.JSON(strings.NewReader(utils.ERC721ABIStr)); err != nil {
-		logger.Fatal("Failed to initialize ERC721 ABI", zap.Error(err))
+	if err := initializeABI(utils.ERC721ABIStr, &utils.ERC721ABI, "ERC721"); err != nil {
 		return
 	}
-	if utils.ERC1155ABI, err = abi.JSON(strings.NewReader(utils.ERC1155ABIStr)); err != nil {
-		logger.Fatal("Failed to initialize ERC1155 ABI", zap.Error(err))
+	if err := initializeABI(utils.ERC1155ABIStr, &utils.ERC1155ABI, "ERC1155"); err != nil {
 		return
 	}
 
 	// Start initial crawl of supported chains
-	err = crawler.CrawlSupportedChains(ctx, logger, db, rdb)
-	if err != nil {
+	if err := crawler.CrawlSupportedChains(ctx, logger, db, rdb); err != nil {
 		logger.Error("Error initializing supported chains", zap.Error(err))
 		return
 	}
 
-	// Start the continuous processing loop
-	timer := time.NewTimer(2 * time.Second) // Import from layerg-crawler config
-	defer timer.Stop()
-
-	for {
-		select {
-		case <-timer.C:
-			// Process new chains
-			crawler.ProcessNewChains(ctx, logger, rdb, db)
-			// Process new assets
-			crawler.ProcessNewChainAssets(ctx, logger, rdb)
-			timer.Reset(2 * time.Second)
-		case <-ctx.Done():
-			logger.Info("Stopping crawler process due to context cancellation")
-			return
-		}
+	// Process new chains
+	if err := crawler.ProcessNewChains(ctx, logger, rdb, db); err != nil {
+		logger.Error("Error in ProcessNewChains", zap.Error(err))
 	}
+
+	// Process new chain assets
+	if err := crawler.ProcessNewChainAssets(ctx, logger, rdb); err != nil {
+		logger.Error("Error in ProcessNewChainAssets", zap.Error(err))
+	}
+
+	logger.Info("Crawler process initialized successfully")
 }
