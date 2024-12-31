@@ -103,6 +103,17 @@ CREATE TABLE
         secret_key VARCHAR NOT NULL
     );
 
+CREATE TYPE crawler_status AS ENUM ('CRAWLING', 'CRAWLED');
+
+CREATE TABLE backfill_crawlers (
+    chain_id INT NOT NULL,
+    collection_address VARCHAR NOT NULL,
+    current_block BIGINT NOT NULL,
+    status crawler_status DEFAULT 'CRAWLING' NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (chain_id, collection_address)
+);
+
 INSERT INTO apps (id, name, secret_key)
 VALUES ('f3e3bf76-62dc-42a7-ad0d-ef9033bc13a5', '', 'default');
 
@@ -143,6 +154,7 @@ DROP TABLE IF EXISTS erc_1155_collection_assets CASCADE;
 DROP TABLE IF EXISTS erc_721_collection_assets CASCADE;
 DROP TABLE IF EXISTS erc_20_collection_assets CASCADE;
 DROP TABLE IF EXISTS onchain_histories CASCADE;
+DROP TABLE IF EXISTS backfill_crawlers;
 DROP TABLE IF EXISTS assets CASCADE;
 DROP TABLE IF EXISTS chains CASCADE;
 DROP TABLE IF EXISTS apps CASCADE;

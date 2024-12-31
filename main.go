@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/jackc/pgx/v5/stdlib" // Blank import to register SQL driver
 	"github.com/redis/go-redis/v9"
@@ -324,6 +325,7 @@ func startCrawlerProcess(ctx context.Context, logger *zap.Logger, db *sql.DB, co
 		Password: redisConfig.Password,
 		DB:       0,
 	})
+	queueClient := asynq.NewClient(asynq.RedisClientOpt{Addr: redisConfig.Url})
 
 	// Initialize ABIs
 	initializeABI := func(abiStr string, abiRef *abi.ABI, name string) error {
@@ -360,6 +362,10 @@ func startCrawlerProcess(ctx context.Context, logger *zap.Logger, db *sql.DB, co
 	// Process new chain assets
 	if err := crawler.ProcessNewChainAssets(ctx, logger, rdb); err != nil {
 		logger.Error("Error in ProcessNewChainAssets", zap.Error(err))
+	}
+
+	if err := crawler.ProcessCrawlingBackfillCollection(ctx, logger, db, rdb, queueClient); err != nil {
+		logger.Error("Error in ProcesCrawlingBackfillCollection", zap.Error(err))
 	}
 
 	logger.Info("Crawler process initialized successfully")

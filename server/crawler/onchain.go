@@ -3,8 +3,10 @@ package crawler
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math/big"
 	"net/http"
 	"strings"
@@ -19,6 +21,7 @@ import (
 	"github.com/unicornultrafoundation/go-u2u/rpc"
 	"go.uber.org/zap"
 
+	"github.com/hibiken/asynq"
 	"github.com/u2u-labs/layerg-core/server/crawler/utils"
 	"github.com/u2u-labs/layerg-core/server/crawler/utils/models"
 )
@@ -28,6 +31,8 @@ const (
 	AssetTypeERC721  = "ERC721"
 	AssetTypeERC1155 = "ERC1155"
 )
+
+var contractType = make(map[int32]map[string]models.Asset)
 
 var blockProcessingMutex sync.Mutex
 
@@ -828,4 +833,427 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.SugaredLogger, d
 	// Cache the transaction in Redis
 	key := fmt.Sprintf("history:%s:%s", chain.ID, l.TxHash.Hex())
 	return rdb.Set(ctx, key, "batch", 24*time.Hour).Err()
+}
+
+func AddBackfillCrawlerTask(ctx context.Context, sugar *zap.Logger, client *ethclient.Client, db *sql.DB, chain *models.Chain, c *models.GetCrawlingBackfillCrawlerRow, queueClient *asynq.Client) error {
+	blockRangeScan := int64(1000)
+	if c.CurrentBlock%blockRangeScan == 0 {
+		sugar.Info("Backfill crawler")
+	}
+
+	timer := time.NewTimer(time.Duration(chain.BlockTime) * time.Millisecond)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-timer.C:
+			task, err := NewBackfillCollectionTask(c)
+			if err != nil {
+				sugar.Error("Could not create task", zap.Error(err))
+				return err
+			}
+			_, err = queueClient.Enqueue(task)
+			if err != nil {
+				sugar.Error("Could not enqueue task", zap.Error(err))
+				return err
+			}
+		}
+	}
+}
+
+func xf(bf *models.GetCrawlingBackfillCrawlerRow) (*asynq.Task, error) {
+
+	payload, err := json.Marshal(bf)
+	if err != nil {
+		return nil, err
+	}
+	return asynq.NewTask(BackfillCollection, payload), nil
+}
+
+func handleErc20BackFill(ctx context.Context, sugar *zap.SugaredLogger, q *sql.DB, client *ethclient.Client,
+	chain *models.Chain, logs []utypes.Log) error {
+
+	// Initialize the AddressSet
+	addressSet := utils.NewAddressSet()
+
+	if len(logs) == 0 {
+		return nil
+	}
+
+	var contractAddress *common.Address
+	for _, l := range logs {
+		contractAddress = &l.Address
+		var event utils.Erc20TransferEvent
+
+		err := utils.ERC20ABI.UnpackIntoInterface(&event, "Transfer", l.Data)
+		if err != nil {
+			sugar.Fatalf("Failed to unpack log: %v", err)
+			return err
+		}
+
+		if l.Topics[0].Hex() != utils.TransferEventSig {
+			return nil
+		}
+
+		event.From = common.BytesToAddress(l.Topics[1].Bytes())
+		event.To = common.BytesToAddress(l.Topics[2].Bytes())
+		amount := event.Value.String()
+
+		_, err = AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
+			From:      event.From.Hex(),
+			To:        event.To.Hex(),
+			AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+			TokenID:   "0",
+			Amount:    amount,
+			TxHash:    l.TxHash.Hex(),
+			Timestamp: time.Now(),
+		})
+
+		// adding sender and receiver to the address set
+		addressSet.AddAddress(event.From)
+		addressSet.AddAddress(event.To)
+	}
+
+	rpcClient, _ := utils.InitNewRPCClient(chain.RpcUrl)
+
+	addressList := addressSet.GetAddresses()
+
+	results := make([]string, len(addressList))
+	calls := make([]rpc.BatchElem, len(addressList))
+
+	for i, addr := range addressList {
+		// Pack the data for the balanceOf function
+		data, err := utils.ERC20ABI.Pack("balanceOf", addr)
+		if err != nil {
+			sugar.Errorf("Failed to pack data for balanceOf: %v", err)
+			return err
+		}
+
+		encodedData := "0x" + common.Bytes2Hex(data)
+
+		// Append the BatchElem for the eth_call
+		calls[i] = rpc.BatchElem{
+			Method: "eth_call",
+			Args: []interface{}{
+				map[string]interface{}{
+					"to":   contractAddress,
+					"data": encodedData,
+				},
+				"latest",
+			},
+			Result: &results[i],
+		}
+	}
+
+	// Execute batch call
+	if err := rpcClient.BatchCallContext(ctx, calls); err != nil {
+		log.Fatalf("Failed to execute batch call: %v", err)
+	}
+
+	// Iterate over the results and update the balances
+	for i, result := range results {
+		var balance *big.Int
+
+		utils.ERC20ABI.UnpackIntoInterface(&balance, "balanceOf", common.FromHex(result))
+
+		if err := Add20Asset(ctx, q, models.Add20AssetParams{
+			AssetID: contractType[chain.ID][contractAddress.Hex()].ID,
+			ChainID: chain.ID,
+			Owner:   addressList[i].Hex(),
+			Balance: balance.String(),
+		}); err != nil {
+			return err
+		}
+	}
+
+	addressSet.Reset()
+	return nil
+}
+
+func handleErc721BackFill(ctx context.Context, sugar *zap.SugaredLogger, q *sql.DB, client *ethclient.Client,
+	chain *models.Chain, logs []utypes.Log) error {
+
+	// Initialize the NewTokenIdSet
+	tokenIdSet := utils.NewTokenIdSet()
+
+	if len(logs) == 0 {
+		return nil
+	}
+
+	var contractAddress *common.Address
+	for _, l := range logs {
+		contractAddress = &l.Address
+
+		// Decode the indexed fields manually
+		event := utils.Erc721TransferEvent{
+			From:    common.BytesToAddress(l.Topics[1].Bytes()),
+			To:      common.BytesToAddress(l.Topics[2].Bytes()),
+			TokenID: l.Topics[3].Big(),
+		}
+		_, err := AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
+			From:      event.From.Hex(),
+			To:        event.To.Hex(),
+			AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+			TokenID:   event.TokenID.String(),
+			Amount:    "0",
+			TxHash:    l.TxHash.Hex(),
+			Timestamp: time.Now(),
+		})
+		if err != nil {
+			return err
+		}
+
+		// adding token Id
+		tokenIdSet.AddTokenId(event.TokenID)
+	}
+
+	rpcClient, _ := utils.InitNewRPCClient(chain.RpcUrl)
+
+	tokenIdList := tokenIdSet.GetTokenIds()
+
+	results := make([]string, len(tokenIdList)*2)
+	calls := make([]rpc.BatchElem, len(tokenIdList)*2)
+
+	for i, tokenId := range tokenIdList {
+		// Pack the data for the tokenURI function
+		data, err := utils.ERC721ABI.Pack("tokenURI", tokenId)
+		if err != nil {
+			sugar.Errorf("Failed to pack data for tokenURI: %v", err)
+			return err
+		}
+
+		encodedUriData := "0x" + common.Bytes2Hex(data)
+
+		// Append the BatchElem for the eth_call
+		calls[2*i] = rpc.BatchElem{
+			Method: "eth_call",
+			Args: []interface{}{
+				map[string]interface{}{
+					"to":   contractAddress,
+					"data": encodedUriData,
+				},
+				"latest",
+			},
+			Result: &results[2*i],
+		}
+
+		// Pack the data for the ownerOf function
+		ownerData, err := utils.ERC721ABI.Pack("ownerOf", tokenId)
+		if err != nil {
+			sugar.Errorf("Failed to pack data for ownerOf: %v", err)
+			return err
+		}
+
+		encodedOwnerData := "0x" + common.Bytes2Hex(ownerData)
+
+		// Append the BatchElem for the eth_call
+		calls[2*i+1] = rpc.BatchElem{
+			Method: "eth_call",
+			Args: []interface{}{
+				map[string]interface{}{
+					"to":   contractAddress,
+					"data": encodedOwnerData,
+				},
+				"latest",
+			},
+			Result: &results[2*i+1],
+		}
+
+	}
+
+	// Execute batch call
+	if err := rpcClient.BatchCallContext(ctx, calls); err != nil {
+		log.Fatalf("Failed to execute batch call: %v", err)
+	}
+
+	// Iterate over the results and update the balances
+	for i := 0; i < len(results); i += 2 {
+		var uri string
+		var owner common.Address
+		utils.ERC721ABI.UnpackIntoInterface(&uri, "tokenURI", common.FromHex(results[i]))
+		utils.ERC721ABI.UnpackIntoInterface(&owner, "ownerOf", common.FromHex(results[i+1]))
+
+		if err := Add721Asset(ctx, q, models.Add721AssetParams{
+			AssetID: contractType[chain.ID][contractAddress.Hex()].ID,
+			ChainID: chain.ID,
+			TokenID: tokenIdList[i/2].String(),
+			Owner:   owner.Hex(),
+			Attributes: sql.NullString{
+				String: uri,
+				Valid:  true,
+			},
+		}); err != nil {
+			return err
+		}
+	}
+
+	tokenIdSet.Reset()
+	return nil
+}
+
+func handleErc1155Backfill(ctx context.Context, sugar *zap.SugaredLogger, q *sql.DB, client *ethclient.Client,
+	chain *models.Chain, logs []utypes.Log) error {
+
+	// Initialize the NewTokenIdSet
+	tokenIdContractAddressSet := utils.NewTokenIdContractAddressSet()
+
+	if len(logs) == 0 {
+		return nil
+	}
+
+	var contractAddress *common.Address
+	for _, l := range logs {
+		contractAddress = &l.Address
+		if l.Topics[0].Hex() == utils.TransferSingleSig {
+			// handleTransferSingle
+
+			// Decode TransferSingle log
+			var event utils.Erc1155TransferSingleEvent
+			err := utils.ERC1155ABI.UnpackIntoInterface(&event, "TransferSingle", l.Data)
+			if err != nil {
+				sugar.Errorw("Failed to unpack TransferSingle log:", "err", err)
+			}
+
+			// Decode the indexed fields for TransferSingle
+			event.Operator = common.BytesToAddress(l.Topics[1].Bytes())
+			event.From = common.BytesToAddress(l.Topics[2].Bytes())
+			event.To = common.BytesToAddress(l.Topics[3].Bytes())
+
+			amount := event.Value.String()
+			_, err = AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
+				From:      event.From.Hex(),
+				To:        event.To.Hex(),
+				AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+				TokenID:   event.Id.String(),
+				Amount:    amount,
+				TxHash:    l.TxHash.Hex(),
+				Timestamp: time.Now(),
+			})
+			if err != nil {
+				return err
+			}
+
+			// adding data to set
+			tokenIdContractAddressSet.AddTokenIdContractAddress(event.Id, event.From.Hex())
+			tokenIdContractAddressSet.AddTokenIdContractAddress(event.Id, event.To.Hex())
+		}
+
+		if l.Topics[0].Hex() == utils.TransferBatchSig {
+			var event utils.Erc1155TransferBatchEvent
+			err := utils.ERC1155ABI.UnpackIntoInterface(&event, "TransferBatch", l.Data)
+			if err != nil {
+				sugar.Errorw("Failed to unpack TransferBatch log:", "err", err)
+			}
+
+			// Decode the indexed fields for TransferBatch
+			event.Operator = common.BytesToAddress(l.Topics[1].Bytes())
+			event.From = common.BytesToAddress(l.Topics[2].Bytes())
+			event.To = common.BytesToAddress(l.Topics[3].Bytes())
+
+			for i := range event.Ids {
+				amount := event.Values[i].String()
+				_, err := AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
+					From:      event.From.Hex(),
+					To:        event.To.Hex(),
+					AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+					TokenID:   event.Ids[i].String(),
+					Amount:    amount,
+					TxHash:    l.TxHash.Hex(),
+					Timestamp: time.Now(),
+				})
+				if err != nil {
+					return err
+				}
+
+				// adding data to set
+				tokenIdContractAddressSet.AddTokenIdContractAddress(event.Ids[i], event.From.Hex())
+				tokenIdContractAddressSet.AddTokenIdContractAddress(event.Ids[i], event.To.Hex())
+			}
+		}
+	}
+
+	rpcClient, _ := utils.InitNewRPCClient(chain.RpcUrl)
+
+	tokenIdList := tokenIdContractAddressSet.GetTokenIdContractAddressses()
+
+	results := make([]string, len(tokenIdList)*2)
+	calls := make([]rpc.BatchElem, len(tokenIdList)*2)
+
+	for i, pairData := range tokenIdList {
+		tokenId := pairData.TokenId
+		ownerAddress := common.HexToAddress(pairData.ContractAddress)
+
+		// Pack the data for the tokenURI function
+		data, err := utils.ERC1155ABI.Pack("uri", tokenId)
+		if err != nil {
+			sugar.Errorf("Failed to pack data for tokenURI: %v", err)
+			return err
+		}
+
+		encodedUriData := "0x" + common.Bytes2Hex(data)
+
+		// Append the BatchElem for the eth_call
+		calls[2*i] = rpc.BatchElem{
+			Method: "eth_call",
+			Args: []interface{}{
+				map[string]interface{}{
+					"to":   contractAddress,
+					"data": encodedUriData,
+				},
+				"latest",
+			},
+			Result: &results[2*i],
+		}
+
+		// 	// Pack the data for the ownerOf function
+		ownerData, err := utils.ERC1155ABI.Pack("balanceOf", ownerAddress, tokenId)
+		if err != nil {
+			sugar.Errorf("Failed to pack data for balanceOf: %v", err)
+			return err
+		}
+
+		encodedBalanceData := "0x" + common.Bytes2Hex(ownerData)
+
+		// 	// Append the BatchElem for the eth_call
+		calls[2*i+1] = rpc.BatchElem{
+			Method: "eth_call",
+			Args: []interface{}{
+				map[string]interface{}{
+					"to":   contractAddress,
+					"data": encodedBalanceData,
+				},
+				"latest",
+			},
+			Result: &results[2*i+1],
+		}
+	}
+
+	// // Execute batch call
+	if err := rpcClient.BatchCallContext(ctx, calls); err != nil {
+		log.Fatalf("Failed to execute batch call: %v", err)
+	}
+
+	// // Iterate over the results and update the balances
+	for i := 0; i < len(results); i += 2 {
+		var uri string
+		var balance *big.Int
+		utils.ERC1155ABI.UnpackIntoInterface(&uri, "uri", common.FromHex(results[i]))
+		utils.ERC1155ABI.UnpackIntoInterface(&balance, "balanceOf", common.FromHex(results[i+1]))
+
+		if err := Add1155Asset(ctx, q, models.Add1155AssetParams{
+			AssetID: contractType[chain.ID][contractAddress.Hex()].ID,
+			ChainID: chain.ID,
+			TokenID: tokenIdList[i/2].TokenId.String(),
+			Owner:   tokenIdList[i/2].ContractAddress,
+			Attributes: sql.NullString{
+				String: uri,
+				Valid:  true,
+			},
+		}); err != nil {
+			return err
+		}
+	}
+
+	tokenIdContractAddressSet.Reset()
+	return nil
 }

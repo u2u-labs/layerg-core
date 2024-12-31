@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 	"github.com/u2u-labs/layerg-core/server/crawler/utils/models"
 	"go.uber.org/zap"
@@ -347,6 +348,30 @@ func deletePendingAssetsFromCache(ctx context.Context, rdb *redis.Client) error 
 	}
 	if len(keys) > 0 {
 		return rdb.Del(ctx, keys...).Err()
+	}
+	return nil
+}
+
+func ProcessCrawlingBackfillCollection(ctx context.Context, sugar *zap.Logger, db *sql.DB, rdb *redis.Client, queueClient *asynq.Client) error {
+	// Get all Backfill Collection with status CRAWLING
+	crawlingBackfill, err := GetCrawlingBackfillCrawler(ctx, db)
+
+	if err != nil {
+		return err
+	}
+
+	for _, c := range crawlingBackfill {
+		chain, err := GetChainById(ctx, db, c.ChainID)
+		if err != nil {
+			return err
+		}
+
+		client, err := initChainClient(&chain)
+		if err != nil {
+			return err
+		}
+		go AddBackfillCrawlerTask(ctx, sugar, client, db, &chain, &c, queueClient)
+
 	}
 	return nil
 }
