@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func startWorker(db *sql.DB, config server.Config) {
+func StartWorker(db *sql.DB, rdb *redis.Client, queueClient *asynq.Client, config server.Config) {
 	var (
 		ctx    = context.Background()
 		logger = &zap.Logger{}
@@ -49,18 +49,18 @@ func startWorker(db *sql.DB, config server.Config) {
 	// if err != nil {
 	// 	panic(err)
 	// }
-	redisConfig := config.GetRedisDbConfig()
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     redisConfig.Url,
-		Password: redisConfig.Password,
-		DB:       0,
-	})
+	// redisConfig := config.GetRedisDbConfig()
+	// rdb := redis.NewClient(&redis.Options{
+	// 	Addr:     redisConfig.Url,
+	// 	Password: redisConfig.Password,
+	// 	DB:       0,
+	// })
 
-	queueClient := asynq.NewClient(asynq.RedisClientOpt{
-		Addr:     redisConfig.Url,
-		Password: redisConfig.Password,
-		DB:       0,
-	})
+	// queueClient := asynq.NewClient(asynq.RedisClientOpt{
+	// 	Addr:     redisConfig.Url,
+	// 	Password: redisConfig.Password,
+	// 	DB:       0,
+	// })
 	defer queueClient.Close()
 	var err error
 	if utils.ERC20ABI, err = abi.JSON(strings.NewReader(utils.ERC20ABIStr)); err != nil {

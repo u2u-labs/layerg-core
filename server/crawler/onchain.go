@@ -113,6 +113,18 @@ func ProcessLatestBlocks(ctx context.Context, sugar *zap.SugaredLogger, client *
 						doneChan <- true
 						return
 					}
+					// Update latest block processed
+					query := "UPDATE chains SET latest_block = $1 WHERE id = $2"
+					_, err = db.ExecContext(ctx, query, latest, chain.ID)
+					if err != nil {
+						sugar.Errorw("Failed to update chain latest blocks in DB", "err", err, "chain", chain)
+						select {
+						case errChan <- fmt.Errorf("failed to update block at height %d: %v", blockNum, err):
+						default:
+						}
+						doneChan <- true
+						return
+					}
 
 					if err = FilterEvents(ctx, sugar, db, client, chain, rdb, receipts); err != nil {
 						select {
@@ -150,23 +162,6 @@ func ProcessLatestBlocks(ctx context.Context, sugar *zap.SugaredLogger, client *
 		case <-doneChan:
 			continue
 		}
-	}
-
-	// Update latest block processed
-	query := "UPDATE chains SET latest_block = $1 WHERE id = $2"
-	result, err := db.ExecContext(ctx, query, latest, chain.ID)
-	if err != nil {
-		sugar.Errorw("Failed to update chain latest blocks in DB", "err", err, "chain", chain)
-		return err
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		sugar.Errorw("Error checking rows affected", "err", err)
-		return err
-	}
-	if rowsAffected != 1 {
-		return fmt.Errorf("expected to update 1 row, updated %d", rowsAffected)
 	}
 
 	chain.LatestBlock = int64(latest)

@@ -368,5 +368,7 @@ func startCrawlerProcess(ctx context.Context, logger *zap.Logger, db *sql.DB, co
 		logger.Error("Error in ProcesCrawlingBackfillCollection", zap.Error(err))
 	}
 
+	crawler.StartWorker(db, rdb, queueClient, config)
+
 	logger.Info("Crawler process initialized successfully")
 }

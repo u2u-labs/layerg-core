@@ -33,7 +33,7 @@ func GetCrawlingBackfillCrawler(ctx context.Context, db *sql.DB) ([]models.GetCr
 
 	for rows.Next() {
 		var backfillCrawler models.GetCrawlingBackfillCrawlerRow
-		if err := rows.Scan(&backfillCrawler.ChainID, &backfillCrawler.CollectionAddress, &backfillCrawler.CurrentBlock, &backfillCrawler.Status); err != nil {
+		if err := rows.Scan(&backfillCrawler.ChainID, &backfillCrawler.CollectionAddress, &backfillCrawler.CurrentBlock, &backfillCrawler.Status, &backfillCrawler.CreatedAt, &backfillCrawler.Type, &backfillCrawler.InitialBlock); err != nil {
 			return nil, err
 		}
 		backfillCrawlers = append(backfillCrawlers, backfillCrawler)
