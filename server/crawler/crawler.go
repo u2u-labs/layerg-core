@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
@@ -48,6 +50,7 @@ func CrawlSupportedChains(ctx context.Context, logger *zap.Logger, db *sql.DB, r
 
 	for _, c := range chains {
 		// Delete chain from cache
+		contractType[c.ID] = make(map[string]models.Asset)
 		if err = deleteChainFromCache(ctx, rdb, c.ID); err != nil {
 			return err
 		}
@@ -109,6 +112,10 @@ func CrawlSupportedChains(ctx context.Context, logger *zap.Logger, db *sql.DB, r
 			return err
 		}
 
+		for _, a := range assets {
+			contractType[a.ChainID][a.CollectionAddress] = a
+		}
+
 		// Start chain crawler
 		client, err := initChainClient(&c)
 		if err != nil {
@@ -131,41 +138,39 @@ func ProcessNewChains(ctx context.Context, logger *zap.Logger, rdb *redis.Client
 		return nil
 	}
 
-	// Create error channel to collect errors from goroutines
+	var wg sync.WaitGroup
 	errChan := make(chan error, len(chains))
-	doneChan := make(chan bool, len(chains))
+	doneChan := make(chan struct{})
 
-	// Process chains in parallel
-	for _, c := range chains {
-		chain := c // Create local copy for goroutine
-		go func() {
-			client, err := initChainClient(&chain)
-			if err != nil {
-				errChan <- fmt.Errorf("failed to init chain client for chain %s: %v", chain.Name, err)
-				return
-			}
+	// Goroutine to collect errors and signal completion
+	go func() {
+		defer close(doneChan)
+		for _, chain := range chains {
+			wg.Add(1)
+			go func(chain models.Chain) {
+				defer wg.Done()
+				client, err := initChainClient(&chain)
+				if err != nil {
+					errChan <- fmt.Errorf("failed to init chain client for chain %s: %v", chain.Name, err)
+					return
+				}
+				go StartChainCrawler(ctx, sugar, client, db, &chain, rdb)
+				sugar.Infow("Initiated new chain crawler", "chain", chain.Name)
+			}(chain)
+		}
+		wg.Wait()
+	}()
 
-			// Start chain crawler in a separate goroutine
-			go StartChainCrawler(ctx, sugar, client, db, &chain, rdb)
-			sugar.Infow("Initiated new chain crawler", "chain", chain.Name)
-			doneChan <- true
-		}()
-	}
-
-	// Wait for all chains to be processed or context cancellation
-	for i := 0; i < len(chains); i++ {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case err := <-errChan:
-			return err
-		case <-doneChan:
-			continue
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-doneChan:
+		if len(errChan) > 0 {
+			return <-errChan
 		}
 	}
 
-	// Only delete from cache if all chains were processed successfully
-	if err = deletePendingChainsFromCache(ctx, rdb); err != nil {
+	if err := deletePendingChainsFromCache(ctx, rdb); err != nil {
 		sugar.Errorw("Failed to delete cached pending chains", "err", err)
 		return err
 	}
@@ -200,6 +205,7 @@ func ProcessNewChainAssets(ctx context.Context, logger *zap.Logger, rdb *redis.C
 					doneChan <- true
 					return
 				default:
+					contractType[asset.ChainID][asset.CollectionAddress] = asset
 					sugar.Infow("Processing new asset",
 						"chain", asset.ChainID,
 						"address", asset.CollectionAddress,
@@ -352,26 +358,77 @@ func deletePendingAssetsFromCache(ctx context.Context, rdb *redis.Client) error 
 	return nil
 }
 
-func ProcessCrawlingBackfillCollection(ctx context.Context, sugar *zap.Logger, db *sql.DB, rdb *redis.Client, queueClient *asynq.Client) error {
-	// Get all Backfill Collection with status CRAWLING
-	crawlingBackfill, err := GetCrawlingBackfillCrawler(ctx, db)
+// func ProcessCrawlingBackfillCollection(ctx context.Context, sugar *zap.Logger, db *sql.DB, queueClient *asynq.Client) error {
+// Get all Backfill Collection with status CRAWLING
+// crawlingBackfill, err := GetCrawlingBackfillCrawler(ctx, db)
 
-	if err != nil {
-		return err
-	}
+// if err != nil {
+// 	return err
+// }
 
-	for _, c := range crawlingBackfill {
-		chain, err := GetChainById(ctx, db, c.ChainID)
-		if err != nil {
-			return err
+// for _, c := range crawlingBackfill {
+// 	sugar.Info("%v", zap.Any("hello", c))
+// 	chain, err := GetChainById(ctx, db, c.ChainID)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	client, err := initChainClient(&chain)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	go AddBackfillCrawlerTask(ctx, sugar, client, db, &chain, &c, queueClient)
+
+// }
+// return nil
+// }
+
+func ProcessCrawlingBackfillCollection(ctx context.Context, sugar *zap.Logger, db *sql.DB, queueClient *asynq.Client) error {
+	// Run in the background using a goroutine
+	go func() {
+		sugar.Info("Starting ProcessCrawlingBackfillCollection in the background...")
+
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				sugar.Info("Context canceled, stopping backfill crawling")
+				return
+			case <-ticker.C:
+				// Get all Backfill Collections with status CRAWLING
+				crawlingBackfill, err := GetCrawlingBackfillCrawler(ctx, db)
+				if err != nil {
+					sugar.Error("Failed to get crawling backfill collections", zap.Error(err))
+					continue
+				}
+
+				if len(crawlingBackfill) == 0 {
+					sugar.Info("No backfill tasks found")
+					continue
+				}
+
+				for _, c := range crawlingBackfill {
+					sugar.Info("Dispatching backfill task", zap.Any("collection", c))
+					chain, err := GetChainById(ctx, db, c.ChainID)
+					if err != nil {
+						sugar.Error("Failed to get chain by ID", zap.Error(err))
+						continue
+					}
+
+					client, err := initChainClient(&chain)
+					if err != nil {
+						sugar.Error("Failed to initialize chain client", zap.Error(err))
+						continue
+					}
+
+					go AddBackfillCrawlerTask(ctx, sugar, client, db, &chain, &c, queueClient)
+				}
+			}
 		}
+	}()
 
-		client, err := initChainClient(&chain)
-		if err != nil {
-			return err
-		}
-		go AddBackfillCrawlerTask(ctx, sugar, client, db, &chain, &c, queueClient)
-
-	}
+	// Return immediately so that the caller can continue running
 	return nil
 }

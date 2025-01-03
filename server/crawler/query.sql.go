@@ -12,7 +12,7 @@ func GetCrawlingBackfillCrawler(ctx context.Context, db *sql.DB) ([]models.GetCr
 		SELECT 
 		bc.chain_id, bc.collection_address, bc.current_block, bc.status, bc.created_at, 
 		a.type, 
-		a.initial_block 
+		a.initial_block
 	FROM 
 		backfill_crawlers AS bc
 	JOIN 

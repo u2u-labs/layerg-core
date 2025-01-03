@@ -514,6 +514,7 @@ func NewConfig(logger *zap.Logger) *config {
 		Limit:            -1,
 		Cluster:          NewPeerConfig(),
 		LayerGCore:       NewLayerGCore(),
+		RedisDb:          NewRedisDb(),
 	}
 }
 
@@ -1143,9 +1144,9 @@ type LayerGCoreConfig struct {
 }
 
 type RedisConfig struct {
-	Url      string `yaml:"url" json:"api_key" usage:"api key to communicate with core server"`
-	Db       string `yaml:"db" json:"api_key_id" usage:"api key id to communicate with core server"`
-	Password string `yaml:"password" json:"url" usage:"url of core server"`
+	Url      string `yaml:"url" json:"api_key" usage:"url redis server"`
+	Db       int    `yaml:"db" json:"api_key_id" usage:"db of redis server"`
+	Password string `yaml:"password" json:"url" usage:"password of redis server"`
 }
 
 func NewGoogleAuthConfig() *GoogleAuthConfig {
@@ -1185,8 +1186,8 @@ func NewLayerGCore() *LayerGCoreConfig {
 }
 func NewRedisDb() *RedisConfig {
 	return &RedisConfig{
-		Url:      "http://localhost:6379",
-		Db:       "",
+		Url:      "localhost:6379",
+		Db:       0,
 		Password: "",
 	}
 }

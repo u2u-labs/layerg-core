@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/big"
 	"strconv"
 	"strings"
@@ -23,6 +22,8 @@ import (
 )
 
 func StartWorker(db *sql.DB, rdb *redis.Client, queueClient *asynq.Client, config server.Config) {
+	// defer queueClient.Close()
+
 	var (
 		ctx    = context.Background()
 		logger = &zap.Logger{}
@@ -61,7 +62,6 @@ func StartWorker(db *sql.DB, rdb *redis.Client, queueClient *asynq.Client, confi
 	// 	Password: redisConfig.Password,
 	// 	DB:       0,
 	// })
-	defer queueClient.Close()
 	var err error
 	if utils.ERC20ABI, err = abi.JSON(strings.NewReader(utils.ERC20ABIStr)); err != nil {
 		panic(err)
@@ -102,10 +102,22 @@ func InitBackfillProcessor(ctx context.Context, sugar *zap.SugaredLogger, db *sq
 		mux := asynq.NewServeMux()
 		taskName := BackfillCollection + ":" + strconv.Itoa(int(chain.ID))
 		mux.Handle(taskName, NewBackfillProcessor(sugar, client, db, &chain))
+		sugar.Infof("Starting server for chain %s with task name %s", chain.Name, taskName)
 
-		if err := srv.Run(mux); err != nil {
-			log.Fatalf("could not run server: %v", err)
-		}
+		// go func(server *asynq.Server, mux *asynq.ServeMux, chainName string) {
+		// 	if err := server.Run(mux); err != nil {
+		// 		sugar.Errorf("Server for chain %s failed: %v", chainName, err)
+		// 	}
+		// }(srv, mux, chain.Name)
+
+		// if err := srv.Run(mux); err != nil {
+		// 	log.Fatalf("could not run server: %v", err)
+		// }
+		go func() {
+			if err := srv.Run(mux); err != nil {
+				sugar.Fatalf("Failed to run asynq server: %v", err)
+			}
+		}()
 	}
 
 	return nil
@@ -129,7 +141,10 @@ func NewBackfillCollectionTask(bf *models.GetCrawlingBackfillCrawlerRow) (*asynq
 	if err != nil {
 		return nil, err
 	}
-	return asynq.NewTask(BackfillCollection, payload), nil
+
+	taskName := BackfillCollection + ":" + strconv.Itoa(int(bf.ChainID))
+	fmt.Print("Add new backfill task")
+	return asynq.NewTask(taskName, payload), nil
 }
 
 func (processor *BackfillProcessor) ProcessTask(ctx context.Context, t *asynq.Task) error {
@@ -146,6 +161,7 @@ func (processor *BackfillProcessor) ProcessTask(ctx context.Context, t *asynq.Ta
 	if (bf.CurrentBlock % blockRangeScan) != 0 {
 		toScanBlock = ((bf.CurrentBlock / blockRangeScan) + 1) * blockRangeScan
 	}
+	processor.sugar.Infof("good", toScanBlock, bf)
 	if bf.InitialBlock.Valid && toScanBlock >= bf.InitialBlock.Int64 {
 		toScanBlock = bf.InitialBlock.Int64
 		bf.Status = models.CrawlerStatusCRAWLED
@@ -176,7 +192,7 @@ func (processor *BackfillProcessor) ProcessTask(ctx context.Context, t *asynq.Ta
 		ToBlock:   big.NewInt(toScanBlock),
 		Addresses: []common.Address{common.HexToAddress(bf.CollectionAddress)},
 	})
-	if bf.CurrentBlock%1000 == 0 {
+	if bf.CurrentBlock%100 == 0 {
 		processor.sugar.Infof("Batch Call from block %d to block %d for assetType %s, contractAddress %s", bf.CurrentBlock, toScanBlock, bf.Type, bf.CollectionAddress)
 	}
 

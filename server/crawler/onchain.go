@@ -37,40 +37,74 @@ var contractType = make(map[int32]map[string]models.Asset)
 var blockProcessingMutex sync.Mutex
 
 func StartChainCrawler(ctx context.Context, sugar *zap.SugaredLogger, client *ethclient.Client, db *sql.DB, chain *models.Chain, rdb *redis.Client) {
+	// sugar.Infow("Start chain crawler", "chain", chain)
+	// timer := time.NewTimer(1)
+	// defer timer.Stop()
+	// errChan := make(chan error, 1)
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case <-ctx.Done():
+	// 			return
+	// 		case <-timer.C:
+	// 			go func() {
+	// 				// Ensure only one instance runs at a time
+	// 				blockProcessingMutex.Lock()
+	// 				defer blockProcessingMutex.Unlock()
+
+	// 				if err := ProcessLatestBlocks(ctx, sugar, client, db, chain, rdb); err != nil {
+	// 					select {
+	// 					case errChan <- err:
+	// 					default:
+	// 					}
+	// 				}
+	// 			}()
+	// 			timer.Reset(1)
+	// 		}
+	// 	}
+	// }()
+
+	// select {
+	// case <-ctx.Done():
+	// 	sugar.Infow("Chain crawler stopped due to context cancellation", "chain", chain.Name)
+	// 	return
+	// case err := <-errChan:
+	// 	sugar.Errorw("Chain crawler stopped due to error", "chain", chain.Name, "error", err)
+	// 	return
+	// }
 	sugar.Infow("Start chain crawler", "chain", chain)
-	timer := time.NewTimer(1)
-	defer timer.Stop()
+	var wg sync.WaitGroup
 	errChan := make(chan error, 1)
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-timer.C:
-				go func() {
-					// Ensure only one instance runs at a time
-					blockProcessingMutex.Lock()
-					defer blockProcessingMutex.Unlock()
+	timer := time.NewTimer(time.Second) // 1-second interval
+	defer timer.Stop()
 
-					if err := ProcessLatestBlocks(ctx, sugar, client, db, chain, rdb); err != nil {
-						select {
-						case errChan <- err:
-						default:
-						}
+	for {
+		select {
+		case <-ctx.Done():
+			wg.Wait() // Ensure all goroutines finish
+			sugar.Infow("Chain crawler stopped due to context cancellation", "chain", chain.Name)
+			return
+		case <-timer.C:
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				// Process blocks with mutex
+				blockProcessingMutex.Lock()
+				defer blockProcessingMutex.Unlock()
+
+				if err := ProcessLatestBlocks(ctx, sugar, client, db, chain, rdb); err != nil {
+					select {
+					case errChan <- err:
+					default:
 					}
-				}()
-				timer.Reset(1)
-			}
+				}
+			}()
+			timer.Reset(time.Second)
+		case err := <-errChan:
+			wg.Wait() // Wait for all workers to complete
+			sugar.Errorw("Chain crawler stopped due to error", "chain", chain.Name, "error", err)
+			return
 		}
-	}()
-
-	select {
-	case <-ctx.Done():
-		sugar.Infow("Chain crawler stopped due to context cancellation", "chain", chain.Name)
-		return
-	case err := <-errChan:
-		sugar.Errorw("Chain crawler stopped due to error", "chain", chain.Name, "error", err)
-		return
 	}
 }
 
@@ -86,7 +120,7 @@ func ProcessLatestBlocks(ctx context.Context, sugar *zap.SugaredLogger, client *
 	}
 
 	// Use a worker pool to process blocks in parallel
-	numWorkers := 10 // Adjust based on system capabilities
+	numWorkers := 2 // Adjust based on system capabilities
 	blockChan := make(chan int64, numWorkers)
 	errChan := make(chan error, 1)
 	doneChan := make(chan bool, numWorkers)
@@ -831,7 +865,7 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.SugaredLogger, d
 }
 
 func AddBackfillCrawlerTask(ctx context.Context, sugar *zap.Logger, client *ethclient.Client, db *sql.DB, chain *models.Chain, c *models.GetCrawlingBackfillCrawlerRow, queueClient *asynq.Client) error {
-	blockRangeScan := int64(1000)
+	blockRangeScan := int64(100) * 100
 	if c.CurrentBlock%blockRangeScan == 0 {
 		sugar.Info("Backfill crawler")
 	}
@@ -847,7 +881,8 @@ func AddBackfillCrawlerTask(ctx context.Context, sugar *zap.Logger, client *ethc
 				sugar.Error("Could not create task", zap.Error(err))
 				return err
 			}
-			_, err = queueClient.Enqueue(task)
+			info, err := queueClient.Enqueue(task)
+			sugar.Info("%v", zap.Any("queue here", info))
 			if err != nil {
 				sugar.Error("Could not enqueue task", zap.Error(err))
 				return err

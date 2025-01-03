@@ -295,25 +295,25 @@ func newOrLoadCookie(enabled bool, config server.Config) string {
 	return cookie.String()
 }
 
-func startPeriodicSync(ctx context.Context, db *sql.DB, logger *zap.Logger) {
-	logger.Info("Starting syncing credential")
+// func startPeriodicSync(ctx context.Context, db *sql.DB, logger *zap.Logger) {
+// 	logger.Info("Starting syncing credential")
 
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
+// 	ticker := time.NewTicker(30 * time.Second)
+// 	defer ticker.Stop()
 
-	// Run the sync immediately on start
-	go server.SyncUsers(ctx, db)
+// 	// Run the sync immediately on start
+// 	go server.SyncUsers(ctx, db)
 
-	for {
-		select {
-		case <-ticker.C:
-			go server.SyncUsers(ctx, db)
-		case <-ctx.Done():
-			logger.Info("Stopping periodic sync due to context cancellation")
-			return
-		}
-	}
-}
+// 	for {
+// 		select {
+// 		case <-ticker.C:
+// 			go server.SyncUsers(ctx, db)
+// 		case <-ctx.Done():
+// 			logger.Info("Stopping periodic sync due to context cancellation")
+// 			return
+// 		}
+// 	}
+// }
 
 func startCrawlerProcess(ctx context.Context, logger *zap.Logger, db *sql.DB, config server.Config) {
 	logger.Info("Initializing crawler")
@@ -323,8 +323,9 @@ func startCrawlerProcess(ctx context.Context, logger *zap.Logger, db *sql.DB, co
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     redisConfig.Url,
 		Password: redisConfig.Password,
-		DB:       0,
+		DB:       redisConfig.Db,
 	})
+	logger.Info("hello: %v", zap.String("redis url: ", redisConfig.Url))
 	queueClient := asynq.NewClient(asynq.RedisClientOpt{Addr: redisConfig.Url})
 
 	// Initialize ABIs
@@ -364,7 +365,7 @@ func startCrawlerProcess(ctx context.Context, logger *zap.Logger, db *sql.DB, co
 		logger.Error("Error in ProcessNewChainAssets", zap.Error(err))
 	}
 
-	if err := crawler.ProcessCrawlingBackfillCollection(ctx, logger, db, rdb, queueClient); err != nil {
+	if err := crawler.ProcessCrawlingBackfillCollection(ctx, logger, db, queueClient); err != nil {
 		logger.Error("Error in ProcesCrawlingBackfillCollection", zap.Error(err))
 	}
 
