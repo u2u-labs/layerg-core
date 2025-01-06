@@ -360,36 +360,65 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.SugaredLogger, db *sql.
 	// }
 
 	// Add transaction history
-	_, err = db.ExecContext(ctx, `
-				INSERT INTO onchain_histories ("from", "to", asset_id, token_id, amount, tx_hash, timestamp)
-				VALUES ($1, $2, $3, $4, $5, $6, $7)
-			`, event.From.Hex(), event.To.Hex(), assetID, "0", amount, l.TxHash.Hex(), time.Now())
+	// _, err = db.ExecContext(ctx, `
+	// 			INSERT INTO onchain_histories ("from", "to", asset_id, token_id, amount, tx_hash, timestamp)
+	// 			VALUES ($1, $2, $3, $4, $5, $6, $7)
+	// 		`, event.From.Hex(), event.To.Hex(), assetID, "0", amount, l.TxHash.Hex(), time.Now())
+	_, err = AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
+		From:      event.From.Hex(),
+		To:        event.To.Hex(),
+		AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+		TokenID:   "0",
+		Amount:    amount,
+		TxHash:    l.TxHash.Hex(),
+		Timestamp: time.Now(),
+	})
 	if err != nil {
 		return err
 	}
 
 	// Update or insert holder records
-	_, err = db.ExecContext(ctx, `
-				INSERT INTO erc_20_collection_assets (asset_id, chain_id, owner, balance)
-				VALUES ($1, $2, $3, $4)
-				ON CONFLICT ON CONSTRAINT erc_20_collection_assets_owner_key DO UPDATE SET 
-					balance = $4,
-					updated_at = CURRENT_TIMESTAMP
-			`, assetID, chain.ID, event.From.Hex(), fromBalance.String())
+	// _, err = db.ExecContext(ctx, `
+	// 			INSERT INTO erc_20_collection_assets (asset_id, chain_id, owner, balance)
+	// 			VALUES ($1, $2, $3, $4)
+	// 			ON CONFLICT ON CONSTRAINT erc_20_collection_assets_owner_key DO UPDATE SET
+	// 				balance = $4,
+	// 				updated_at = CURRENT_TIMESTAMP
+	// 		`, assetID, chain.ID, event.From.Hex(), fromBalance.String())
+	// if err != nil {
+	// 	sugar.Infow("error while inserting 2", err)
+	// 	return err
+	// }
+
+	err = Add20Asset(ctx, db, models.Add20AssetParams{
+		AssetID: assetID,
+		ChainID: chain.ID,
+		Owner:   event.From.Hex(),
+		Balance: fromBalance.String(),
+	})
 	if err != nil {
-		sugar.Infow("error while inserting 2", err)
 		return err
 	}
 
-	_, err = db.ExecContext(ctx, `
-				INSERT INTO erc_20_collection_assets (asset_id, chain_id, owner, balance)
-				VALUES ($1, $2, $3, $4)
-				ON CONFLICT ON CONSTRAINT erc_20_collection_assets_owner_key DO UPDATE SET 
-					balance = $4,
-					updated_at = CURRENT_TIMESTAMP
-			`, assetID, chain.ID, event.To.Hex(), toBalance.String())
+	// _, err = db.ExecContext(ctx, `
+	// 			INSERT INTO erc_20_collection_assets (asset_id, chain_id, owner, balance)
+	// 			VALUES ($1, $2, $3, $4)
+	// 			ON CONFLICT ON CONSTRAINT erc_20_collection_assets_owner_key DO UPDATE SET
+	// 				balance = $4,
+	// 				updated_at = CURRENT_TIMESTAMP
+	// 		`, assetID, chain.ID, event.To.Hex(), toBalance.String())
+	// if err != nil {
+	// 	sugar.Infow("error while inserting 2", err, event.To.String(), assetID, toBalance.String())
+	// 	return err
+	// }
+
+	err = Add20Asset(ctx, db, models.Add20AssetParams{
+		AssetID: assetID,
+		ChainID: chain.ID,
+		Owner:   event.To.Hex(),
+		Balance: toBalance.String(),
+	})
 	if err != nil {
-		sugar.Infow("error while inserting 2", err, event.To.String(), assetID, toBalance.String())
 		return err
 	}
 
@@ -624,21 +653,48 @@ func handleErc721Transfer(ctx context.Context, sugar *zap.SugaredLogger, db *sql
 			defer tx.Rollback()
 
 			// Add transaction history
-			_, err = tx.ExecContext(ctx, `
-				INSERT INTO onchain_histories ("from", "to", asset_id, token_id, amount, tx_hash, timestamp)
-				VALUES ($1, $2, $3, $4, $5, $6, $7)
-			`, event.From.Hex(), event.To.Hex(), assetID, event.TokenID.String(), "1", l.TxHash.Hex(), time.Now())
+			// _, err = tx.ExecContext(ctx, `
+			// 	INSERT INTO onchain_histories ("from", "to", asset_id, token_id, amount, tx_hash, timestamp)
+			// 	VALUES ($1, $2, $3, $4, $5, $6, $7)
+			// `, event.From.Hex(), event.To.Hex(), assetID, event.TokenID.String(), "1", l.TxHash.Hex(), time.Now())
+			// if err != nil {
+			// 	return err
+			// }
+
+			_, err = AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
+				From:      event.From.Hex(),
+				To:        event.To.Hex(),
+				AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+				TokenID:   event.TokenID.String(),
+				Amount:    "1",
+				TxHash:    l.TxHash.Hex(),
+				Timestamp: time.Now(),
+			})
 			if err != nil {
 				return err
 			}
 
 			// Update NFT ownership
-			_, err = tx.ExecContext(ctx, `
-				INSERT INTO erc_721_collection_assets (asset_id, chain_id, token_id, owner, attributes)
-				VALUES ($1, $2, $3, $4, $5)
-				ON CONFLICT (asset_id, chain_id, token_id) DO UPDATE 
-				SET owner = $4, attributes = $5, updated_at = CURRENT_TIMESTAMP
-			`, assetID, chain.ID, event.TokenID.String(), event.To.Hex(), uri)
+			// _, err = tx.ExecContext(ctx, `
+			// 	INSERT INTO erc_721_collection_assets (asset_id, chain_id, token_id, owner, attributes)
+			// 	VALUES ($1, $2, $3, $4, $5)
+			// 	ON CONFLICT (asset_id, chain_id, token_id) DO UPDATE
+			// 	SET owner = $4, attributes = $5, updated_at = CURRENT_TIMESTAMP
+			// `, assetID, chain.ID, event.TokenID.String(), event.To.Hex(), uri)
+			// if err != nil {
+			// 	return err
+			// }
+
+			err = Add721Asset(ctx, db, models.Add721AssetParams{
+				AssetID: assetID,
+				ChainID: chain.ID,
+				TokenID: event.TokenID.String(),
+				Owner:   event.To.Hex(),
+				Attributes: sql.NullString{
+					Valid:  len(uri) > 0,
+					String: uri,
+				},
+			})
 			if err != nil {
 				return err
 			}
@@ -720,21 +776,45 @@ func handleErc1155TransferSingle(ctx context.Context, sugar *zap.SugaredLogger, 
 			defer tx.Rollback()
 
 			// Add transaction history
-			_, err = tx.ExecContext(ctx, `
-				INSERT INTO onchain_histories ("from", "to", asset_id, token_id, amount, tx_hash, timestamp)
-				VALUES ($1, $2, $3, $4, $5, $6, $7)
-			`, event.From.Hex(), event.To.Hex(), assetID, event.Id.String(), event.Value.String(), l.TxHash.Hex(), time.Now())
+			// _, err = tx.ExecContext(ctx, `
+			// 	INSERT INTO onchain_histories ("from", "to", asset_id, token_id, amount, tx_hash, timestamp)
+			// 	VALUES ($1, $2, $3, $4, $5, $6, $7)
+			// `, event.From.Hex(), event.To.Hex(), assetID, event.Id.String(), event.Value.String(), l.TxHash.Hex(), time.Now())
+			// if err != nil {
+			// 	return err
+			// }
+
+			_, err = AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
+				From:      event.From.Hex(),
+				To:        event.To.Hex(),
+				AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+				TokenID:   event.Id.String(),
+				Amount:    event.Value.String(),
+				TxHash:    l.TxHash.Hex(),
+				Timestamp: time.Now(),
+			})
 			if err != nil {
 				return err
 			}
 
 			// Update token ownership and balance
-			_, err = tx.ExecContext(ctx, `
-				INSERT INTO erc_1155_collection_assets (asset_id, chain_id, token_id, owner, balance, attributes)
-				VALUES ($1, $2, $3, $4, $5, $6)
-				ON CONFLICT (asset_id, chain_id, token_id, owner) DO UPDATE 
-				SET balance = $5, attributes = $6, updated_at = CURRENT_TIMESTAMP
-			`, assetID, chain.ID, event.Id.String(), event.To.Hex(), balance.String(), uri)
+			// _, err = tx.ExecContext(ctx, `
+			// 	INSERT INTO erc_1155_collection_assets (asset_id, chain_id, token_id, owner, balance, attributes)
+			// 	VALUES ($1, $2, $3, $4, $5, $6)
+			// 	ON CONFLICT (asset_id, chain_id, token_id, owner) DO UPDATE
+			// 	SET balance = $5, attributes = $6, updated_at = CURRENT_TIMESTAMP
+			// `, assetID, chain.ID, event.Id.String(), event.To.Hex(), balance.String(), uri)
+			err = Add1155Asset(ctx, db, models.Add1155AssetParams{
+				AssetID: assetID,
+				ChainID: chain.ID,
+				TokenID: event.Id.String(),
+				Owner:   event.To.Hex(),
+				Balance: balance.String(),
+				Attributes: sql.NullString{
+					Valid:  len(uri) > 0,
+					String: uri,
+				},
+			})
 			if err != nil {
 				return err
 			}
@@ -818,21 +898,46 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.SugaredLogger, d
 				}
 
 				// Add transaction history
-				_, err = tx.ExecContext(ctx, `
-					INSERT INTO onchain_histories ("from", "to", asset_id, token_id, amount, tx_hash, timestamp)
-					VALUES ($1, $2, $3, $4, $5, $6, $7)
-				`, event.From.Hex(), event.To.Hex(), assetID, event.Ids[i].String(), event.Values[i].String(), l.TxHash.Hex(), time.Now())
+				// _, err = tx.ExecContext(ctx, `
+				// 	INSERT INTO onchain_histories ("from", "to", asset_id, token_id, amount, tx_hash, timestamp)
+				// 	VALUES ($1, $2, $3, $4, $5, $6, $7)
+				// `, event.From.Hex(), event.To.Hex(), assetID, event.Ids[i].String(), event.Values[i].String(), l.TxHash.Hex(), time.Now())
+				// if err != nil {
+				// 	return err
+				// }
+
+				_, err = AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
+					From:      event.From.Hex(),
+					To:        event.To.Hex(),
+					AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+					TokenID:   event.Ids[i].String(),
+					Amount:    event.Values[i].String(),
+					TxHash:    l.TxHash.Hex(),
+					Timestamp: time.Now(),
+				})
 				if err != nil {
 					return err
 				}
 
 				// Update token ownership and balance
-				_, err = tx.ExecContext(ctx, `
-					INSERT INTO erc_1155_collection_assets (asset_id, chain_id, token_id, owner, balance, attributes)
-					VALUES ($1, $2, $3, $4, $5, $6)
-					ON CONFLICT (asset_id, chain_id, token_id, owner) DO UPDATE 
-					SET balance = $5, attributes = $6, updated_at = CURRENT_TIMESTAMP
-				`, assetID, chain.ID, event.Ids[i].String(), event.To.Hex(), balance.String(), uri)
+				// _, err = tx.ExecContext(ctx, `
+				// 	INSERT INTO erc_1155_collection_assets (asset_id, chain_id, token_id, owner, balance, attributes)
+				// 	VALUES ($1, $2, $3, $4, $5, $6)
+				// 	ON CONFLICT (asset_id, chain_id, token_id, owner) DO UPDATE
+				// 	SET balance = $5, attributes = $6, updated_at = CURRENT_TIMESTAMP
+				// `, assetID, chain.ID, event.Ids[i].String(), event.To.Hex(), balance.String(), uri)
+
+				err = Add1155Asset(ctx, db, models.Add1155AssetParams{
+					AssetID: assetID,
+					ChainID: chain.ID,
+					TokenID: event.Ids[i].String(),
+					Owner:   event.To.Hex(),
+					Balance: balance.String(),
+					Attributes: sql.NullString{
+						Valid:  len(uri) > 0,
+						String: uri,
+					},
+				})
 				if err != nil {
 					return err
 				}
@@ -1110,7 +1215,7 @@ func handleErc721BackFill(ctx context.Context, sugar *zap.SugaredLogger, q *sql.
 			Owner:   owner.Hex(),
 			Attributes: sql.NullString{
 				String: uri,
-				Valid:  true,
+				Valid:  len(uri) > 0,
 			},
 		}); err != nil {
 			return err
@@ -1277,7 +1382,7 @@ func handleErc1155Backfill(ctx context.Context, sugar *zap.SugaredLogger, q *sql
 			Owner:   tokenIdList[i/2].ContractAddress,
 			Attributes: sql.NullString{
 				String: uri,
-				Valid:  true,
+				Valid:  len(uri) > 0,
 			},
 		}); err != nil {
 			return err
