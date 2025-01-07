@@ -1160,6 +1160,15 @@ export class ConsoleService {
     return this.httpClient.get<ApiChannelMessageList>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
 
+  /** Add new NFT collection */
+  addNFTCollection(auth_token: string, collection_address: string, type: string): Observable<any> {
+    collection_address = encodeURIComponent(String(collection_address))
+    type = encodeURIComponent(String(type))
+    const urlPath = `/v2/console/collection/${collection_address}/type/${type}`;
+    let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+    return this.httpClient.post(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  }
+
   /** Get server config and configuration warnings. */
   getConfig(auth_token: string): Observable<Config> {
     const urlPath = `/v2/console/config`;

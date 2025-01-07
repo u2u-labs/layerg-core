@@ -1108,6 +1108,44 @@
         ]
       }
     },
+    "/v2/console/collection/{collection_address}/type/{type}": {
+      "post": {
+        "summary": "Add new NFT collection",
+        "operationId": "Console_AddNFTCollection",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "collection_address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Console"
+        ]
+      }
+    },
     "/v2/console/config": {
       "get": {
         "summary": "Get server config and configuration warnings.",
