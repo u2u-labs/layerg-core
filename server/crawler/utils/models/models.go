@@ -17,6 +17,8 @@ const (
 	AssetTypeERC20   AssetType = "ERC20"
 )
 
+var ContractType = make(map[int32]map[string]Asset)
+
 func (e *AssetType) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:

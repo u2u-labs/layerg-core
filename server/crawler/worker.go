@@ -12,6 +12,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 	"github.com/u2u-labs/layerg-core/server"
+	crawlerQuery "github.com/u2u-labs/layerg-core/server/crawler/crawler_query"
 	"github.com/u2u-labs/layerg-core/server/crawler/utils"
 	"github.com/u2u-labs/layerg-core/server/crawler/utils/models"
 	u2u "github.com/unicornultrafoundation/go-u2u"
@@ -78,7 +79,7 @@ func StartWorker(db *sql.DB, rdb *redis.Client, queueClient *asynq.Client, confi
 
 func InitBackfillProcessor(ctx context.Context, sugar *zap.SugaredLogger, db *sql.DB, rdb *redis.Client, queueClient *asynq.Client, config server.Config) error {
 	// Get all chains
-	chains, err := GetAllChain(ctx, db)
+	chains, err := crawlerQuery.GetAllChain(ctx, db)
 	if err != nil {
 		return err
 	}
@@ -207,7 +208,7 @@ func (processor *BackfillProcessor) ProcessTask(ctx context.Context, t *asynq.Ta
 
 	bf.CurrentBlock = toScanBlock
 
-	UpdateCrawlingBackfill(ctx, models.UpdateCrawlingBackfillParams{
+	crawlerQuery.UpdateCrawlingBackfill(ctx, models.UpdateCrawlingBackfillParams{
 		ChainID:           bf.ChainID,
 		CollectionAddress: bf.CollectionAddress,
 		Status:            bf.Status,

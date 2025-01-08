@@ -1,4 +1,4 @@
-package crawler
+package crawlerQuery
 
 import (
 	"context"
@@ -201,6 +201,55 @@ func GetChainById(ctx context.Context, db *sql.DB, id int32) (models.Chain, erro
 		&i.Explorer,
 		&i.LatestBlock,
 		&i.BlockTime,
+	)
+	return i, err
+}
+
+func AddBackfillCrawler(ctx context.Context, db *sql.DB, arg models.AddBackfillCrawlerParams) error {
+	addBackfillCrawler := `-- name: AddBackfillCrawler :exec
+	INSERT INTO backfill_crawlers (
+		chain_id, collection_address, current_block
+	)
+	VALUES (
+		$1, $2, $3
+	) ON CONFLICT ON CONSTRAINT BACKFILL_CRAWLERS_PKEY DO UPDATE SET
+		current_block = EXCLUDED.current_block,
+		status = 'CRAWLING'
+	RETURNING chain_id, collection_address, current_block, status, created_at
+	`
+	_, err := db.ExecContext(ctx, addBackfillCrawler, arg.ChainID, arg.CollectionAddress, arg.CurrentBlock)
+	return err
+}
+
+func AddNewAsset(ctx context.Context, db *sql.DB, arg models.AddNewAssetParams) (models.Asset, error) {
+	const addNewAsset = `-- name: AddNewAsset :exec
+		INSERT INTO assets (
+			id, chain_id, collection_address, type, decimal_data, initial_block, last_updated
+		)
+		VALUES (
+			$1, $2, $3, $4, $5, $6, $7
+		) RETURNING id, chain_id, collection_address, type, created_at, updated_at, decimal_data, initial_block, last_updated
+		`
+	var i models.Asset
+	row := db.QueryRowContext(ctx, addNewAsset,
+		arg.ID,
+		arg.ChainID,
+		arg.CollectionAddress,
+		arg.Type,
+		arg.DecimalData,
+		arg.InitialBlock,
+		arg.LastUpdated,
+	)
+	err := row.Scan(
+		&i.ID,
+		&i.ChainID,
+		&i.CollectionAddress,
+		&i.Type,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DecimalData,
+		&i.InitialBlock,
+		&i.LastUpdated,
 	)
 	return i, err
 }

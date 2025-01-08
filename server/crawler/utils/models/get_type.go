@@ -55,3 +55,19 @@ type Add1155AssetParams struct {
 	Balance    string         `json:"balance"`
 	Attributes sql.NullString `json:"attributes"`
 }
+
+type AddBackfillCrawlerParams struct {
+	ChainID           int32  `json:"chainId"`
+	CollectionAddress string `json:"collectionAddress"`
+	CurrentBlock      int64  `json:"currentBlock"`
+}
+
+type AddNewAssetParams struct {
+	ID                string        `json:"id"`
+	ChainID           int32         `json:"chainId"`
+	CollectionAddress string        `json:"collectionAddress"`
+	Type              AssetType     `json:"type"`
+	DecimalData       sql.NullInt16 `json:"decimalData"`
+	InitialBlock      sql.NullInt64 `json:"initialBlock"`
+	LastUpdated       sql.NullTime  `json:"lastUpdated"`
+}

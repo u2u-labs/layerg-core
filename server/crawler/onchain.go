@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/hibiken/asynq"
+	crawlerQuery "github.com/u2u-labs/layerg-core/server/crawler/crawler_query"
 	"github.com/u2u-labs/layerg-core/server/crawler/utils"
 	"github.com/u2u-labs/layerg-core/server/crawler/utils/models"
 )
@@ -31,8 +32,6 @@ const (
 	AssetTypeERC721  = "ERC721"
 	AssetTypeERC1155 = "ERC1155"
 )
-
-var contractType = make(map[int32]map[string]models.Asset)
 
 var blockProcessingMutex sync.Mutex
 
@@ -364,10 +363,10 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.SugaredLogger, db *sql.
 	// 			INSERT INTO onchain_histories ("from", "to", asset_id, token_id, amount, tx_hash, timestamp)
 	// 			VALUES ($1, $2, $3, $4, $5, $6, $7)
 	// 		`, event.From.Hex(), event.To.Hex(), assetID, "0", amount, l.TxHash.Hex(), time.Now())
-	_, err = AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
+	_, err = crawlerQuery.AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
 		From:      event.From.Hex(),
 		To:        event.To.Hex(),
-		AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+		AssetID:   models.ContractType[chain.ID][l.Address.Hex()].ID,
 		TokenID:   "0",
 		Amount:    amount,
 		TxHash:    l.TxHash.Hex(),
@@ -390,7 +389,7 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.SugaredLogger, db *sql.
 	// 	return err
 	// }
 
-	err = Add20Asset(ctx, db, models.Add20AssetParams{
+	err = crawlerQuery.Add20Asset(ctx, db, models.Add20AssetParams{
 		AssetID: assetID,
 		ChainID: chain.ID,
 		Owner:   event.From.Hex(),
@@ -412,7 +411,7 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.SugaredLogger, db *sql.
 	// 	return err
 	// }
 
-	err = Add20Asset(ctx, db, models.Add20AssetParams{
+	err = crawlerQuery.Add20Asset(ctx, db, models.Add20AssetParams{
 		AssetID: assetID,
 		ChainID: chain.ID,
 		Owner:   event.To.Hex(),
@@ -661,10 +660,10 @@ func handleErc721Transfer(ctx context.Context, sugar *zap.SugaredLogger, db *sql
 			// 	return err
 			// }
 
-			_, err = AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
+			_, err = crawlerQuery.AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
 				From:      event.From.Hex(),
 				To:        event.To.Hex(),
-				AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+				AssetID:   models.ContractType[chain.ID][l.Address.Hex()].ID,
 				TokenID:   event.TokenID.String(),
 				Amount:    "1",
 				TxHash:    l.TxHash.Hex(),
@@ -685,7 +684,7 @@ func handleErc721Transfer(ctx context.Context, sugar *zap.SugaredLogger, db *sql
 			// 	return err
 			// }
 
-			err = Add721Asset(ctx, db, models.Add721AssetParams{
+			err = crawlerQuery.Add721Asset(ctx, db, models.Add721AssetParams{
 				AssetID: assetID,
 				ChainID: chain.ID,
 				TokenID: event.TokenID.String(),
@@ -784,10 +783,10 @@ func handleErc1155TransferSingle(ctx context.Context, sugar *zap.SugaredLogger, 
 			// 	return err
 			// }
 
-			_, err = AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
+			_, err = crawlerQuery.AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
 				From:      event.From.Hex(),
 				To:        event.To.Hex(),
-				AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+				AssetID:   models.ContractType[chain.ID][l.Address.Hex()].ID,
 				TokenID:   event.Id.String(),
 				Amount:    event.Value.String(),
 				TxHash:    l.TxHash.Hex(),
@@ -804,7 +803,7 @@ func handleErc1155TransferSingle(ctx context.Context, sugar *zap.SugaredLogger, 
 			// 	ON CONFLICT (asset_id, chain_id, token_id, owner) DO UPDATE
 			// 	SET balance = $5, attributes = $6, updated_at = CURRENT_TIMESTAMP
 			// `, assetID, chain.ID, event.Id.String(), event.To.Hex(), balance.String(), uri)
-			err = Add1155Asset(ctx, db, models.Add1155AssetParams{
+			err = crawlerQuery.Add1155Asset(ctx, db, models.Add1155AssetParams{
 				AssetID: assetID,
 				ChainID: chain.ID,
 				TokenID: event.Id.String(),
@@ -906,10 +905,10 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.SugaredLogger, d
 				// 	return err
 				// }
 
-				_, err = AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
+				_, err = crawlerQuery.AddOnchainTransaction(ctx, db, models.AddOnchainTransactionParams{
 					From:      event.From.Hex(),
 					To:        event.To.Hex(),
-					AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+					AssetID:   models.ContractType[chain.ID][l.Address.Hex()].ID,
 					TokenID:   event.Ids[i].String(),
 					Amount:    event.Values[i].String(),
 					TxHash:    l.TxHash.Hex(),
@@ -927,7 +926,7 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.SugaredLogger, d
 				// 	SET balance = $5, attributes = $6, updated_at = CURRENT_TIMESTAMP
 				// `, assetID, chain.ID, event.Ids[i].String(), event.To.Hex(), balance.String(), uri)
 
-				err = Add1155Asset(ctx, db, models.Add1155AssetParams{
+				err = crawlerQuery.Add1155Asset(ctx, db, models.Add1155AssetParams{
 					AssetID: assetID,
 					ChainID: chain.ID,
 					TokenID: event.Ids[i].String(),
@@ -1034,10 +1033,10 @@ func handleErc20BackFill(ctx context.Context, sugar *zap.SugaredLogger, q *sql.D
 		event.To = common.BytesToAddress(l.Topics[2].Bytes())
 		amount := event.Value.String()
 
-		_, err = AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
+		_, err = crawlerQuery.AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
 			From:      event.From.Hex(),
 			To:        event.To.Hex(),
-			AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+			AssetID:   models.ContractType[chain.ID][l.Address.Hex()].ID,
 			TokenID:   "0",
 			Amount:    amount,
 			TxHash:    l.TxHash.Hex(),
@@ -1091,8 +1090,8 @@ func handleErc20BackFill(ctx context.Context, sugar *zap.SugaredLogger, q *sql.D
 
 		utils.ERC20ABI.UnpackIntoInterface(&balance, "balanceOf", common.FromHex(result))
 
-		if err := Add20Asset(ctx, q, models.Add20AssetParams{
-			AssetID: contractType[chain.ID][contractAddress.Hex()].ID,
+		if err := crawlerQuery.Add20Asset(ctx, q, models.Add20AssetParams{
+			AssetID: models.ContractType[chain.ID][contractAddress.Hex()].ID,
 			ChainID: chain.ID,
 			Owner:   addressList[i].Hex(),
 			Balance: balance.String(),
@@ -1125,10 +1124,10 @@ func handleErc721BackFill(ctx context.Context, sugar *zap.SugaredLogger, q *sql.
 			To:      common.BytesToAddress(l.Topics[2].Bytes()),
 			TokenID: l.Topics[3].Big(),
 		}
-		_, err := AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
+		_, err := crawlerQuery.AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
 			From:      event.From.Hex(),
 			To:        event.To.Hex(),
-			AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+			AssetID:   models.ContractType[chain.ID][l.Address.Hex()].ID,
 			TokenID:   event.TokenID.String(),
 			Amount:    "0",
 			TxHash:    l.TxHash.Hex(),
@@ -1208,8 +1207,8 @@ func handleErc721BackFill(ctx context.Context, sugar *zap.SugaredLogger, q *sql.
 		utils.ERC721ABI.UnpackIntoInterface(&uri, "tokenURI", common.FromHex(results[i]))
 		utils.ERC721ABI.UnpackIntoInterface(&owner, "ownerOf", common.FromHex(results[i+1]))
 
-		if err := Add721Asset(ctx, q, models.Add721AssetParams{
-			AssetID: contractType[chain.ID][contractAddress.Hex()].ID,
+		if err := crawlerQuery.Add721Asset(ctx, q, models.Add721AssetParams{
+			AssetID: models.ContractType[chain.ID][contractAddress.Hex()].ID,
 			ChainID: chain.ID,
 			TokenID: tokenIdList[i/2].String(),
 			Owner:   owner.Hex(),
@@ -1255,10 +1254,10 @@ func handleErc1155Backfill(ctx context.Context, sugar *zap.SugaredLogger, q *sql
 			event.To = common.BytesToAddress(l.Topics[3].Bytes())
 
 			amount := event.Value.String()
-			_, err = AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
+			_, err = crawlerQuery.AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
 				From:      event.From.Hex(),
 				To:        event.To.Hex(),
-				AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+				AssetID:   models.ContractType[chain.ID][l.Address.Hex()].ID,
 				TokenID:   event.Id.String(),
 				Amount:    amount,
 				TxHash:    l.TxHash.Hex(),
@@ -1287,10 +1286,10 @@ func handleErc1155Backfill(ctx context.Context, sugar *zap.SugaredLogger, q *sql
 
 			for i := range event.Ids {
 				amount := event.Values[i].String()
-				_, err := AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
+				_, err := crawlerQuery.AddOnchainTransaction(ctx, q, models.AddOnchainTransactionParams{
 					From:      event.From.Hex(),
 					To:        event.To.Hex(),
-					AssetID:   contractType[chain.ID][l.Address.Hex()].ID,
+					AssetID:   models.ContractType[chain.ID][l.Address.Hex()].ID,
 					TokenID:   event.Ids[i].String(),
 					Amount:    amount,
 					TxHash:    l.TxHash.Hex(),
@@ -1375,8 +1374,8 @@ func handleErc1155Backfill(ctx context.Context, sugar *zap.SugaredLogger, q *sql
 		utils.ERC1155ABI.UnpackIntoInterface(&uri, "uri", common.FromHex(results[i]))
 		utils.ERC1155ABI.UnpackIntoInterface(&balance, "balanceOf", common.FromHex(results[i+1]))
 
-		if err := Add1155Asset(ctx, q, models.Add1155AssetParams{
-			AssetID: contractType[chain.ID][contractAddress.Hex()].ID,
+		if err := crawlerQuery.Add1155Asset(ctx, q, models.Add1155AssetParams{
+			AssetID: models.ContractType[chain.ID][contractAddress.Hex()].ID,
 			ChainID: chain.ID,
 			TokenID: tokenIdList[i/2].TokenId.String(),
 			Owner:   tokenIdList[i/2].ContractAddress,

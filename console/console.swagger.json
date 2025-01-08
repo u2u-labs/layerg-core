@@ -1108,7 +1108,7 @@
         ]
       }
     },
-    "/v2/console/collection/{collection_address}/type/{type}": {
+    "/v2/console/collection/{collection_address}/type/{type}/block/{initial_block}/chain/{chain_id}": {
       "post": {
         "summary": "Add new NFT collection",
         "operationId": "Console_AddNFTCollection",
@@ -1139,6 +1139,20 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "initial_block",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "chain_id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [

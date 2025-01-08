@@ -187,7 +187,7 @@ service Console {
 
   // Add new NFT collection
   rpc AddNFTCollection (AddNFTCollectionRequest) returns (google.protobuf.Empty) {
-    option (google.api.http).post = "/v2/console/collection/{collection_address}/type/{type}";
+    option (google.api.http).post = "/v2/console/collection/{collection_address}/type/{type}/block/{initial_block}/chain/{chain_id}";
   }
 
   // Delete a wallet ledger item.
@@ -641,6 +641,8 @@ message UpdateGroupUserStateRequest {
 message AddNFTCollectionRequest {
   string collection_address = 1;
   string type = 2;
+  uint64 initial_block = 3;
+  uint32 chain_id = 4;
 }
 
 // Remove a leaderboard record

@@ -10,6 +10,7 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
+	crawlerQuery "github.com/u2u-labs/layerg-core/server/crawler/crawler_query"
 	"github.com/u2u-labs/layerg-core/server/crawler/utils/models"
 	"go.uber.org/zap"
 )
@@ -50,7 +51,7 @@ func CrawlSupportedChains(ctx context.Context, logger *zap.Logger, db *sql.DB, r
 
 	for _, c := range chains {
 		// Delete chain from cache
-		contractType[c.ID] = make(map[string]models.Asset)
+		models.ContractType[c.ID] = make(map[string]models.Asset)
 		if err = deleteChainFromCache(ctx, rdb, c.ID); err != nil {
 			return err
 		}
@@ -113,7 +114,7 @@ func CrawlSupportedChains(ctx context.Context, logger *zap.Logger, db *sql.DB, r
 		}
 
 		for _, a := range assets {
-			contractType[a.ChainID][a.CollectionAddress] = a
+			models.ContractType[a.ChainID][a.CollectionAddress] = a
 		}
 
 		// Start chain crawler
@@ -205,7 +206,7 @@ func ProcessNewChainAssets(ctx context.Context, logger *zap.Logger, rdb *redis.C
 					doneChan <- true
 					return
 				default:
-					contractType[asset.ChainID][asset.CollectionAddress] = asset
+					models.ContractType[asset.ChainID][asset.CollectionAddress] = asset
 					sugar.Infow("Processing new asset",
 						"chain", asset.ChainID,
 						"address", asset.CollectionAddress,
@@ -398,7 +399,7 @@ func ProcessCrawlingBackfillCollection(ctx context.Context, sugar *zap.Logger, d
 				return
 			case <-ticker.C:
 				// Get all Backfill Collections with status CRAWLING
-				crawlingBackfill, err := GetCrawlingBackfillCrawler(ctx, db)
+				crawlingBackfill, err := crawlerQuery.GetCrawlingBackfillCrawler(ctx, db)
 				if err != nil {
 					sugar.Error("Failed to get crawling backfill collections", zap.Error(err))
 					continue
@@ -411,7 +412,7 @@ func ProcessCrawlingBackfillCollection(ctx context.Context, sugar *zap.Logger, d
 
 				for _, c := range crawlingBackfill {
 					sugar.Info("Dispatching backfill task", zap.Any("collection", c))
-					chain, err := GetChainById(ctx, db, c.ChainID)
+					chain, err := crawlerQuery.GetChainById(ctx, db, c.ChainID)
 					if err != nil {
 						sugar.Error("Failed to get chain by ID", zap.Error(err))
 						continue
