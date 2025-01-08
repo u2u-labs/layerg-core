@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
@@ -102,7 +103,7 @@ func InitBackfillProcessor(ctx context.Context, sugar *zap.SugaredLogger, db *sq
 		// mux maps a type to a handler
 		mux := asynq.NewServeMux()
 		taskName := BackfillCollection + ":" + strconv.Itoa(int(chain.ID))
-		mux.Handle(taskName, NewBackfillProcessor(sugar, client, db, &chain, rdb))
+		mux.Handle(taskName, NewBackfillProcessor(sugar, client, db, &chain, rdb, config))
 		sugar.Infof("Starting server for chain %s with task name %s", chain.Name, taskName)
 
 		// go func(server *asynq.Server, mux *asynq.ServeMux, chainName string) {
@@ -171,8 +172,9 @@ func (processor *BackfillProcessor) ProcessTask(ctx context.Context, t *asynq.Ta
 		return nil
 	}
 
+	processor.sugar.Info("ttl: %s", processor.config.GetRedisDbConfig().Ttl)
 	// Set the idempotency key in Redis
-	err = processor.rdb.Set(ctx, idempotencyKey, "processing", 0).Err() // `0` means no expiry
+	err = processor.rdb.Set(ctx, idempotencyKey, "processing", time.Duration(time.Duration(processor.config.GetRedisDbConfig().Ttl)*time.Second)).Err() // `0` means no expiry
 	if err != nil {
 		processor.sugar.Errorf("Failed to set idempotency key: %v", err)
 		return err
@@ -250,10 +252,11 @@ type BackfillProcessor struct {
 	ethClient *ethclient.Client
 	db        *sql.DB
 	chain     *models.Chain
-	rdb       *redis.Client // Add Redis client here
+	rdb       *redis.Client
+	config    server.Config
 }
 
-func NewBackfillProcessor(sugar *zap.SugaredLogger, ethClient *ethclient.Client, db *sql.DB, chain *models.Chain, rdb *redis.Client) *BackfillProcessor {
+func NewBackfillProcessor(sugar *zap.SugaredLogger, ethClient *ethclient.Client, db *sql.DB, chain *models.Chain, rdb *redis.Client, config server.Config) *BackfillProcessor {
 	sugar.Infow("Initiated new chain backfill, start crawling", "chain", chain.Chain)
-	return &BackfillProcessor{sugar, ethClient, db, chain, rdb}
+	return &BackfillProcessor{sugar, ethClient, db, chain, rdb, config}
 }
