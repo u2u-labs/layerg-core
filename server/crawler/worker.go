@@ -102,7 +102,7 @@ func InitBackfillProcessor(ctx context.Context, sugar *zap.SugaredLogger, db *sq
 		// mux maps a type to a handler
 		mux := asynq.NewServeMux()
 		taskName := BackfillCollection + ":" + strconv.Itoa(int(chain.ID))
-		mux.Handle(taskName, NewBackfillProcessor(sugar, client, db, &chain))
+		mux.Handle(taskName, NewBackfillProcessor(sugar, client, db, &chain, rdb))
 		sugar.Infof("Starting server for chain %s with task name %s", chain.Name, taskName)
 
 		// go func(server *asynq.Server, mux *asynq.ServeMux, chainName string) {
@@ -153,6 +153,29 @@ func (processor *BackfillProcessor) ProcessTask(ctx context.Context, t *asynq.Ta
 
 	if err := json.Unmarshal(t.Payload(), &bf); err != nil {
 		return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
+	}
+
+	// Generate Redis key for idempotency
+	idempotencyKey := fmt.Sprintf("backfill:%d:%s:%d:%d", bf.ChainID, bf.CollectionAddress, bf.CurrentBlock, bf.CurrentBlock+100)
+
+	// Check if the key already exists in Redis
+	exists, err := processor.rdb.Exists(ctx, idempotencyKey).Result()
+	if err != nil {
+		processor.sugar.Errorf("Failed to check idempotency key: %v", err)
+		return err
+	}
+
+	// Skip if key already exists (duplicate task detected)
+	if exists > 0 {
+		processor.sugar.Infof("Skipping already processed block range for key: %s", idempotencyKey)
+		return nil
+	}
+
+	// Set the idempotency key in Redis
+	err = processor.rdb.Set(ctx, idempotencyKey, "processing", 0).Err() // `0` means no expiry
+	if err != nil {
+		processor.sugar.Errorf("Failed to set idempotency key: %v", err)
+		return err
 	}
 
 	blockRangeScan := int64(100)
@@ -227,9 +250,10 @@ type BackfillProcessor struct {
 	ethClient *ethclient.Client
 	db        *sql.DB
 	chain     *models.Chain
+	rdb       *redis.Client // Add Redis client here
 }
 
-func NewBackfillProcessor(sugar *zap.SugaredLogger, ethClient *ethclient.Client, db *sql.DB, chain *models.Chain) *BackfillProcessor {
+func NewBackfillProcessor(sugar *zap.SugaredLogger, ethClient *ethclient.Client, db *sql.DB, chain *models.Chain, rdb *redis.Client) *BackfillProcessor {
 	sugar.Infow("Initiated new chain backfill, start crawling", "chain", chain.Chain)
-	return &BackfillProcessor{sugar, ethClient, db, chain}
+	return &BackfillProcessor{sugar, ethClient, db, chain, rdb}
 }
