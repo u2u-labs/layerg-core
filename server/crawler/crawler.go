@@ -122,16 +122,15 @@ func CrawlSupportedChains(ctx context.Context, logger *zap.Logger, db *sql.DB, r
 		if err != nil {
 			return err
 		}
-		go StartChainCrawler(ctx, logger.Sugar(), client, db, &c, rdb)
+		go StartChainCrawler(ctx, logger, client, db, &c, rdb)
 	}
 	return nil
 }
 
 func ProcessNewChains(ctx context.Context, logger *zap.Logger, rdb *redis.Client, db *sql.DB) error {
-	sugar := logger.Sugar()
 	chains, err := getCachedPendingChains(ctx, rdb)
 	if err != nil {
-		sugar.Errorw("Failed to get cached pending chains", "err", err)
+		logger.Error("Failed to get cached pending chains", zap.Error(err))
 		return err
 	}
 
@@ -155,8 +154,8 @@ func ProcessNewChains(ctx context.Context, logger *zap.Logger, rdb *redis.Client
 					errChan <- fmt.Errorf("failed to init chain client for chain %s: %v", chain.Name, err)
 					return
 				}
-				go StartChainCrawler(ctx, sugar, client, db, &chain, rdb)
-				sugar.Infow("Initiated new chain crawler", "chain", chain.Name)
+				go StartChainCrawler(ctx, logger, client, db, &chain, rdb)
+				logger.Info("Initiated new chain crawler", zap.String("chain", chain.Name))
 			}(chain)
 		}
 		wg.Wait()
@@ -172,7 +171,7 @@ func ProcessNewChains(ctx context.Context, logger *zap.Logger, rdb *redis.Client
 	}
 
 	if err := deletePendingChainsFromCache(ctx, rdb); err != nil {
-		sugar.Errorw("Failed to delete cached pending chains", "err", err)
+		logger.Error("Failed to delete cached pending chains", zap.Error(err))
 		return err
 	}
 

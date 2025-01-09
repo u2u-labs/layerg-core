@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/u2u-labs/go-layerg-common/api"
+	"github.com/u2u-labs/layerg-core/server/http"
 	"github.com/u2u-labs/layerg-core/social"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -1238,7 +1239,7 @@ func AuthenticateUA(ctx context.Context, logger *zap.Logger, db *sql.DB, config 
 	// Look for an existing account
 	var response UADetail
 	endpoint := config.GetLayerGCoreConfig().UniversalAccountURL + "/ua/details"
-	err := GET(ctx, endpoint, token, make(map[string]string), &response)
+	err := http.GET(ctx, endpoint, token, make(map[string]string), &response)
 	if err != nil {
 		logger.Error("Error while fetch info from UA", zap.Error(err))
 		return "", "", false, status.Error(codes.Internal, "Error fetching user account.")

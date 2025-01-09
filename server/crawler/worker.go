@@ -37,7 +37,7 @@ func StartWorker(db *sql.DB, rdb *redis.Client, queueClient *asynq.Client, confi
 	// 	logger, _ = zap.NewDevelopment()
 	// }
 	defer logger.Sync() // flushes buffer, if any
-	sugar := logger.Sugar()
+	// sugar := logger.Sugar()
 
 	// conn, err := sql.Open(
 	// 	viper.GetString("COCKROACH_DB_DRIVER"),
@@ -75,11 +75,13 @@ func StartWorker(db *sql.DB, rdb *redis.Client, queueClient *asynq.Client, confi
 		panic(err)
 	}
 
-	InitBackfillProcessor(ctx, sugar, db, rdb, queueClient, config)
+	InitBackfillProcessor(ctx, logger, db, rdb, queueClient, config)
 }
 
-func InitBackfillProcessor(ctx context.Context, sugar *zap.SugaredLogger, db *sql.DB, rdb *redis.Client, queueClient *asynq.Client, config server.Config) error {
+func InitBackfillProcessor(ctx context.Context, logger *zap.Logger, db *sql.DB, rdb *redis.Client, queueClient *asynq.Client, config server.Config) error {
 	// Get all chains
+	sugar := logger.Sugar()
+
 	chains, err := crawlerQuery.GetAllChain(ctx, db)
 	if err != nil {
 		return err
@@ -103,7 +105,7 @@ func InitBackfillProcessor(ctx context.Context, sugar *zap.SugaredLogger, db *sq
 		// mux maps a type to a handler
 		mux := asynq.NewServeMux()
 		taskName := BackfillCollection + ":" + strconv.Itoa(int(chain.ID))
-		mux.Handle(taskName, NewBackfillProcessor(sugar, client, db, &chain, rdb, config))
+		mux.Handle(taskName, NewBackfillProcessor(logger, client, db, &chain, rdb, config))
 		sugar.Infof("Starting server for chain %s with task name %s", chain.Name, taskName)
 
 		// go func(server *asynq.Server, mux *asynq.ServeMux, chainName string) {
@@ -162,21 +164,20 @@ func (processor *BackfillProcessor) ProcessTask(ctx context.Context, t *asynq.Ta
 	// Check if the key already exists in Redis
 	exists, err := processor.rdb.Exists(ctx, idempotencyKey).Result()
 	if err != nil {
-		processor.sugar.Errorf("Failed to check idempotency key: %v", err)
+		processor.sugar.Error("Failed to check idempotency key", zap.Error(err))
 		return err
 	}
 
 	// Skip if key already exists (duplicate task detected)
 	if exists > 0 {
-		processor.sugar.Infof("Skipping already processed block range for key: %s", idempotencyKey)
+		processor.sugar.Info("Skipping already processed block range for key", zap.String("key", idempotencyKey))
 		return nil
 	}
 
-	processor.sugar.Info("ttl: %s", processor.config.GetRedisDbConfig().Ttl)
 	// Set the idempotency key in Redis
 	err = processor.rdb.Set(ctx, idempotencyKey, "processing", time.Duration(time.Duration(processor.config.GetRedisDbConfig().Ttl)*time.Second)).Err() // `0` means no expiry
 	if err != nil {
-		processor.sugar.Errorf("Failed to set idempotency key: %v", err)
+		processor.sugar.Error("Failed to set idempotency key", zap.Error(err))
 		return err
 	}
 
@@ -187,7 +188,6 @@ func (processor *BackfillProcessor) ProcessTask(ctx context.Context, t *asynq.Ta
 	if (bf.CurrentBlock % blockRangeScan) != 0 {
 		toScanBlock = ((bf.CurrentBlock / blockRangeScan) + 1) * blockRangeScan
 	}
-	processor.sugar.Infof("good", toScanBlock, bf)
 	if bf.InitialBlock.Valid && toScanBlock >= bf.InitialBlock.Int64 {
 		toScanBlock = bf.InitialBlock.Int64
 		bf.Status = models.CrawlerStatusCRAWLED
@@ -219,7 +219,7 @@ func (processor *BackfillProcessor) ProcessTask(ctx context.Context, t *asynq.Ta
 		Addresses: []common.Address{common.HexToAddress(bf.CollectionAddress)},
 	})
 	if bf.CurrentBlock%100 == 0 {
-		processor.sugar.Infof("Batch Call from block %d to block %d for assetType %s, contractAddress %s", bf.CurrentBlock, toScanBlock, bf.Type, bf.CollectionAddress)
+		processor.sugar.Info(fmt.Sprintf("Batch Call from block %v to block %v for assetType %v, contractAddress %v", bf.CurrentBlock, toScanBlock, bf.Type, bf.CollectionAddress))
 	}
 
 	switch bf.Type {
@@ -248,7 +248,7 @@ func (processor *BackfillProcessor) ProcessTask(ctx context.Context, t *asynq.Ta
 
 // BackfillProcessor implements asynq.Handler interface.
 type BackfillProcessor struct {
-	sugar     *zap.SugaredLogger
+	sugar     *zap.Logger
 	ethClient *ethclient.Client
 	db        *sql.DB
 	chain     *models.Chain
@@ -256,7 +256,7 @@ type BackfillProcessor struct {
 	config    server.Config
 }
 
-func NewBackfillProcessor(sugar *zap.SugaredLogger, ethClient *ethclient.Client, db *sql.DB, chain *models.Chain, rdb *redis.Client, config server.Config) *BackfillProcessor {
-	sugar.Infow("Initiated new chain backfill, start crawling", "chain", chain.Chain)
+func NewBackfillProcessor(sugar *zap.Logger, ethClient *ethclient.Client, db *sql.DB, chain *models.Chain, rdb *redis.Client, config server.Config) *BackfillProcessor {
+	sugar.Info("Initiated new chain backfill, start crawling", zap.String("chain", chain.Chain))
 	return &BackfillProcessor{sugar, ethClient, db, chain, rdb, config}
 }

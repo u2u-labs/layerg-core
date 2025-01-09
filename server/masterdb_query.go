@@ -11,6 +11,7 @@ import (
 	crawlerQuery "github.com/u2u-labs/layerg-core/server/crawler/crawler_query"
 	"github.com/u2u-labs/layerg-core/server/crawler/utils"
 	"github.com/u2u-labs/layerg-core/server/crawler/utils/models"
+	"github.com/u2u-labs/layerg-core/server/http"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -32,7 +33,7 @@ func CreateCollection(ctx context.Context, request CollectionRequest, config Con
 	endpoint := baseUrl + "/chain/1/collection"
 
 	var response masterdb.CollectionResponse
-	err := POST(ctx, endpoint, "", request, &response)
+	err := http.POST(ctx, endpoint, "", request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create collection: %w", err)
 	}
@@ -97,4 +98,56 @@ func (s *ConsoleServer) AddNFTCollection(ctx context.Context, in *console.AddNFT
 
 	return &emptypb.Empty{}, nil
 
+}
+
+func AddERC721Asset(ctx context.Context, request masterdb.Add721Asset, logger *zap.Logger) (*masterdb.Add721Asset, error) {
+	config := NewConfig(logger)
+	if request.Asset721.CollectionId == "" {
+		return nil, fmt.Errorf("collectionId is required")
+	}
+	if request.Asset721.TokenId == "" {
+		return nil, fmt.Errorf("tokenId is required")
+	}
+	if request.History.From == "" || request.History.To == "" {
+		return nil, fmt.Errorf("from and to addresses are required")
+	}
+
+	baseUrl := config.GetLayerGCoreConfig().MasterDB
+	endpoint := baseUrl + "/asset/erc-721"
+
+	var response masterdb.Add721Asset
+	err := http.POST(ctx, endpoint, "", request, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add ERC721 asset: %w", err)
+	}
+
+	return &response, nil
+}
+
+func AddERC1155Asset(ctx context.Context, request masterdb.Add1155Asset, logger *zap.Logger) (*masterdb.Add1155Asset, error) {
+	config := NewConfig(logger)
+	baseUrl := config.GetLayerGCoreConfig().MasterDB
+	endpoint := baseUrl + "/asset/erc-1155"
+
+	var response masterdb.Add1155Asset
+	err := http.POST(ctx, endpoint, "", request, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add ERC1155 asset: %w", err)
+	}
+
+	return &response, nil
+}
+
+func AddERC20Asset(ctx context.Context, request masterdb.Add20Asset, logger *zap.Logger) (*masterdb.Add20Asset, error) {
+	config := NewConfig(logger)
+	baseUrl := config.GetLayerGCoreConfig().MasterDB
+	endpoint := baseUrl + "/asset/erc-20"
+
+	var response masterdb.Add20Asset
+	err := http.POST(ctx, endpoint, "", request, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add ERC20 asset: %w", err)
+	}
+
+	return &response, nil
 }

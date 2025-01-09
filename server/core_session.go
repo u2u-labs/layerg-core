@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/u2u-labs/layerg-core/server/http"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -35,7 +36,7 @@ func SessionRefresh(ctx context.Context, logger *zap.Logger, db *sql.DB, config 
 		RefreshToken: token,
 	}
 	var response RefreshUATokenResponse
-	err := POST(ctx, endpoint, "", request, &response)
+	err := http.POST(ctx, endpoint, "", request, &response)
 	if err != nil {
 		// return uuid.Nil, "", nil, "", status.Error(codes.Aborted, "Refresh token fetch failed")
 		// TODO: call refresh token api UA, if đéo valid thì đi tiếp flow dưới
