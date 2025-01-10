@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -36,138 +35,211 @@ const (
 	AssetTypeERC1155 = "ERC1155"
 )
 
-var blockProcessingMutex sync.Mutex
+// var blockProcessingMutex sync.Mutex
 
 func StartChainCrawler(ctx context.Context, sugar *zap.Logger, client *ethclient.Client, db *sql.DB, chain *models.Chain, rdb *redis.Client) {
-	// sugar.Info("Start chain crawler", "chain", chain)
 	sugar.Info("Start chain crawler", zap.Any("chain", chain))
-	var wg sync.WaitGroup
 	errChan := make(chan error, 1)
-	timer := time.NewTimer(time.Second) // 1-second interval
+	timer := time.NewTicker(time.Second) // Use Ticker for recurring intervals
 	defer timer.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			wg.Wait() // Ensure all goroutines finish
-			// sugar.Infow("Chain crawler stopped due to context cancellation", "chain", chain.Name)
+			// Context canceled, stop the crawler
 			sugar.Info("Chain crawler stopped due to context cancellation", zap.String("chain", chain.Name))
 			return
 		case <-timer.C:
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				// Process blocks with mutex
-				blockProcessingMutex.Lock()
-				defer blockProcessingMutex.Unlock()
-
-				if err := ProcessLatestBlocks(ctx, sugar, client, db, chain, rdb); err != nil {
-					select {
-					case errChan <- err:
-					default:
-					}
-				}
-			}()
-			timer.Reset(time.Second)
+			// Process blocks in order, sequentially
+			if err := ProcessLatestBlocks(ctx, sugar, client, db, chain, rdb); err != nil {
+				errChan <- err
+				return
+			}
 		case err := <-errChan:
-			wg.Wait() // Wait for all workers to complete
-			// sugar.Error("Chain crawler stopped due to error", "chain", chain.Name, "error", err)
+			// Handle errors from block processing
 			sugar.Error("Chain crawler stopped due to error", zap.Error(err), zap.String("chain", chain.Name))
 			return
 		}
 	}
 }
 
+// func StartChainCrawler(ctx context.Context, sugar *zap.Logger, client *ethclient.Client, db *sql.DB, chain *models.Chain, rdb *redis.Client) {
+// 	// sugar.Info("Start chain crawler", "chain", chain)
+// 	sugar.Info("Start chain crawler", zap.Any("chain", chain))
+// 	var wg sync.WaitGroup
+// 	errChan := make(chan error, 1)
+// 	timer := time.NewTimer(time.Second) // 1-second interval
+// 	defer timer.Stop()
+
+// 	for {
+// 		select {
+// 		case <-ctx.Done():
+// 			wg.Wait() // Ensure all goroutines finish
+// 			// sugar.Infow("Chain crawler stopped due to context cancellation", "chain", chain.Name)
+// 			sugar.Info("Chain crawler stopped due to context cancellation", zap.String("chain", chain.Name))
+// 			return
+// 		case <-timer.C:
+// 			wg.Add(1)
+// 			go func() {
+// 				defer wg.Done()
+// 				// Process blocks with mutex
+// 				blockProcessingMutex.Lock()
+// 				defer blockProcessingMutex.Unlock()
+
+// 				if err := ProcessLatestBlocks(ctx, sugar, client, db, chain, rdb); err != nil {
+// 					select {
+// 					case errChan <- err:
+// 					default:
+// 					}
+// 				}
+// 			}()
+// 			timer.Reset(time.Second)
+// 		case err := <-errChan:
+// 			wg.Wait() // Wait for all workers to complete
+// 			// sugar.Error("Chain crawler stopped due to error", "chain", chain.Name, "error", err)
+// 			sugar.Error("Chain crawler stopped due to error", zap.Error(err), zap.String("chain", chain.Name))
+// 			return
+// 		}
+// 	}
+// }
+
+// func ProcessLatestBlocks(ctx context.Context, sugar *zap.Logger, client *ethclient.Client, db *sql.DB, chain *models.Chain, rdb *redis.Client) error {
+// 	latest, err := client.BlockNumber(ctx)
+// 	if err != nil {
+// 		// sugar.Error("Failed to fetch latest blocks", zap.Error(err), "chain", chain)
+// 		sugar.Error("Failed to fetch latest blocks", zap.Error(err), zap.Any("chain", chain))
+// 		return err
+// 	}
+
+// 	if chain.LatestBlock >= int64(latest) {
+// 		return nil // Nothing to process
+// 	}
+
+// 	// Use a worker pool to process blocks in parallel
+// 	numWorkers := 1 // Adjust based on system capabilities
+// 	blockChan := make(chan int64, numWorkers)
+// 	errChan := make(chan error, 1)
+// 	doneChan := make(chan bool, numWorkers)
+
+// 	// Start workers
+// 	for i := 0; i < numWorkers; i++ {
+// 		go func() {
+// 			for blockNum := range blockChan {
+// 				select {
+// 				case <-ctx.Done():
+// 					doneChan <- true
+// 					return
+// 				default:
+// 					if blockNum%50 == 0 {
+// 						// sugar.Infow("Importing block receipts", "chain", chain.Name, "block", blockNum, "latest", latest)
+// 						sugar.Info("Importing block receipts", zap.String("chain", chain.Name), zap.Int("block", int(blockNum)), zap.Int("latest", int(latest)))
+// 					}
+
+// 					receipts, err := client.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blockNum)))
+// 					if err != nil {
+// 						select {
+// 						case errChan <- fmt.Errorf("failed to fetch block receipts at height %d: %v", blockNum, err):
+// 						default:
+// 						}
+// 						doneChan <- true
+// 						return
+// 					}
+// 					// Update latest block processed
+// 					query := "UPDATE chains SET latest_block = $1 WHERE id = $2"
+// 					_, err = db.ExecContext(ctx, query, latest, chain.ID)
+// 					if err != nil {
+// 						// sugar.Error("Failed to update chain latest blocks in DB", zap.Error(err), "chain", chain)
+// 						sugar.Error("Failed to update chain latest blocks in DB", zap.Error(err), zap.Any("chain", chain))
+// 						select {
+// 						case errChan <- fmt.Errorf("failed to update block at height %d: %v", blockNum, err):
+// 						default:
+// 						}
+// 						doneChan <- true
+// 						return
+// 					}
+
+// 					if err = FilterEvents(ctx, sugar, db, client, chain, rdb, receipts); err != nil {
+// 						select {
+// 						case errChan <- fmt.Errorf("failed to filter events at height %d: %v", blockNum, err):
+// 						default:
+// 						}
+// 						doneChan <- true
+// 						return
+// 					}
+// 				}
+// 			}
+// 			doneChan <- true
+// 		}()
+// 	}
+
+// 	// Send blocks to workers
+// 	go func() {
+// 		for i := chain.LatestBlock + 1; i <= int64(latest); i++ {
+// 			select {
+// 			case <-ctx.Done():
+// 				return
+// 			case blockChan <- i:
+// 			}
+// 		}
+// 		close(blockChan)
+// 	}()
+
+// 	// Wait for workers to finish or error
+// 	for i := 0; i < numWorkers; i++ {
+// 		select {
+// 		case <-ctx.Done():
+// 			return ctx.Err()
+// 		case err := <-errChan:
+// 			return err
+// 		case <-doneChan:
+// 			continue
+// 		}
+// 	}
+
+// 	chain.LatestBlock = int64(latest)
+// 	return nil
+// }
+
 func ProcessLatestBlocks(ctx context.Context, sugar *zap.Logger, client *ethclient.Client, db *sql.DB, chain *models.Chain, rdb *redis.Client) error {
 	latest, err := client.BlockNumber(ctx)
 	if err != nil {
-		// sugar.Error("Failed to fetch latest blocks", zap.Error(err), "chain", chain)
 		sugar.Error("Failed to fetch latest blocks", zap.Error(err), zap.Any("chain", chain))
 		return err
 	}
 
 	if chain.LatestBlock >= int64(latest) {
-		return nil // Nothing to process
+		return nil
 	}
 
-	// Use a worker pool to process blocks in parallel
-	numWorkers := 1 // Adjust based on system capabilities
-	blockChan := make(chan int64, numWorkers)
-	errChan := make(chan error, 1)
-	doneChan := make(chan bool, numWorkers)
-
-	// Start workers
-	for i := 0; i < numWorkers; i++ {
-		go func() {
-			for blockNum := range blockChan {
-				select {
-				case <-ctx.Done():
-					doneChan <- true
-					return
-				default:
-					if blockNum%50 == 0 {
-						// sugar.Infow("Importing block receipts", "chain", chain.Name, "block", blockNum, "latest", latest)
-						sugar.Info("Importing block receipts", zap.String("chain", chain.Name), zap.Int("block", int(blockNum)), zap.Int("latest", int(latest)))
-					}
-
-					receipts, err := client.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blockNum)))
-					if err != nil {
-						select {
-						case errChan <- fmt.Errorf("failed to fetch block receipts at height %d: %v", blockNum, err):
-						default:
-						}
-						doneChan <- true
-						return
-					}
-					// Update latest block processed
-					query := "UPDATE chains SET latest_block = $1 WHERE id = $2"
-					_, err = db.ExecContext(ctx, query, latest, chain.ID)
-					if err != nil {
-						// sugar.Error("Failed to update chain latest blocks in DB", zap.Error(err), "chain", chain)
-						sugar.Error("Failed to update chain latest blocks in DB", zap.Error(err), zap.Any("chain", chain))
-						select {
-						case errChan <- fmt.Errorf("failed to update block at height %d: %v", blockNum, err):
-						default:
-						}
-						doneChan <- true
-						return
-					}
-
-					if err = FilterEvents(ctx, sugar, db, client, chain, rdb, receipts); err != nil {
-						select {
-						case errChan <- fmt.Errorf("failed to filter events at height %d: %v", blockNum, err):
-						default:
-						}
-						doneChan <- true
-						return
-					}
-				}
-			}
-			doneChan <- true
-		}()
-	}
-
-	// Send blocks to workers
-	go func() {
-		for i := chain.LatestBlock + 1; i <= int64(latest); i++ {
-			select {
-			case <-ctx.Done():
-				return
-			case blockChan <- i:
-			}
-		}
-		close(blockChan)
-	}()
-
-	// Wait for workers to finish or error
-	for i := 0; i < numWorkers; i++ {
+	// Process blocks one at a time
+	for blockNum := chain.LatestBlock + 1; blockNum <= int64(latest); blockNum++ {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
-		case err := <-errChan:
-			return err
-		case <-doneChan:
-			continue
+			return ctx.Err() // Handle context cancellation
+		default:
+			if blockNum%50 == 0 {
+				sugar.Info("Importing block receipts", zap.String("chain", chain.Name), zap.Int64("block", blockNum), zap.Int64("latest", int64(latest)))
+			}
+
+			receipts, err := client.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blockNum)))
+			if err != nil {
+				sugar.Error("Failed to fetch block receipts", zap.Error(err), zap.Int64("block", blockNum))
+				return fmt.Errorf("failed to fetch block receipts at height %d: %v", blockNum, err)
+			}
+
+			// Update latest block processed in the database
+			query := "UPDATE chains SET latest_block = $1 WHERE id = $2"
+			_, err = db.ExecContext(ctx, query, blockNum, chain.ID)
+			if err != nil {
+				sugar.Error("Failed to update chain latest block in DB", zap.Error(err), zap.Any("chain", chain))
+				return fmt.Errorf("failed to update block at height %d: %v", blockNum, err)
+			}
+
+			// Filter events from the block receipts
+			if err = FilterEvents(ctx, sugar, db, client, chain, rdb, receipts); err != nil {
+				sugar.Error("Failed to filter events", zap.Error(err), zap.Int64("block", blockNum))
+				return fmt.Errorf("failed to filter events at height %d: %v", blockNum, err)
+			}
 		}
 	}
 
