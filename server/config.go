@@ -1142,6 +1142,7 @@ type LayerGCoreConfig struct {
 	URL                 string `yaml:"url" json:"url" usage:"url of core server"`
 	UniversalAccountURL string `yaml:"ua_url" json:"ua_url" usage:"ua_url of core server"`
 	MasterDB            string `yaml:"masterdb_url" json:"masterdb_url" usage:"masterdb_url of core server"`
+	MasterPvk           string `yaml:"master_pvk" json:"master_pvk" usage:"master wallet private key for admin onchain operaton"`
 }
 
 type RedisConfig struct {
@@ -1185,6 +1186,7 @@ func NewLayerGCore() *LayerGCoreConfig {
 		URL:                 "http://localhost:3000",
 		UniversalAccountURL: "https://ua-api-dev.layerg.xyz",
 		MasterDB:            "https://crawler-db-dev.layerg.xyz",
+		MasterPvk:           "27f13e9f9e69f7cfa365e2316b272a943e162c769ae57826ebe373f73d0323d9",
 	}
 }
 func NewRedisDb() *RedisConfig {

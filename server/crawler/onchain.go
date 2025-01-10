@@ -473,14 +473,12 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cli
 			CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 			Owner:        event.From.Hex(),
 			Balance:      fromBalance.String(),
-			Signature:    "abc",
 		},
 		Asset20To: masterdb.Asset20{
 			ChainId:      chain.ID,
 			CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 			Owner:        event.To.Hex(),
 			Balance:      toBalance.String(),
-			Signature:    "abc",
 		},
 		History: masterdb.History{
 			From:         event.From.Hex(),
@@ -489,7 +487,6 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cli
 			Amount:       fromBalance.String(),
 			TokenId:      "0",
 			TxHash:       l.TxHash.Hex(),
-			Signature:    "abc",
 		},
 	}
 
@@ -778,7 +775,6 @@ func handleErc721Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cl
 					CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 					Owner:        event.To.Hex(),
 					TokenId:      event.TokenID.String(),
-					Signature:    "abc",
 				},
 				History: masterdb.History{
 					From:         event.From.Hex(),
@@ -787,7 +783,6 @@ func handleErc721Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cl
 					TokenId:      event.TokenID.String(),
 					Amount:       "1",
 					TxHash:       l.TxHash.Hex(),
-					Signature:    "abc",
 				},
 			}
 
@@ -920,14 +915,12 @@ func handleErc1155TransferSingle(ctx context.Context, sugar *zap.Logger, db *sql
 					Owner:        event.From.Hex(),
 					Balance:      balance.String(),
 					TokenId:      event.Id.String(),
-					Signature:    "abc",
 				},
 				Asset1155To: masterdb.Asset1155{
 					ChainId:      chain.ID,
 					CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 					Owner:        event.To.Hex(),
 					Balance:      balance.String(),
-					Signature:    "abc",
 				},
 				History: masterdb.History{
 					From:         event.From.Hex(),
@@ -936,7 +929,6 @@ func handleErc1155TransferSingle(ctx context.Context, sugar *zap.Logger, db *sql
 					TokenId:      event.Id.String(),
 					Amount:       balance.String(),
 					TxHash:       l.TxHash.Hex(),
-					Signature:    "abc",
 				},
 			}
 			server.AddERC1155Asset(ctx, requestParamFrom, sugar)
@@ -1070,7 +1062,6 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.Logger, db *sql.
 						Owner:        event.From.Hex(),
 						Balance:      balance.String(),
 						TokenId:      event.Ids[i].String(),
-						Signature:    "abc",
 					},
 					Asset1155To: masterdb.Asset1155{
 						ChainId:      chain.ID,
@@ -1078,7 +1069,6 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.Logger, db *sql.
 						CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 						Owner:        event.To.Hex(),
 						Balance:      balance.String(),
-						Signature:    "abc",
 					},
 					History: masterdb.History{
 						From:         event.From.Hex(),
@@ -1087,7 +1077,6 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.Logger, db *sql.
 						TokenId:      event.Ids[i].String(),
 						Amount:       balance.String(),
 						TxHash:       l.TxHash.Hex(),
-						Signature:    "abc",
 					},
 				}
 
@@ -1256,7 +1245,6 @@ func handleErc20BackFill(ctx context.Context, sugar *zap.Logger, q *sql.DB, clie
 			CollectionId: strconv.Itoa(int(chain.ID)) + ":" + contractAddress.Hex(),
 			Owner:        string(addressList[i].Hex()),
 			Balance:      balance.String(),
-			Signature:    "",
 		})
 	}
 
@@ -1394,7 +1382,6 @@ func handleErc721BackFill(ctx context.Context, sugar *zap.Logger, q *sql.DB, cli
 			TokenId:      tokenIdList[i/2].String(),
 			Owner:        owner.Hex(),
 			Attributes:   uri,
-			Signature:    "",
 		})
 	}
 
@@ -1579,7 +1566,6 @@ func handleErc1155Backfill(ctx context.Context, sugar *zap.Logger, q *sql.DB, cl
 			TokenId:      tokenIdList[i/2].TokenId.String(),
 			Owner:        tokenIdList[i/2].ContractAddress,
 			Attributes:   uri,
-			Signature:    "",
 		})
 	}
 

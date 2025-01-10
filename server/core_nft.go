@@ -191,7 +191,7 @@ func CreateAssetNFT(ctx context.Context, token string, request CreateAssetNFTReq
 	endpoint := baseUrl + "/api/asset-nft/create"
 
 	var response CreateAssetNFTResponse
-	err := http.POST(ctx, endpoint, token, request, &response)
+	err := http.POST(ctx, endpoint, token, "", request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
 	}
@@ -224,7 +224,7 @@ func TransferNFT(ctx context.Context, token string, request TransferNFTRequest, 
 
 	endpoint := baseUrl + "/api/transaction/transfer-nft"
 
-	err := http.POST(ctx, endpoint, token, request, nil)
+	err := http.POST(ctx, endpoint, token, "", request, nil)
 	if err != nil {
 		return fmt.Errorf("failed to transfer NFT: %w", err)
 	}
@@ -236,7 +236,7 @@ func MintNFT(ctx context.Context, token string, request MintNFTRequest, config C
 	baseUrl := config.GetLayerGCoreConfig().URL
 	endpoint := baseUrl + "/api/transaction/mint-nft"
 
-	err := http.POST(ctx, endpoint, token, request, nil)
+	err := http.POST(ctx, endpoint, token, "", request, nil)
 	if err != nil {
 		return fmt.Errorf("failed to mint NFT: %w", err)
 	}

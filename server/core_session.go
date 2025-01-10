@@ -36,7 +36,7 @@ func SessionRefresh(ctx context.Context, logger *zap.Logger, db *sql.DB, config 
 		RefreshToken: token,
 	}
 	var response RefreshUATokenResponse
-	err := http.POST(ctx, endpoint, "", request, &response)
+	err := http.POST(ctx, endpoint, "", "", request, &response)
 	if err != nil {
 		// return uuid.Nil, "", nil, "", status.Error(codes.Aborted, "Refresh token fetch failed")
 		// TODO: call refresh token api UA, if đéo valid thì đi tiếp flow dưới
