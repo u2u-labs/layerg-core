@@ -151,3 +151,46 @@ func AddERC20Asset(ctx context.Context, request masterdb.Add20Asset, logger *zap
 
 	return &response, nil
 }
+
+func SubmitERC721BatchRequest(ctx context.Context, batchRequest masterdb.Add721AssetBatch, logger *zap.Logger) (*masterdb.Add721AssetBatch, error) {
+	config := NewConfig(logger)
+	baseUrl := config.GetLayerGCoreConfig().MasterDB
+	logger.Info("base url: ", zap.String("url", baseUrl))
+	endpoint := baseUrl + "/asset/erc-721-batch"
+
+	var response masterdb.Add721AssetBatch
+	err := http.POST(ctx, endpoint, "", batchRequest, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to submit ERC721 batch: %w", err)
+	}
+
+	return &response, nil
+}
+
+func SubmitERC1155BatchRequest(ctx context.Context, batchRequest masterdb.Add1155AssetBatch, logger *zap.Logger) (*masterdb.Add1155AssetBatch, error) {
+	config := NewConfig(logger)
+	baseUrl := config.GetLayerGCoreConfig().MasterDB
+	endpoint := baseUrl + "/asset/erc-1155-batch"
+
+	var response masterdb.Add1155AssetBatch
+	err := http.POST(ctx, endpoint, "", batchRequest, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to submit ERC1155 batch: %w", err)
+	}
+
+	return &response, nil
+}
+
+func SubmitERC20BatchRequest(ctx context.Context, batchRequest masterdb.Add20AssetBatch, logger *zap.Logger) (*masterdb.Add20AssetBatch, error) {
+	config := NewConfig(logger)
+	baseUrl := config.GetLayerGCoreConfig().MasterDB
+	endpoint := baseUrl + "/asset/erc-20-batch"
+
+	var response masterdb.Add20AssetBatch
+	err := http.POST(ctx, endpoint, "", batchRequest, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to submit ERC20 batch: %w", err)
+	}
+
+	return &response, nil
+}

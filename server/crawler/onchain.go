@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -90,7 +91,7 @@ func ProcessLatestBlocks(ctx context.Context, sugar *zap.Logger, client *ethclie
 	}
 
 	// Use a worker pool to process blocks in parallel
-	numWorkers := 2 // Adjust based on system capabilities
+	numWorkers := 1 // Adjust based on system capabilities
 	blockChan := make(chan int64, numWorkers)
 	errChan := make(chan error, 1)
 	doneChan := make(chan bool, numWorkers)
@@ -397,14 +398,14 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cli
 	requestParamFrom := masterdb.Add20Asset{
 		Asset20From: masterdb.Asset20{
 			ChainId:      chain.ID,
-			CollectionId: l.Address.Hex(),
+			CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 			Owner:        event.From.Hex(),
 			Balance:      fromBalance.String(),
 			Signature:    "abc",
 		},
 		Asset20To: masterdb.Asset20{
 			ChainId:      chain.ID,
-			CollectionId: l.Address.Hex(),
+			CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 			Owner:        event.To.Hex(),
 			Balance:      toBalance.String(),
 			Signature:    "abc",
@@ -412,7 +413,7 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cli
 		History: masterdb.History{
 			From:         event.From.Hex(),
 			To:           event.To.Hex(),
-			CollectionId: l.Address.Hex(),
+			CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 			Amount:       fromBalance.String(),
 			TokenId:      "0",
 			TxHash:       l.TxHash.Hex(),
@@ -702,7 +703,7 @@ func handleErc721Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cl
 			requestParamFrom := masterdb.Add721Asset{
 				Asset721: masterdb.Asset721{
 					ChainId:      chain.ID,
-					CollectionId: l.Address.Hex(),
+					CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 					Owner:        event.To.Hex(),
 					TokenId:      event.TokenID.String(),
 					Signature:    "abc",
@@ -710,7 +711,7 @@ func handleErc721Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cl
 				History: masterdb.History{
 					From:         event.From.Hex(),
 					To:           event.To.Hex(),
-					CollectionId: l.Address.Hex(),
+					CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 					TokenId:      event.TokenID.String(),
 					Amount:       "1",
 					TxHash:       l.TxHash.Hex(),
@@ -843,7 +844,7 @@ func handleErc1155TransferSingle(ctx context.Context, sugar *zap.Logger, db *sql
 			requestParamFrom := masterdb.Add1155Asset{
 				Asset1155From: masterdb.Asset1155{
 					ChainId:      chain.ID,
-					CollectionId: l.Address.Hex(),
+					CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 					Owner:        event.From.Hex(),
 					Balance:      balance.String(),
 					TokenId:      event.Id.String(),
@@ -851,7 +852,7 @@ func handleErc1155TransferSingle(ctx context.Context, sugar *zap.Logger, db *sql
 				},
 				Asset1155To: masterdb.Asset1155{
 					ChainId:      chain.ID,
-					CollectionId: l.Address.Hex(),
+					CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 					Owner:        event.To.Hex(),
 					Balance:      balance.String(),
 					Signature:    "abc",
@@ -859,7 +860,7 @@ func handleErc1155TransferSingle(ctx context.Context, sugar *zap.Logger, db *sql
 				History: masterdb.History{
 					From:         event.From.Hex(),
 					To:           event.To.Hex(),
-					CollectionId: l.Address.Hex(),
+					CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 					TokenId:      event.Id.String(),
 					Amount:       balance.String(),
 					TxHash:       l.TxHash.Hex(),
@@ -993,7 +994,7 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.Logger, db *sql.
 				requestParamFrom := masterdb.Add1155Asset{
 					Asset1155From: masterdb.Asset1155{
 						ChainId:      chain.ID,
-						CollectionId: l.Address.Hex(),
+						CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 						Owner:        event.From.Hex(),
 						Balance:      balance.String(),
 						TokenId:      event.Ids[i].String(),
@@ -1002,7 +1003,7 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.Logger, db *sql.
 					Asset1155To: masterdb.Asset1155{
 						ChainId:      chain.ID,
 						TokenId:      event.Ids[i].String(),
-						CollectionId: l.Address.Hex(),
+						CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 						Owner:        event.To.Hex(),
 						Balance:      balance.String(),
 						Signature:    "abc",
@@ -1010,7 +1011,7 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.Logger, db *sql.
 					History: masterdb.History{
 						From:         event.From.Hex(),
 						To:           event.To.Hex(),
-						CollectionId: l.Address.Hex(),
+						CollectionId: strconv.Itoa(int(chain.ID)) + ":" + l.Address.Hex(),
 						TokenId:      event.Ids[i].String(),
 						Amount:       balance.String(),
 						TxHash:       l.TxHash.Hex(),
@@ -1158,6 +1159,7 @@ func handleErc20BackFill(ctx context.Context, sugar *zap.Logger, q *sql.DB, clie
 		}
 	}
 
+	var assets20 []masterdb.Asset20
 	// Execute batch call
 	if err := rpcClient.BatchCallContext(ctx, calls); err != nil {
 		log.Fatalf("Failed to execute batch call: %v", err)
@@ -1177,8 +1179,23 @@ func handleErc20BackFill(ctx context.Context, sugar *zap.Logger, q *sql.DB, clie
 		}); err != nil {
 			return err
 		}
+		assets20 = append(assets20, masterdb.Asset20{
+			ChainId:      chain.ID,
+			CollectionId: strconv.Itoa(int(chain.ID)) + ":" + contractAddress.Hex(),
+			Owner:        string(addressList[i].Hex()),
+			Balance:      balance.String(),
+			Signature:    "",
+		})
 	}
 
+	batchRequest := masterdb.Add20AssetBatch{
+		Assets20: assets20,
+	}
+	_, err := server.SubmitERC20BatchRequest(ctx, batchRequest, sugar)
+	if err != nil {
+		sugar.Error("Failed to submit batch ERC20", zap.Error(err))
+		// return err
+	}
 	addressSet.Reset()
 	return nil
 }
@@ -1279,6 +1296,7 @@ func handleErc721BackFill(ctx context.Context, sugar *zap.Logger, q *sql.DB, cli
 		log.Fatalf("Failed to execute batch call: %v", err)
 	}
 
+	var assets721 []masterdb.Asset721
 	// Iterate over the results and update the balances
 	for i := 0; i < len(results); i += 2 {
 		var uri string
@@ -1298,6 +1316,23 @@ func handleErc721BackFill(ctx context.Context, sugar *zap.Logger, q *sql.DB, cli
 		}); err != nil {
 			return err
 		}
+		assets721 = append(assets721, masterdb.Asset721{
+			ChainId:      int32(chain.ID),
+			CollectionId: strconv.Itoa(int(chain.ID)) + ":" + contractAddress.Hex(),
+			TokenId:      tokenIdList[i/2].String(),
+			Owner:        owner.Hex(),
+			Attributes:   uri,
+			Signature:    "",
+		})
+	}
+
+	batchRequest := masterdb.Add721AssetBatch{
+		Assets721: assets721,
+	}
+	_, err := server.SubmitERC721BatchRequest(ctx, batchRequest, sugar)
+	if err != nil {
+		sugar.Error("Failed to submit batch ERC721", zap.Error(err))
+		// return err
 	}
 
 	tokenIdSet.Reset()
@@ -1446,6 +1481,7 @@ func handleErc1155Backfill(ctx context.Context, sugar *zap.Logger, q *sql.DB, cl
 		log.Fatalf("Failed to execute batch call: %v", err)
 	}
 
+	var assets1155 []masterdb.Asset1155
 	// // Iterate over the results and update the balances
 	for i := 0; i < len(results); i += 2 {
 		var uri string
@@ -1465,6 +1501,23 @@ func handleErc1155Backfill(ctx context.Context, sugar *zap.Logger, q *sql.DB, cl
 		}); err != nil {
 			return err
 		}
+		assets1155 = append(assets1155, masterdb.Asset1155{
+			ChainId:      int32(chain.ID),
+			CollectionId: strconv.Itoa(int(chain.ID)) + ":" + contractAddress.Hex(),
+			TokenId:      tokenIdList[i/2].TokenId.String(),
+			Owner:        tokenIdList[i/2].ContractAddress,
+			Attributes:   uri,
+			Signature:    "",
+		})
+	}
+
+	batchRequest := masterdb.Add1155AssetBatch{
+		Assets1155: assets1155,
+	}
+
+	_, err := server.SubmitERC1155BatchRequest(ctx, batchRequest, sugar)
+	if err != nil {
+		sugar.Error("Failed to submit batch ERC1155", zap.Error(err))
 	}
 
 	tokenIdContractAddressSet.Reset()
