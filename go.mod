@@ -1,8 +1,8 @@
 module github.com/u2u-labs/layerg-core
 
-go 1.22.0
+go 1.23
 
-toolchain go1.22.8
+toolchain go1.23.4
 
 require (
 	github.com/blugelabs/bluge v0.2.2
@@ -21,17 +21,17 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/u2u-labs/go-layerg-common v0.0.0-20250110080614-eb094188c0ce
+	github.com/u2u-labs/go-layerg-common v0.0.0-20250110105347-ae721a16c3c1
 	github.com/u2u-labs/layerg-kit v0.0.0-20241023235723-b6a14baaaa29
 	github.com/uber-go/tally/v4 v4.1.16
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.25.0
+	golang.org/x/crypto v0.32.0
 	golang.org/x/oauth2 v0.21.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240730163845-b1a4ccb954bf
 	google.golang.org/grpc v1.65.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
-	google.golang.org/protobuf v1.35.2
+	google.golang.org/protobuf v1.36.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -116,11 +116,11 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/twmb/murmur3 v1.1.8 // indirect
-	github.com/unicornultrafoundation/go-u2u v1.1.2
+	github.com/unicornultrafoundation/go-u2u v1.1.4
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.27.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240730163845-b1a4ccb954bf // indirect
 )

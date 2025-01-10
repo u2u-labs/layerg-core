@@ -30,7 +30,7 @@ func ProduceSignature(requestParamFrom any, config Config) (string, error) {
 
 	pvk := config.GetLayerGCoreConfig().MasterPvk
 	// Sign the data using the private key
-	signature, err := masterdb.SignECDSA(pvk, dataBytes)
+	signature, err := masterdb.SignEthereumMessage(pvk, dataBytes)
 	if err != nil {
 		return "", fmt.Errorf("failed to produce signature: %v", err)
 	}
