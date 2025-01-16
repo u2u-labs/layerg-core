@@ -68,7 +68,7 @@ func CrawlSupportedChains(ctx context.Context, logger *zap.Logger, db *sql.DB, r
 			query := `
                 SELECT id, chain_id, collection_address, type, created_at, updated_at, 
                        decimal_data, initial_block, last_updated
-                FROM assets 
+                FROM collections 
                 WHERE chain_id = $1 
                 LIMIT $2 OFFSET $3
             `

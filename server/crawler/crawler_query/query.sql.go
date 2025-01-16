@@ -16,7 +16,7 @@ func GetCrawlingBackfillCrawler(ctx context.Context, db *sql.DB) ([]models.GetCr
 	FROM 
 		backfill_crawlers AS bc
 	JOIN 
-		assets AS a 
+		collections AS a 
 		ON a.chain_id = bc.chain_id 
 		AND a.collection_address = bc.collection_address 
 	WHERE 
@@ -93,18 +93,23 @@ func UpdateCrawlingBackfill(ctx context.Context, arg models.UpdateCrawlingBackfi
 func Add20Asset(ctx context.Context, db *sql.DB, arg models.Add20AssetParams) error {
 	add20Asset := `
 		INSERT INTO
-			erc_20_collection_assets (asset_id, chain_id, owner, balance)
+			erc_20_collection_assets (chain_id, collection_id, owner, balance, updated_by, signature)
 		VALUES (
-			$1, $2, $3, $4
-		) ON CONFLICT (owner) DO UPDATE SET
-			balance = $4
-		RETURNING id, chain_id, asset_id, owner, balance, created_at, updated_at
+			$1, $2, $3, $4, $5, $6
+		) ON CONFLICT (collection_id, owner) DO UPDATE SET
+			balance = $4,
+			updated_by = $5,
+			signature = $6,
+			updated_at = CURRENT_TIMESTAMP
+		RETURNING id, chain_id, collection_id, owner, balance, created_at, updated_at, updated_by, signature
 	`
 	_, err := db.ExecContext(ctx, add20Asset,
-		arg.AssetID,
 		arg.ChainID,
+		arg.CollectionID,
 		arg.Owner,
 		arg.Balance,
+		arg.UpdatedBy,
+		arg.Signature,
 	)
 	return err
 }
@@ -112,20 +117,25 @@ func Add20Asset(ctx context.Context, db *sql.DB, arg models.Add20AssetParams) er
 func Add721Asset(ctx context.Context, db *sql.DB, arg models.Add721AssetParams) error {
 	add721Asset := `
 		INSERT INTO
-			erc_721_collection_assets (asset_id, chain_id, token_id, owner, attributes)
+			erc_721_collection_assets (chain_id, collection_id, token_id, owner, attributes, updated_by, signature)
 		VALUES (
-			$1, $2, $3, $4, $5
-		) ON CONFLICT ON CONSTRAINT UC_ERC721 DO UPDATE SET
+			$1, $2, $3, $4, $5, $6, $7
+		) ON CONFLICT ON CONSTRAINT erc_721_collection_id_idx DO UPDATE SET
 			owner = $4,
-			attributes = $5
-		RETURNING id, chain_id, asset_id, token_id, owner, attributes, created_at, updated_at
+			attributes = $5,
+			updated_by = $6,
+			signature = $7,
+			updated_at = CURRENT_TIMESTAMP
+		RETURNING id, chain_id, collection_id, token_id, owner, attributes, created_at, updated_at, updated_by, signature
 		`
 	_, err := db.ExecContext(ctx, add721Asset,
-		arg.AssetID,
 		arg.ChainID,
+		arg.CollectionID,
 		arg.TokenID,
 		arg.Owner,
 		arg.Attributes,
+		arg.UpdatedBy,
+		arg.Signature,
 	)
 	return err
 }
@@ -133,22 +143,27 @@ func Add721Asset(ctx context.Context, db *sql.DB, arg models.Add721AssetParams) 
 func Add1155Asset(ctx context.Context, db *sql.DB, arg models.Add1155AssetParams) error {
 	add1155Asset := `
 		INSERT INTO
-			erc_1155_collection_assets (asset_id, chain_id, token_id, owner, balance, attributes)
+			erc_1155_collection_assets (chain_id, collection_id, token_id, owner, balance, attributes, updated_by, signature)
 		VALUES (
-			$1, $2, $3, $4, $5, $6
-		) ON CONFLICT ON CONSTRAINT UC_ERC1155_OWNER DO UPDATE SET
+			$1, $2, $3, $4, $5, $6, $7, $8
+		) ON CONFLICT ON CONSTRAINT erc_1155_collection_id_idx DO UPDATE SET
 			balance = $5,
-			attributes = $6
+			attributes = $6,
+			updated_by = $7,
+			signature = $8,
+			updated_at = CURRENT_TIMESTAMP
 			
-		RETURNING id, chain_id, asset_id, token_id, owner, balance, attributes, created_at, updated_at
+		RETURNING id, chain_id, collection_id, token_id, owner, balance, attributes, created_at, updated_at, updated_by, signature
 		`
 	_, err := db.ExecContext(ctx, add1155Asset,
-		arg.AssetID,
 		arg.ChainID,
+		arg.CollectionID,
 		arg.TokenID,
 		arg.Owner,
 		arg.Balance,
 		arg.Attributes,
+		arg.UpdatedBy,
+		arg.Signature,
 	)
 	return err
 }
@@ -223,7 +238,7 @@ func AddBackfillCrawler(ctx context.Context, db *sql.DB, arg models.AddBackfillC
 
 func AddNewAsset(ctx context.Context, db *sql.DB, arg models.AddNewAssetParams) (models.Asset, error) {
 	const addNewAsset = `-- name: AddNewAsset :exec
-		INSERT INTO assets (
+		INSERT INTO collections (
 			id, chain_id, collection_address, type, decimal_data, initial_block, last_updated
 		)
 		VALUES (

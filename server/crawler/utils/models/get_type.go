@@ -3,6 +3,8 @@ package models
 import (
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type GetCrawlingBackfillCrawlerRow struct {
@@ -33,27 +35,33 @@ type AddOnchainTransactionParams struct {
 }
 
 type Add20AssetParams struct {
-	AssetID string `json:"assetId"`
-	ChainID int32  `json:"chainId"`
-	Owner   string `json:"owner"`
-	Balance string `json:"balance"`
+	ChainID      int32     `json:"chainId"`
+	CollectionID string    `json:"collectionId"`
+	Owner        string    `json:"owner"`
+	Balance      string    `json:"balance"`
+	UpdatedBy    uuid.UUID `json:"updatedBy"`
+	Signature    string    `json:"signature"`
 }
 
 type Add721AssetParams struct {
-	AssetID    string         `json:"assetId"`
-	ChainID    int32          `json:"chainId"`
-	TokenID    string         `json:"tokenId"`
-	Owner      string         `json:"owner"`
-	Attributes sql.NullString `json:"attributes"`
+	ChainID      int32          `json:"chainId"`
+	CollectionID string         `json:"collectionId"`
+	TokenID      string         `json:"tokenId"`
+	Owner        string         `json:"owner"`
+	Attributes   sql.NullString `json:"attributes"`
+	UpdatedBy    uuid.UUID      `json:"updatedBy"`
+	Signature    string         `json:"signature"`
 }
 
 type Add1155AssetParams struct {
-	AssetID    string         `json:"assetId"`
-	ChainID    int32          `json:"chainId"`
-	TokenID    string         `json:"tokenId"`
-	Owner      string         `json:"owner"`
-	Balance    string         `json:"balance"`
-	Attributes sql.NullString `json:"attributes"`
+	ChainID      int32          `json:"chainId"`
+	CollectionID string         `json:"collectionId"`
+	TokenID      string         `json:"tokenId"`
+	Owner        string         `json:"owner"`
+	Balance      string         `json:"balance"`
+	Attributes   sql.NullString `json:"attributes"`
+	UpdatedBy    uuid.UUID      `json:"updatedBy"`
+	Signature    string         `json:"signature"`
 }
 
 type AddBackfillCrawlerParams struct {

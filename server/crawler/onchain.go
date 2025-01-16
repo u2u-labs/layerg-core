@@ -255,7 +255,7 @@ func FilterEvents(ctx context.Context, sugar *zap.Logger, db *sql.DB, client *et
 			// Get asset type from database
 			var assetType string
 			err := db.QueryRowContext(ctx,
-				"SELECT type FROM assets WHERE chain_id = $1 AND collection_address = $2",
+				"SELECT type FROM collections WHERE chain_id = $1 AND collection_address = $2",
 				chain.ID, l.Address.Hex()).Scan(&assetType)
 			if err == sql.ErrNoRows {
 				continue // Skip if asset not found
@@ -317,7 +317,7 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cli
 	// Get asset ID
 	var assetID string
 	err = db.QueryRowContext(ctx,
-		"SELECT id FROM assets WHERE chain_id = $1 AND collection_address = $2",
+		"SELECT id FROM collections WHERE chain_id = $1 AND collection_address = $2",
 		chain.ID, l.Address.Hex()).Scan(&assetID)
 	if err != nil {
 		return fmt.Errorf("error getting asset ID: %v", err)
@@ -436,10 +436,10 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cli
 	// }
 
 	err = crawlerQuery.Add20Asset(ctx, db, models.Add20AssetParams{
-		AssetID: assetID,
-		ChainID: chain.ID,
-		Owner:   event.From.Hex(),
-		Balance: fromBalance.String(),
+		CollectionID: assetID,
+		ChainID:      chain.ID,
+		Owner:        event.From.Hex(),
+		Balance:      fromBalance.String(),
 	})
 	if err != nil {
 		return err
@@ -458,10 +458,10 @@ func handleErc20Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cli
 	// }
 
 	err = crawlerQuery.Add20Asset(ctx, db, models.Add20AssetParams{
-		AssetID: assetID,
-		ChainID: chain.ID,
-		Owner:   event.To.Hex(),
-		Balance: toBalance.String(),
+		CollectionID: assetID,
+		ChainID:      chain.ID,
+		Owner:        event.To.Hex(),
+		Balance:      toBalance.String(),
 	})
 	if err != nil {
 		return err
@@ -696,7 +696,7 @@ func handleErc721Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cl
 	// Get asset ID
 	var assetID string
 	err := db.QueryRowContext(ctx,
-		"SELECT id FROM assets WHERE chain_id = $1 AND collection_address = $2",
+		"SELECT id FROM collections WHERE chain_id = $1 AND collection_address = $2",
 		chain.ID, l.Address.Hex()).Scan(&assetID)
 	if err != nil {
 		return fmt.Errorf("error getting asset ID: %v", err)
@@ -756,10 +756,10 @@ func handleErc721Transfer(ctx context.Context, sugar *zap.Logger, db *sql.DB, cl
 			// }
 
 			err = crawlerQuery.Add721Asset(ctx, db, models.Add721AssetParams{
-				AssetID: assetID,
-				ChainID: chain.ID,
-				TokenID: event.TokenID.String(),
-				Owner:   event.To.Hex(),
+				CollectionID: assetID,
+				ChainID:      chain.ID,
+				TokenID:      event.TokenID.String(),
+				Owner:        event.To.Hex(),
 				Attributes: sql.NullString{
 					Valid:  len(uri) > 0,
 					String: uri,
@@ -832,7 +832,7 @@ func handleErc1155TransferSingle(ctx context.Context, sugar *zap.Logger, db *sql
 	// Get asset ID
 	var assetID string
 	err = db.QueryRowContext(ctx,
-		"SELECT id FROM assets WHERE chain_id = $1 AND collection_address = $2",
+		"SELECT id FROM collections WHERE chain_id = $1 AND collection_address = $2",
 		chain.ID, l.Address.Hex()).Scan(&assetID)
 	if err != nil {
 		return fmt.Errorf("error getting asset ID: %v", err)
@@ -894,11 +894,11 @@ func handleErc1155TransferSingle(ctx context.Context, sugar *zap.Logger, db *sql
 			// 	SET balance = $5, attributes = $6, updated_at = CURRENT_TIMESTAMP
 			// `, assetID, chain.ID, event.Id.String(), event.To.Hex(), balance.String(), uri)
 			err = crawlerQuery.Add1155Asset(ctx, db, models.Add1155AssetParams{
-				AssetID: assetID,
-				ChainID: chain.ID,
-				TokenID: event.Id.String(),
-				Owner:   event.To.Hex(),
-				Balance: balance.String(),
+				CollectionID: assetID,
+				ChainID:      chain.ID,
+				TokenID:      event.Id.String(),
+				Owner:        event.To.Hex(),
+				Balance:      balance.String(),
 				Attributes: sql.NullString{
 					Valid:  len(uri) > 0,
 					String: uri,
@@ -977,7 +977,7 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.Logger, db *sql.
 	// Get asset ID
 	var assetID string
 	err = db.QueryRowContext(ctx,
-		"SELECT id FROM assets WHERE chain_id = $1 AND collection_address = $2",
+		"SELECT id FROM collections WHERE chain_id = $1 AND collection_address = $2",
 		chain.ID, l.Address.Hex()).Scan(&assetID)
 	if err != nil {
 		return fmt.Errorf("error getting asset ID: %v", err)
@@ -1042,11 +1042,11 @@ func handleErc1155TransferBatch(ctx context.Context, sugar *zap.Logger, db *sql.
 				// `, assetID, chain.ID, event.Ids[i].String(), event.To.Hex(), balance.String(), uri)
 
 				err = crawlerQuery.Add1155Asset(ctx, db, models.Add1155AssetParams{
-					AssetID: assetID,
-					ChainID: chain.ID,
-					TokenID: event.Ids[i].String(),
-					Owner:   event.To.Hex(),
-					Balance: balance.String(),
+					CollectionID: assetID,
+					ChainID:      chain.ID,
+					TokenID:      event.Ids[i].String(),
+					Owner:        event.To.Hex(),
+					Balance:      balance.String(),
 					Attributes: sql.NullString{
 						Valid:  len(uri) > 0,
 						String: uri,
@@ -1233,10 +1233,10 @@ func handleErc20BackFill(ctx context.Context, sugar *zap.Logger, q *sql.DB, clie
 		utils.ERC20ABI.UnpackIntoInterface(&balance, "balanceOf", common.FromHex(result))
 
 		if err := crawlerQuery.Add20Asset(ctx, q, models.Add20AssetParams{
-			AssetID: models.ContractType[chain.ID][contractAddress.Hex()].ID,
-			ChainID: chain.ID,
-			Owner:   addressList[i].Hex(),
-			Balance: balance.String(),
+			CollectionID: models.ContractType[chain.ID][contractAddress.Hex()].ID,
+			ChainID:      chain.ID,
+			Owner:        addressList[i].Hex(),
+			Balance:      balance.String(),
 		}); err != nil {
 			return err
 		}
@@ -1365,10 +1365,10 @@ func handleErc721BackFill(ctx context.Context, sugar *zap.Logger, q *sql.DB, cli
 		utils.ERC721ABI.UnpackIntoInterface(&owner, "ownerOf", common.FromHex(results[i+1]))
 
 		if err := crawlerQuery.Add721Asset(ctx, q, models.Add721AssetParams{
-			AssetID: models.ContractType[chain.ID][contractAddress.Hex()].ID,
-			ChainID: chain.ID,
-			TokenID: tokenIdList[i/2].String(),
-			Owner:   owner.Hex(),
+			CollectionID: models.ContractType[chain.ID][contractAddress.Hex()].ID,
+			ChainID:      chain.ID,
+			TokenID:      tokenIdList[i/2].String(),
+			Owner:        owner.Hex(),
 			Attributes: sql.NullString{
 				String: uri,
 				Valid:  len(uri) > 0,
@@ -1549,10 +1549,10 @@ func handleErc1155Backfill(ctx context.Context, sugar *zap.Logger, q *sql.DB, cl
 		utils.ERC1155ABI.UnpackIntoInterface(&balance, "balanceOf", common.FromHex(results[i+1]))
 
 		if err := crawlerQuery.Add1155Asset(ctx, q, models.Add1155AssetParams{
-			AssetID: models.ContractType[chain.ID][contractAddress.Hex()].ID,
-			ChainID: chain.ID,
-			TokenID: tokenIdList[i/2].TokenId.String(),
-			Owner:   tokenIdList[i/2].ContractAddress,
+			CollectionID: models.ContractType[chain.ID][contractAddress.Hex()].ID,
+			ChainID:      chain.ID,
+			TokenID:      tokenIdList[i/2].TokenId.String(),
+			Owner:        tokenIdList[i/2].ContractAddress,
 			Attributes: sql.NullString{
 				String: uri,
 				Valid:  len(uri) > 0,
