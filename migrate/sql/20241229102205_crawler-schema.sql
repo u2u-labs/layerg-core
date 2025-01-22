@@ -94,7 +94,7 @@ CREATE INDEX erc_1155_collection_assets_owner_idx ON erc_1155_collection_assets 
 
 CREATE TABLE
     onchain_histories (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "from" VARCHAR(42) NOT NULL,
         "to" VARCHAR(42) NOT NULL,
         asset_id VARCHAR NOT NULL,
@@ -110,7 +110,7 @@ CREATE INDEX onchain_history_tx_hash_idx ON onchain_histories (tx_hash);
 
 CREATE TABLE
     apps (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         name VARCHAR NOT NULL,
         secret_key VARCHAR NOT NULL
     );
