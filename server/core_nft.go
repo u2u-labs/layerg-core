@@ -156,7 +156,7 @@ func GetCollectionAsset(ctx context.Context, params runtime.CollectionAssetQuery
 		return nil, err
 	}
 	baseUrl := config.GetLayerGCoreConfig().URL
-	endpoint := baseUrl + "/api/asset-nft"
+	endpoint := baseUrl + "/api/assets"
 
 	// Execute GET request and unmarshal response
 	var response runtime.CollectionAssetResponse
