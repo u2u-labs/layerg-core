@@ -4,12 +4,12 @@ logger:
   stdout: true
   file: ""
 database:
-  address: ["root@localhost:26257"]
+  # address: ["root@localhost:26257"]
+  address: ["postgresql://postgres:postgres@127.0.0.1:5433/nakama"]
   database: "layerg"
 cluster:
   gossip_bindport: 8353
-  # members:
-  #   - "localhost:7353"
+  # membersưaocalhost:7353"
 socket:
   port: 8350
 console:
