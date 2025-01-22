@@ -120,11 +120,11 @@ func Add721Asset(ctx context.Context, db *sql.DB, arg models.Add721AssetParams) 
 			erc_721_collection_assets (chain_id, collection_id, token_id, owner, attributes, updated_by, signature)
 		VALUES (
 			$1, $2, $3, $4, $5, $6, $7
-		) ON CONFLICT ON CONSTRAINT erc_721_collection_id_idx DO UPDATE SET
-			owner = $4,
-			attributes = $5,
-			updated_by = $6,
-			signature = $7,
+		) ON CONFLICT (collection_id, token_id) DO UPDATE SET
+			owner = EXCLUDED.owner,
+			attributes = EXCLUDED.attributes,
+			updated_by = EXCLUDED.updated_by,
+			signature = EXCLUDED.signature,
 			updated_at = CURRENT_TIMESTAMP
 		RETURNING id, chain_id, collection_id, token_id, owner, attributes, created_at, updated_at, updated_by, signature
 		`
@@ -146,11 +146,11 @@ func Add1155Asset(ctx context.Context, db *sql.DB, arg models.Add1155AssetParams
 			erc_1155_collection_assets (chain_id, collection_id, token_id, owner, balance, attributes, updated_by, signature)
 		VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8
-		) ON CONFLICT ON CONSTRAINT erc_1155_collection_id_idx DO UPDATE SET
-			balance = $5,
-			attributes = $6,
-			updated_by = $7,
-			signature = $8,
+		) ON CONFLICT (collection_id, token_id, owner) DO UPDATE SET
+			balance = EXCLUDED.balance,
+			attributes = EXCLUDED.attributes,
+			updated_by = EXCLUDED.updated_by,
+			signature = EXCLUDED.signature,
 			updated_at = CURRENT_TIMESTAMP
 			
 		RETURNING id, chain_id, collection_id, token_id, owner, balance, attributes, created_at, updated_at, updated_by, signature
