@@ -1,5 +1,7 @@
 -- +migrate Up
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE
     chains (
         id INT PRIMARY KEY,
@@ -12,7 +14,7 @@ CREATE TABLE
         block_time INT NOT NULL
     );
 
-CREATE TYPE IF NOT EXISTS asset_type AS ENUM ('ERC721', 'ERC1155', 'ERC20');
+CREATE TYPE asset_type AS ENUM ('ERC721', 'ERC1155', 'ERC20');
 
 CREATE TYPE collection_type AS ENUM ('ERC721', 'ERC1155', 'ERC20');
 
@@ -34,7 +36,7 @@ CREATE UNIQUE INDEX assets_collection_idx ON collections (chain_id, collection_a
 
 CREATE TABLE
     erc_20_collection_assets (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         chain_id INT NOT NULL,
         collection_id VARCHAR NOT NULL,
         owner VARCHAR(42) NOT NULL,
@@ -53,7 +55,7 @@ CREATE INDEX erc_20_collection_assets_owner_idx ON erc_20_collection_assets (cha
 
 CREATE TABLE
    erc_721_collection_assets (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         chain_id INT NOT NULL,
         collection_id VARCHAR NOT NULL,
         token_id DECIMAL(78, 0) NOT NULL,
@@ -72,7 +74,7 @@ CREATE INDEX erc_721_collection_assets_owner_idx ON erc_721_collection_assets (c
 
 CREATE TABLE
     erc_1155_collection_assets (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         chain_id INT NOT NULL,
         collection_id VARCHAR NOT NULL,
         token_id DECIMAL(78, 0) NOT NULL,
