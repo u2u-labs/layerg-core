@@ -1146,10 +1146,10 @@ type LayerGCoreConfig struct {
 }
 
 type RedisConfig struct {
-	Url      string `yaml:"url" json:"api_key" usage:"url redis server"`
-	Db       int    `yaml:"db" json:"api_key_id" usage:"db of redis server"`
+	Url      string `yaml:"url" json:"url" usage:"url redis server"`
+	Db       int    `yaml:"db" json:"db" usage:"db of redis server"`
 	Ttl      int    `yaml:"ttl" json:"ttl" usage:"time-to-live in second"`
-	Password string `yaml:"password" json:"url" usage:"password of redis server"`
+	Password string `yaml:"password" json:"password" usage:"password of redis server"`
 }
 
 func NewGoogleAuthConfig() *GoogleAuthConfig {

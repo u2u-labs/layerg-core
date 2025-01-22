@@ -1,7 +1,7 @@
 # docker build "$PWD" --build-arg commit="$(git rev-parse --short HEAD)" --build-arg version=latest -t dangnp/layerg:latest
 # docker build "$PWD" --build-arg commit="$(git rev-parse --short HEAD)" --build-arg version="$(git rev-parse --short HEAD)" -t layerglabs/layerg:"$(git rev-parse --short HEAD)"
 
-FROM golang:1.22.5-bookworm AS builder
+FROM golang:1.23-bookworm AS builder
 
 ARG commit
 ARG version

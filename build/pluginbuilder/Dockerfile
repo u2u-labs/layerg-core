@@ -1,7 +1,7 @@
 # docker build . --file ./Dockerfile --build-arg version=latest -t dangnp/layerg-pluginbuilder:latest
 # docker build . --file ./Dockerfile --build-arg version="v2.1.1-$(git rev-parse --short HEAD)" -t layerglabs/layerg-pluginbuilder:"2.1.1-$(git rev-parse --short HEAD)"
 
-FROM golang:1.22.5-bookworm as builder
+FROM arm64v8/golang:1.23-bookworm as builder
 
 LABEL Layer Labs <support@layerg.xyz>
 
