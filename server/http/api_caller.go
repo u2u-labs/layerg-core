@@ -87,7 +87,7 @@ func POST(ctx context.Context, endpoint string, token string, signature string, 
 		req.Header.Set("Signature", signature)
 	}
 	req.Header.Set("Content-Type", "application/json")
-
+	req.Header.Set("Origin", "http://localhost")
 	// Execute request
 	client := &http.Client{}
 	resp, err := client.Do(req)

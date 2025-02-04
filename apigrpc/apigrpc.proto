@@ -245,7 +245,7 @@ service LayerG {
     };
   }
 
-  // Authenticate a user with Google against the server.
+  // Authenticate a user with Telegram.
   rpc AuthenticateTelegram (api.AuthenticateTelegramRequest) returns (api.Session) {
       option (google.api.http) = {
         post: "/v2/account/authenticate/telegram",
@@ -260,6 +260,22 @@ service LayerG {
         }
       };
     }
+
+  // Request Telegram OTP for authentication.
+  rpc SendTelegramAuthOTP (api.SendTelegramOTPRequest) returns (google.protobuf.Empty) {
+      option (google.api.http) = {
+        post: "/v2/account/authenticate-ua/telegram-otp",
+        body: "*"
+      };
+      option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+        security: {
+          security_requirement: {
+            key: "BasicAuth";
+            value: {};
+          }
+        }
+      };
+  }
 
   rpc AuthenticateUA (api.AuthenticateUA) returns (api.Session) {
       option (google.api.http) = {

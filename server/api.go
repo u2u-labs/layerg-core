@@ -82,6 +82,7 @@ type ApiServer struct {
 	grpcGatewayServer    *http.Server
 	activeTokenCacheUser ActiveTokenCache
 	protojsonMarshaler   *protojson.MarshalOptions
+	tokenPairCache       *TokenPairCache
 }
 
 func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, version string, socialClient *social.Client, storageIndex StorageIndex, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, matchmaker Matchmaker, tracker Tracker, router MessageRouter, streamManager StreamManager, metrics Metrics, pipeline *Pipeline, runtime *Runtime, activeCache ActiveTokenCache) *ApiServer {
@@ -140,6 +141,7 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 		grpcServer:           grpcServer,
 		activeTokenCacheUser: activeCache,
 		protojsonMarshaler:   protojsonMarshaler,
+		tokenPairCache:       NewTokenPairCache(),
 	}
 
 	// Register and start GRPC server.
@@ -366,6 +368,8 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 	case "/layerg.api.LayerG/AuthenticateEvm":
 		fallthrough
 	case "/layerg.api.LayerG/AuthenticateUA":
+		fallthrough
+	case "/layerg.api.LayerG/SendTelegramAuthOTP":
 		fallthrough
 	case "/layerg.api.LayerG/AuthenticateSteam":
 		// Session refresh and authentication functions only require server key.

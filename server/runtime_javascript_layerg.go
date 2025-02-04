@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -1756,9 +1757,16 @@ func (n *runtimeJavascriptLayerGModule) authenticateTelegram(r *goja.Runtime) fu
 			panic(r.NewTypeError("expects ID token string"))
 		}
 
+		otp := getJsString(r, f.Argument(1))
+		if otp == "" {
+			panic(r.NewTypeError("expects OTP string"))
+		}
+		chainId := getJsString(r, f.Argument(2))
+		chainIdInt, err := strconv.Atoi(chainId)
+
 		username := ""
 		if f.Argument(1) != goja.Undefined() {
-			username = getJsString(r, f.Argument(1))
+			username = getJsString(r, f.Argument(3))
 		}
 
 		if username == "" {
@@ -1769,22 +1777,43 @@ func (n *runtimeJavascriptLayerGModule) authenticateTelegram(r *goja.Runtime) fu
 			panic(r.NewTypeError("expects id to be valid, must be 1-128 bytes"))
 		}
 
-		telegramAppData := getJsString(r, f.Argument(0))
+		firstname := getJsString(r, f.Argument(4))
+		lastname := getJsString(r, f.Argument(5))
+		avatarUrl := getJsString(r, f.Argument(6))
 		create := true
 		if f.Argument(2) != goja.Undefined() {
-			create = getJsBool(r, f.Argument(2))
+			create = getJsBool(r, f.Argument(7))
 		}
 
-		dbUserID, dbUsername, created, err := AuthenticateTelegram(n.ctx, n.logger, n.db, telegramId, username, telegramAppData, create)
+		if err != nil {
+			panic(r.NewTypeError("expects chainId to be a valid integer"))
+		}
+
+		dbUserID, token, _, _, _, created, err := AuthenticateTelegram(n.ctx, n.logger, n.db, n.config, telegramId, chainIdInt, username, firstname, lastname, avatarUrl, otp, create)
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}
 
 		return r.ToValue(map[string]interface{}{
-			"userId":   dbUserID,
-			"username": dbUsername,
-			"created":  created,
+			"userId":      dbUserID,
+			"accessToken": token,
+			"created":     created,
 		})
+	}
+}
+func (n *runtimeJavascriptLayerGModule) sendTelegramAuthOTP(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		telegramId := getJsString(r, f.Argument(0))
+		if telegramId == "" {
+			panic(r.NewTypeError("expects ID token string"))
+		}
+
+		err := SendTelegramAuthOTP(n.ctx, n.logger, n.config, telegramId)
+		if err != nil {
+			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
+		}
+
+		return r.ToValue(map[string]interface{}{})
 	}
 }
 

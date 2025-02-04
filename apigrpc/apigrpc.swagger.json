@@ -127,6 +127,45 @@
         ]
       }
     },
+    "/v2/account/authenticate-ua/telegram-otp": {
+      "post": {
+        "summary": "Request Telegram OTP for authentication.",
+        "operationId": "LayerG_SendTelegramAuthOTP",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiSendTelegramOTPRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LayerG"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/v2/account/authenticate/apple": {
       "post": {
         "summary": "Authenticate a user with an Apple ID against the server.",
@@ -665,7 +704,7 @@
     },
     "/v2/account/authenticate/telegram": {
       "post": {
-        "summary": "Authenticate a user with Google against the server.",
+        "summary": "Authenticate a user with Telegram.",
         "operationId": "LayerG_AuthenticateTelegram",
         "responses": {
           "200": {
@@ -4177,8 +4216,21 @@
           "type": "string",
           "description": "Set the username on the account at register. Must be unique."
         },
-        "telegramAppData": {
+        "firstname": {
           "type": "string"
+        },
+        "lastname": {
+          "type": "string"
+        },
+        "avatarUrl": {
+          "type": "string"
+        },
+        "otp": {
+          "type": "string"
+        },
+        "chainId": {
+          "type": "string",
+          "format": "int64"
         },
         "vars": {
           "type": "object",
@@ -4812,6 +4864,14 @@
         }
       },
       "description": "Execute an Lua function on the server."
+    },
+    "apiSendTelegramOTPRequest": {
+      "type": "object",
+      "properties": {
+        "telegramId": {
+          "type": "string"
+        }
+      }
     },
     "apiSession": {
       "type": "object",
