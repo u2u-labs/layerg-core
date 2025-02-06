@@ -136,6 +136,8 @@ func (s *ApiServer) SessionLogout(ctx context.Context, in *api.SessionLogoutRequ
 		return nil, status.Error(codes.Internal, "Error processing session logout.")
 	}
 
+	s.tokenPairCache.Remove(userID.String())
+
 	// After hook.
 	if fn := s.runtime.AfterSessionLogout(); fn != nil {
 		afterFn := func(clientIP, clientPort string) error {
