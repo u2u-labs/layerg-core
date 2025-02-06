@@ -75,6 +75,19 @@ func (c *TokenPairCache) Add(nativeToken string, uaAccess, uaRefresh string, acc
 	}
 }
 
+func (c *TokenPairCache) Update(nativeToken string, uaAccess, uaRefresh string, accessExp, refreshExp int64) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, exists := c.nativeToUA[nativeToken]; exists {
+		c.nativeToUA[nativeToken] = UATokenPair{
+			AccessToken:  uaAccess,
+			RefreshToken: uaRefresh,
+			AccessExp:    accessExp,
+			RefreshExp:   refreshExp,
+		}
+	}
+}
+
 func (c *TokenPairCache) Get(nativeToken string) (UATokenPair, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()

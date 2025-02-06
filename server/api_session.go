@@ -39,11 +39,20 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 		return nil, status.Error(codes.InvalidArgument, "Refresh token is required.")
 	}
 
-	userID, username, vars, tokenId, _, err := SessionRefresh(ctx, s.logger, s.db, s.config, s.sessionCache, in.Token)
+	userID, username, vars, tokenId, err := SessionRefresh(ctx, s.logger, s.db, s.config, s.sessionCache, in.Token)
 	if err != nil {
 		s.logger.Error("Error refreshing session.", zap.Error(err))
 		return nil, err
 	}
+
+	uaToken, _ := s.tokenPairCache.Get(userID.String())
+
+	refreshResponse, err := RefreshUAToken(ctx, uaToken.RefreshToken, s.config)
+	if err != nil {
+		s.logger.Error("Error refreshing UA token.", zap.Error(err))
+		return nil, err
+	}
+	s.tokenPairCache.Update(userID.String(), refreshResponse.Data.AccessToken, refreshResponse.Data.RefreshToken, refreshResponse.Data.AccessTokenExpire, refreshResponse.Data.RefreshTokenExpire)
 
 	// Use updated vars if they are provided, otherwise use existing ones from refresh token.
 	useVars := in.Vars
