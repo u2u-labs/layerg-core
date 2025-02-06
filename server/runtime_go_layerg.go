@@ -52,9 +52,10 @@ type RuntimeGoLayerGModule struct {
 	fleetManager         runtime.FleetManager
 	storageIndex         StorageIndex
 	activeTokenCacheUser ActiveTokenCache
+	tokenPairCache       *TokenPairCache
 }
 
-func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache) *RuntimeGoLayerGModule {
+func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache) *RuntimeGoLayerGModule {
 	return &RuntimeGoLayerGModule{
 		logger:               logger,
 		db:                   db,
@@ -74,6 +75,7 @@ func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler
 		router:               router,
 		storageIndex:         storageIndex,
 		activeTokenCacheUser: activeCache,
+		tokenPairCache:       tokenPairCache,
 
 		node: config.GetName(),
 
@@ -351,6 +353,48 @@ func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, u
 	}
 
 	return AuthenticateGoogle(ctx, n.logger, n.db, n.socialClient, token, username, create)
+}
+
+// @group contract
+// @summary Build a contract call request from provided contract call parameters.
+// @param params(type=ContractCallParams) The contract call parameters.
+// @return txRequest(*TransactionRequest) The built transaction request.
+// @return error(error) An optional error if building the transaction fails.
+// func (n *RuntimeGoLayerGModule) BuildContractCallRequest(ctx context.Context, params ContractCallParams) (*TransactionRequest, error) {
+// 	n.logger.Info("Building contract call request", zap.Any("params", params))
+// 	return BuildContractCallRequest(params)
+// }
+
+// @group contract
+// @summary Build a contract call request from separate base type parameters.
+// @param sender(type=string) The sender's address.
+// @param contractAddress(type=string) The target contract's address.
+// @param abi(type=string) The ABI of the contract.
+// @param method(type=string) The contract method to call.
+// @param value(type=int64) The amount to send (in smallest unit) which is converted to string.
+// @param params(type=...interface{}) Additional parameters for the contract method.
+// @return txRequest(*TransactionRequest) The built transaction request.
+// @return error(error) An optional error if building the transaction fails.
+func (n *RuntimeGoLayerGModule) BuildContractCallRequest(ctx context.Context, params runtime.ContractCallParams) (*runtime.TransactionRequest, error) {
+
+	return BuildContractCallRequest(params)
+}
+
+func (n *RuntimeGoLayerGModule) SendUAOnchainTX(ctx context.Context, params runtime.UATransactionRequest) (*runtime.UATransactionResponse, error) {
+	userID := ctx.Value(ctxUserIDKey{}).(uuid.UUID)
+	uaToken, _ := n.tokenPairCache.Get(userID.String())
+	request := &runtime.TransactionRequest{
+		To:                   params.TransactionReq.To,
+		Value:                params.TransactionReq.Value,
+		Data:                 params.TransactionReq.Data,
+		MaxPriorityFeePerGas: params.TransactionReq.MaxPriorityFeePerGas,
+	}
+	payload := &runtime.UATransactionRequest{
+		ChainID:        int(params.ChainID),
+		Sponsor:        params.Sponsor,
+		TransactionReq: request,
+	}
+	return SendUAOnchainTX(ctx, uaToken.AccessToken, *payload, n.config)
 }
 
 // @group authenticate

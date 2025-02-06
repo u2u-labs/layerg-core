@@ -344,8 +344,8 @@ github.com/tklauser/numcpus v0.6.1/go.mod h1:1XfjsgE2zo8GVw7POkMbHENHzVg3GzmoZ9f
 github.com/twmb/murmur3 v1.1.5/go.mod h1:Qq/R7NUyOfr65zD+6Q5IHKsJLwP7exErjN6lyyq3OSQ=
 github.com/twmb/murmur3 v1.1.8 h1:8Yt9taO/WN3l08xErzjeschgZU2QSrwm1kclYq+0aRg=
 github.com/twmb/murmur3 v1.1.8/go.mod h1:Qq/R7NUyOfr65zD+6Q5IHKsJLwP7exErjN6lyyq3OSQ=
-github.com/u2u-labs/go-layerg-common v0.0.0-20250204103317-bc2fc5ce5c26 h1:O8vVYJ4cgeEgtR9LL9eAucEEqcEoXDEcsWLznj5q/qE=
-github.com/u2u-labs/go-layerg-common v0.0.0-20250204103317-bc2fc5ce5c26/go.mod h1:2KLgDN+9u+tAhgvxI2jnSQ1UysSdZOKxTNoBxwJ715s=
+github.com/u2u-labs/go-layerg-common v0.0.0-20250206034642-87dfb438a2b2 h1:g5ozoZGdMtLCn9zZdypq/0AKIzJgIFGGQAyotxcedRM=
+github.com/u2u-labs/go-layerg-common v0.0.0-20250206034642-87dfb438a2b2/go.mod h1:/nallPOeqo1HBqE+HTOTyAPEaq6cGZ5aE4xHg1uN0i4=
 github.com/u2u-labs/layerg-kit v0.0.0-20241023235723-b6a14baaaa29 h1:2zhD/69ajY2mfytYTUI1ZOTQCbKJzNA+bE3MeUV/ilc=
 github.com/u2u-labs/layerg-kit v0.0.0-20241023235723-b6a14baaaa29/go.mod h1:IU5LI6gUwpf/8OQkf6V2fLMaaU/leR5PBYBlNKSGkmc=
 github.com/uber-go/tally/v4 v4.1.16 h1:by2hveWRh/cUReButk6ns1sHK/hiKry7BuOV6iY16XI=

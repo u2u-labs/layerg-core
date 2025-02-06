@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/u2u-labs/go-layerg-common/runtime"
 	"github.com/u2u-labs/layerg-core/server/http"
 )
 
@@ -75,6 +76,33 @@ func TelegramLogin(ctx context.Context, token string, request TelegramLoginReque
 	endpoint := baseUrl + "/auth/telegram-login"
 
 	var response TelegramLoginResponse
+	err := http.POST(ctx, endpoint, token, "", request, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
+	}
+
+	return &response, nil
+}
+
+type OnchainTransactionRequest struct {
+	To                   string `json:"to"`
+	Value                string `json:"value"`
+	Data                 string `json:"data"`
+	MaxPriorityFeePerGas string `json:"maxPriorityFeePerGas"`
+}
+
+type OnchainTransactionPayload struct {
+	ProjectID      string                     `json:"projectId"`
+	ChainID        int                        `json:"chainId"`
+	Sponsor        bool                       `json:"sponsor"`
+	TransactionReq *OnchainTransactionRequest `json:"transactionReq"`
+}
+
+func SendUAOnchainTX(ctx context.Context, token string, request runtime.UATransactionRequest, config Config) (*runtime.UATransactionResponse, error) {
+	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
+	endpoint := baseUrl + "/onchain/send"
+
+	var response runtime.UATransactionResponse
 	err := http.POST(ctx, endpoint, token, "", request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)

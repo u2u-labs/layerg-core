@@ -1187,7 +1187,7 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 
 	// Store both native and UA tokens in the caches
 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
-	s.tokenPairCache.Add(token, uaAccessToken, uaRefreshToken, uaAccessExp, uaRefreshExp)
+	s.tokenPairCache.Add(dbUserID, uaAccessToken, uaRefreshToken, uaAccessExp, uaRefreshExp)
 
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 

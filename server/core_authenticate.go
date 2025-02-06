@@ -1214,6 +1214,8 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 		return "", "", "", 0, 0, false, status.Error(codes.Internal, "Error logging in to AA")
 	}
 
+	logger.Info("Login response", zap.Any("loginResponse", loginResponse))
+
 	if !loginResponse.Success {
 		logger.Error("Failed to login", zap.String("message", loginResponse.Message))
 		return "", "", "", 0, 0, false, status.Error(codes.Internal, loginResponse.Message)
