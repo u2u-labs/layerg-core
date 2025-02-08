@@ -49,18 +49,18 @@ type TelegramLoginResponse struct {
 			RefreshTokenExpire int64  `json:"refreshTokenExpire"`
 			AccessToken        string `json:"accessToken"`
 			AccessTokenExpire  int64  `json:"accessTokenExpire"`
-			UserID             int    `json:"userId"`
+			UserID             string `json:"userId"`
 		} `json:"rs"`
 		AAWallet struct {
 			AAAddress      string `json:"aaAddress"`
 			OwnerAddress   string `json:"ownerAddress"`
 			FactoryAddress string `json:"factoryAddress"`
-			UserID         int    `json:"userId"`
-			ChainID        int    `json:"chainId"`
+			UserID         string `json:"userId"`
+			ChainID        string `json:"chainId"`
 			IsDeployed     bool   `json:"isDeployed"`
 			CreatedAt      string `json:"createdAt"`
 			UpdatedAt      string `json:"updatedAt"`
-			ID             int    `json:"id"`
+			ID             string `json:"id"`
 		} `json:"aaWalelt"`
 	} `json:"data"`
 	Message string `json:"message"`
