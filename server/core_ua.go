@@ -29,7 +29,7 @@ func SendTelegramOTP(ctx context.Context, request TelegramOTPRequest, config Con
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/auth/telegram-otp-request"
 
-	headers, err := GetUAHeaderPayload(request.Domain, config)
+	headers, err := GetUAAuthHeaders(request.Domain, config)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func TelegramLogin(ctx context.Context, token string, request TelegramLoginReque
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/auth/telegram-login"
 
-	headers, err := GetUAHeaderPayload(request.Domain, config)
+	headers, err := GetUAAuthHeaders(request.Domain, config)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func RefreshUAToken(ctx context.Context, token string, config Config) (*runtime.
 	return &response, nil
 }
 
-func GetUAHeaderPayload(domain string, config Config) (map[string]string, error) {
+func GetUAAuthHeaders(domain string, config Config) (map[string]string, error) {
 	timestamp := time.Now().UnixMilli()
 	signature, err := CreateSignature(timestamp, domain, config.GetLayerGCoreConfig().UAPublicApiKey, config.GetLayerGCoreConfig().UAPrivateApiKey)
 	if err != nil {
