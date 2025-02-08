@@ -423,12 +423,12 @@ func (n *RuntimeGoLayerGModule) AuthenticateTelegram(ctx context.Context, telegr
 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
 	}
 
-	dbUserID, token, _, _, _, created, err := AuthenticateTelegram(ctx, n.logger, n.db, n.config, telegramId, chainId, username, firstname, lastname, avatarUrl, otp, create)
+	dbUserID, token, _, _, _, created, err := AuthenticateTelegram(ctx, n.logger, n.db, n.config, telegramId, chainId, username, firstname, lastname, avatarUrl, otp, create, "http://localhost:7350")
 	return dbUserID, token, created, err
 }
 
 func (n *RuntimeGoLayerGModule) SendTelegramAuthOTP(ctx context.Context, telegramId string) error {
-	return SendTelegramAuthOTP(ctx, n.logger, n.config, telegramId)
+	return SendTelegramAuthOTP(ctx, n.logger, n.config, telegramId, "http://localhost:7350")
 }
 
 // @group authenticate

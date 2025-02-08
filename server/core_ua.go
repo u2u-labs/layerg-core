@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"time"
 
 	"github.com/u2u-labs/go-layerg-common/runtime"
 	"github.com/u2u-labs/layerg-core/server/http"
@@ -11,6 +13,7 @@ import (
 type TelegramOTPRequest struct {
 	TelegramID string `json:"telegramId"`
 	APIKey     string `json:"apiKey"`
+	Domain     string `json:"domain"`
 }
 
 type TelegramOTPResponse struct {
@@ -26,8 +29,13 @@ func SendTelegramOTP(ctx context.Context, request TelegramOTPRequest, config Con
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/auth/telegram-otp-request"
 
+	headers, err := GetUAHeaderPayload(request.Domain, config)
+	if err != nil {
+		return nil, err
+	}
+
 	var response TelegramOTPResponse
-	err := http.POST(ctx, endpoint, "", "", request, &response)
+	err = http.POST(ctx, endpoint, "", "", headers, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
 	}
@@ -69,14 +77,19 @@ type TelegramLoginRequest struct {
 	Lastname   string `json:"lastname"`
 	AvatarURL  string `json:"avatarUrl"`
 	OTP        string `json:"otp"`
+	Domain     string `json:"domain"`
 }
 
 func TelegramLogin(ctx context.Context, token string, request TelegramLoginRequest, config Config) (*TelegramLoginResponse, error) {
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/auth/telegram-login"
 
+	headers, err := GetUAHeaderPayload(request.Domain, config)
+	if err != nil {
+		return nil, err
+	}
 	var response TelegramLoginResponse
-	err := http.POST(ctx, endpoint, token, "", request, &response)
+	err = http.POST(ctx, endpoint, token, "", headers, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
 	}
@@ -103,7 +116,7 @@ func SendUAOnchainTX(ctx context.Context, token string, request runtime.UATransa
 	endpoint := baseUrl + "/onchain/send"
 
 	var response runtime.UATransactionResponse
-	err := http.POST(ctx, endpoint, token, "", request, &response)
+	err := http.POST(ctx, endpoint, token, "", nil, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
 	}
@@ -119,10 +132,26 @@ func RefreshUAToken(ctx context.Context, token string, config Config) (*runtime.
 		RefreshToken: token,
 	}
 	var response runtime.UARefreshTokenResponse
-	err := http.POST(ctx, endpoint, "", "", request, &response)
+	err := http.POST(ctx, endpoint, "", "", nil, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
 	}
 
 	return &response, nil
+}
+
+func GetUAHeaderPayload(domain string, config Config) (map[string]string, error) {
+	timestamp := time.Now().UnixMilli()
+	signature, err := CreateSignature(timestamp, domain, config.GetLayerGCoreConfig().UAPublicApiKey, config.GetLayerGCoreConfig().UAPrivateApiKey)
+	if err != nil {
+		return nil, err
+	}
+
+	headers := map[string]string{
+		"x-signature": signature.Signature,
+		"x-timestamp": big.NewInt(signature.Timestamp).String(),
+		"origin":      signature.Domain,
+		"x-api-key":   config.GetLayerGCoreConfig().UAPublicApiKey,
+	}
+	return headers, nil
 }

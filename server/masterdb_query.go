@@ -49,7 +49,7 @@ func CreateCollection(ctx context.Context, request CollectionRequest, config Con
 	endpoint := baseUrl + "/chain/1/collection"
 
 	var response masterdb.CollectionResponse
-	err := http.POST(ctx, endpoint, "", "", request, &response)
+	err := http.POST(ctx, endpoint, "", "", nil, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create collection: %w", err)
 	}
@@ -135,7 +135,7 @@ func AddERC721Asset(ctx context.Context, request masterdb.Add721Asset, logger *z
 		return nil, fmt.Errorf("failed to sign request")
 	}
 	var response masterdb.Add721Asset
-	err = http.POST(ctx, endpoint, "", signature, request, &response)
+	err = http.POST(ctx, endpoint, "", signature, nil, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add ERC721 asset: %w", err)
 	}
@@ -152,7 +152,7 @@ func AddERC1155Asset(ctx context.Context, request masterdb.Add1155Asset, logger 
 		return nil, fmt.Errorf("failed to sign request")
 	}
 	var response masterdb.Add1155Asset
-	err = http.POST(ctx, endpoint, "", signature, request, &response)
+	err = http.POST(ctx, endpoint, "", signature, nil, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add ERC1155 asset: %w", err)
 	}
@@ -169,7 +169,7 @@ func AddERC20Asset(ctx context.Context, request masterdb.Add20Asset, logger *zap
 		return nil, fmt.Errorf("failed to sign request")
 	}
 	var response masterdb.Add20Asset
-	err = http.POST(ctx, endpoint, "", signature, request, &response)
+	err = http.POST(ctx, endpoint, "", signature, nil, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add ERC20 asset: %w", err)
 	}
@@ -187,7 +187,7 @@ func SubmitERC721BatchRequest(ctx context.Context, batchRequest masterdb.Add721A
 		return nil, fmt.Errorf("failed to sign request")
 	}
 	var response masterdb.Add721AssetBatch
-	err = http.POST(ctx, endpoint, "", signature, batchRequest, &response)
+	err = http.POST(ctx, endpoint, "", signature, nil, batchRequest, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to submit ERC721 batch: %w", err)
 	}
@@ -204,7 +204,7 @@ func SubmitERC1155BatchRequest(ctx context.Context, batchRequest masterdb.Add115
 		return nil, fmt.Errorf("failed to sign request")
 	}
 	var response masterdb.Add1155AssetBatch
-	err = http.POST(ctx, endpoint, "", signature, batchRequest, &response)
+	err = http.POST(ctx, endpoint, "", signature, nil, batchRequest, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to submit ERC1155 batch: %w", err)
 	}
@@ -221,7 +221,7 @@ func SubmitERC20BatchRequest(ctx context.Context, batchRequest masterdb.Add20Ass
 		return nil, fmt.Errorf("failed to sign request")
 	}
 	var response masterdb.Add20AssetBatch
-	err = http.POST(ctx, endpoint, "", signature, batchRequest, &response)
+	err = http.POST(ctx, endpoint, "", signature, nil, batchRequest, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to submit ERC20 batch: %w", err)
 	}

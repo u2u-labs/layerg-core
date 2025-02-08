@@ -17,6 +17,7 @@ import (
 	"github.com/u2u-labs/go-layerg-common/api"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -1130,11 +1131,22 @@ func generateUsername() string {
 }
 
 func (s *ApiServer) SendTelegramAuthOTP(ctx context.Context, in *api.SendTelegramOTPRequest) (*emptypb.Empty, error) {
+	// Extract metadata from the context
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "No metadata in request")
+	}
+
+	// Get the 'Origin' header
+	origin := md.Get("grpcgateway-origin")
+	if len(origin) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "Origin header is missing")
+	}
 
 	if in.TelegramId == "" {
 		return nil, status.Error(codes.InvalidArgument, "Telegram ID is required.")
 	}
-	err := SendTelegramAuthOTP(ctx, s.logger, s.config, in.TelegramId)
+	err := SendTelegramAuthOTP(ctx, s.logger, s.config, in.TelegramId, origin[0])
 	if err != nil {
 		return nil, err
 	}
@@ -1166,6 +1178,18 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 		}
 	}
 
+	// Extract metadata from the context
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "No metadata in request")
+	}
+
+	// Get the 'Origin' header
+	origin := md.Get("Origin")
+	if len(origin) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "Origin header is missing")
+	}
+
 	if in.Account.TelegramId == "" {
 		return nil, status.Error(codes.InvalidArgument, "Telegram ID is required.")
 	}
@@ -1185,7 +1209,7 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 
 	create := in.Create == nil || in.Create.Value
 
-	dbUserID, uaAccessToken, uaRefreshToken, uaAccessExp, uaRefreshExp, created, err := AuthenticateTelegram(ctx, s.logger, s.db, s.config, in.Account.TelegramId, int(in.Account.ChainId), username, in.Account.Firstname, in.Account.Lastname, in.Account.AvatarUrl, in.Account.Otp, create)
+	dbUserID, uaAccessToken, uaRefreshToken, uaAccessExp, uaRefreshExp, created, err := AuthenticateTelegram(ctx, s.logger, s.db, s.config, in.Account.TelegramId, int(in.Account.ChainId), username, in.Account.Firstname, in.Account.Lastname, in.Account.AvatarUrl, in.Account.Otp, create, origin[0])
 	if err != nil {
 		return nil, err
 	}
