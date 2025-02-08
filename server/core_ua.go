@@ -12,8 +12,6 @@ import (
 
 type TelegramOTPRequest struct {
 	TelegramID string `json:"telegramId"`
-	APIKey     string `json:"apiKey"`
-	Domain     string `json:"domain"`
 }
 
 type TelegramOTPResponse struct {
@@ -29,7 +27,7 @@ func SendTelegramOTP(ctx context.Context, request TelegramOTPRequest, config Con
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/auth/telegram-otp-request"
 
-	headers, err := GetUAAuthHeaders(request.Domain, config)
+	headers, err := GetUAAuthHeaders(config)
 	if err != nil {
 		return nil, err
 	}
@@ -70,21 +68,19 @@ type TelegramLoginResponse struct {
 
 type TelegramLoginRequest struct {
 	TelegramID string `json:"telegramId"`
-	APIKey     string `json:"apiKey"`
 	ChainID    int    `json:"chainId"`
 	Username   string `json:"username"`
 	Firstname  string `json:"firstname"`
 	Lastname   string `json:"lastname"`
 	AvatarURL  string `json:"avatarUrl"`
 	OTP        string `json:"otp"`
-	Domain     string `json:"domain"`
 }
 
 func TelegramLogin(ctx context.Context, token string, request TelegramLoginRequest, config Config) (*TelegramLoginResponse, error) {
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/auth/telegram-login"
 
-	headers, err := GetUAAuthHeaders(request.Domain, config)
+	headers, err := GetUAAuthHeaders(config)
 	if err != nil {
 		return nil, err
 	}
@@ -140,9 +136,9 @@ func RefreshUAToken(ctx context.Context, token string, config Config) (*runtime.
 	return &response, nil
 }
 
-func GetUAAuthHeaders(domain string, config Config) (map[string]string, error) {
+func GetUAAuthHeaders(config Config) (map[string]string, error) {
 	timestamp := time.Now().UnixMilli()
-	signature, err := CreateSignature(timestamp, domain, config.GetLayerGCoreConfig().UAPublicApiKey, config.GetLayerGCoreConfig().UAPrivateApiKey)
+	signature, err := CreateSignature(timestamp, config.GetLayerGCoreConfig().UADomain, config.GetLayerGCoreConfig().UAPublicApiKey, config.GetLayerGCoreConfig().UAPrivateApiKey)
 	if err != nil {
 		return nil, err
 	}

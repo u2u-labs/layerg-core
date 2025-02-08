@@ -2,8 +2,6 @@ package server
 
 import (
 	"crypto/ecdsa"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"net/url"
 	"strings"
@@ -55,22 +53,4 @@ func CreateSignature(timestamp int64, domain, publicKey, priKey string) (*UAHead
 		Timestamp: timestamp,
 		Domain:    domain,
 	}, nil
-}
-
-func GetSignatureSigner(timestamp int64, domain, publicKey, signatureHex string) (string, error) {
-	message := fmt.Sprintf("%s:%d:%s", domain, timestamp, publicKey)
-	hash := sha256.Sum256([]byte(strings.ToLower(message)))
-
-	signature, err := hex.DecodeString(signatureHex)
-	if err != nil {
-		return "", fmt.Errorf("invalid signature format: %w", err)
-	}
-
-	recoveredPubKey, err := crypto.SigToPub(hash[:], signature)
-	if err != nil {
-		return "", fmt.Errorf("failed to recover signer: %w", err)
-	}
-
-	signerAddress := crypto.PubkeyToAddress(*recoveredPubKey).Hex()
-	return signerAddress, nil
 }

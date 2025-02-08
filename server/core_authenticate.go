@@ -1173,12 +1173,10 @@ func sendFriendAddedNotification(ctx context.Context, logger *zap.Logger, db *sq
 // 	return userID, username, true, nil
 // }
 
-func SendTelegramAuthOTP(ctx context.Context, logger *zap.Logger, config Config, telegramId, domain string) error {
+func SendTelegramAuthOTP(ctx context.Context, logger *zap.Logger, config Config, telegramId string) error {
 	// Request OTP
 	otpRequest := TelegramOTPRequest{
 		TelegramID: telegramId,
-		APIKey:     config.GetLayerGCoreConfig().UAApiKey,
-		Domain:     domain,
 	}
 
 	otpResponse, err := SendTelegramOTP(ctx, otpRequest, config)
@@ -1196,18 +1194,16 @@ func SendTelegramAuthOTP(ctx context.Context, logger *zap.Logger, config Config,
 	return nil
 }
 
-func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, telegramId string, chainId int, username, firstname, lastname, avatarUrl, otp string, create bool, domain string) (string, string, string, int64, int64, bool, error) {
+func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, telegramId string, chainId int, username, firstname, lastname, avatarUrl, otp string, create bool) (string, string, string, int64, int64, bool, error) {
 	// Attempt login with the provided OTP
 	loginRequest := TelegramLoginRequest{
 		TelegramID: telegramId,
-		APIKey:     config.GetLayerGCoreConfig().UAApiKey,
 		ChainID:    chainId,
 		Username:   username,
 		Firstname:  firstname,
 		Lastname:   lastname,
 		AvatarURL:  avatarUrl,
 		OTP:        otp,
-		Domain:     domain,
 	}
 
 	loginResponse, err := TelegramLogin(ctx, "", loginRequest, config)

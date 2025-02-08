@@ -1146,6 +1146,7 @@ type LayerGCoreConfig struct {
 	UAApiKey            string `yaml:"ua_api_key" json:"ua_api_key" usage:"ua api key for core server"`
 	UAPublicApiKey      string `yaml:"ua_public_api_key" json:"ua_public_api_key" usage:"ua public api key for core server"`
 	UAPrivateApiKey     string `yaml:"ua_private_api_key" json:"ua_private_api_key" usage:"ua private api key for core server"`
+	UADomain            string `yaml:"ua_domain" json:"ua_domain" usage:"ua domain for core server"`
 }
 
 type RedisConfig struct {
@@ -1193,6 +1194,7 @@ func NewLayerGCore() *LayerGCoreConfig {
 		UAApiKey:            "sys-dev-api-key",
 		UAPublicApiKey:      "7c581609293E503dE149d93f34767DFF33d32C16",
 		UAPrivateApiKey:     "c194c2a77814de98c486836da3ae6747769ed6e6064186f2943b33f25dba284c",
+		UADomain:            "http://localhost:7351",
 	}
 }
 func NewRedisDb() *RedisConfig {

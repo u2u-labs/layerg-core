@@ -1789,7 +1789,7 @@ func (n *runtimeJavascriptLayerGModule) authenticateTelegram(r *goja.Runtime) fu
 			panic(r.NewTypeError("expects chainId to be a valid integer"))
 		}
 
-		dbUserID, token, _, _, _, created, err := AuthenticateTelegram(n.ctx, n.logger, n.db, n.config, telegramId, chainIdInt, username, firstname, lastname, avatarUrl, otp, create, "http://localhost:7350")
+		dbUserID, token, _, _, _, created, err := AuthenticateTelegram(n.ctx, n.logger, n.db, n.config, telegramId, chainIdInt, username, firstname, lastname, avatarUrl, otp, create)
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}
@@ -1808,7 +1808,7 @@ func (n *runtimeJavascriptLayerGModule) sendTelegramAuthOTP(r *goja.Runtime) fun
 			panic(r.NewTypeError("expects ID token string"))
 		}
 
-		err := SendTelegramAuthOTP(n.ctx, n.logger, n.config, telegramId, "http://localhost:7350")
+		err := SendTelegramAuthOTP(n.ctx, n.logger, n.config, telegramId)
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}
