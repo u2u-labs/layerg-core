@@ -383,18 +383,9 @@ func (n *RuntimeGoLayerGModule) BuildContractCallRequest(ctx context.Context, pa
 func (n *RuntimeGoLayerGModule) SendUAOnchainTX(ctx context.Context, params runtime.UATransactionRequest) (*runtime.UATransactionResponse, error) {
 	userID := ctx.Value(ctxUserIDKey{}).(uuid.UUID)
 	uaToken, _ := n.tokenPairCache.Get(userID.String())
-	request := &runtime.TransactionRequest{
-		To:                   params.TransactionReq.To,
-		Value:                params.TransactionReq.Value,
-		Data:                 params.TransactionReq.Data,
-		MaxPriorityFeePerGas: params.TransactionReq.MaxPriorityFeePerGas,
-	}
-	payload := &runtime.UATransactionRequest{
-		ChainID:        int(params.ChainID),
-		Sponsor:        params.Sponsor,
-		TransactionReq: request,
-	}
-	return SendUAOnchainTX(ctx, uaToken.AccessToken, *payload, n.config)
+	request := params
+
+	return SendUAOnchainTX(ctx, uaToken.AccessToken, request, n.config)
 }
 
 // @group authenticate

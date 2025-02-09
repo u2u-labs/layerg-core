@@ -110,9 +110,12 @@ type OnchainTransactionPayload struct {
 func SendUAOnchainTX(ctx context.Context, token string, request runtime.UATransactionRequest, config Config) (*runtime.UATransactionResponse, error) {
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/onchain/send"
-
+	headers, err := GetUAAuthHeaders(config)
+	if err != nil {
+		return nil, err
+	}
 	var response runtime.UATransactionResponse
-	err := http.POST(ctx, endpoint, token, "", nil, request, &response)
+	err = http.POST(ctx, endpoint, token, "", headers, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
 	}
