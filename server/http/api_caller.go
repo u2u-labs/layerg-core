@@ -62,7 +62,7 @@ func GET(ctx context.Context, endpoint string, token string, params map[string]s
 }
 
 // POST function with dynamic response unmarshaling and handling for nil body
-func POST(ctx context.Context, endpoint string, token string, signature string, body interface{}, responseStruct interface{}) error {
+func POST(ctx context.Context, endpoint string, token string, signature string, headers map[string]string, body interface{}, responseStruct interface{}) error {
 	// If body is nil, set to empty JSON
 	var jsonBody []byte
 	var err error
@@ -88,6 +88,10 @@ func POST(ctx context.Context, endpoint string, token string, signature string, 
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Origin", "http://localhost")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
 	// Execute request
 	client := &http.Client{}
 	resp, err := client.Do(req)

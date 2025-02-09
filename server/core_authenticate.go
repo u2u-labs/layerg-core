@@ -1177,7 +1177,6 @@ func SendTelegramAuthOTP(ctx context.Context, logger *zap.Logger, config Config,
 	// Request OTP
 	otpRequest := TelegramOTPRequest{
 		TelegramID: telegramId,
-		APIKey:     config.GetLayerGCoreConfig().UAApiKey,
 	}
 
 	otpResponse, err := SendTelegramOTP(ctx, otpRequest, config)
@@ -1199,7 +1198,6 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 	// Attempt login with the provided OTP
 	loginRequest := TelegramLoginRequest{
 		TelegramID: telegramId,
-		APIKey:     config.GetLayerGCoreConfig().UAApiKey,
 		ChainID:    chainId,
 		Username:   username,
 		Firstname:  firstname,

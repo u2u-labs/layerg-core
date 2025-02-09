@@ -17,6 +17,8 @@ RUN apt-get update && \
     git clone --quiet --no-checkout https://github.com/u2u-labs/layerg-core /go/build/layerg
 
 WORKDIR /go/build/layerg
+COPY . .
+
 RUN git checkout --quiet "$commit" && \
     go mod tidy && \
     go mod vendor && \

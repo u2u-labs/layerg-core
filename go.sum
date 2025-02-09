@@ -351,7 +351,7 @@ github.com/u2u-labs/layerg-kit v0.0.0-20241023235723-b6a14baaaa29/go.mod h1:IU5L
 github.com/uber-go/tally/v4 v4.1.16 h1:by2hveWRh/cUReButk6ns1sHK/hiKry7BuOV6iY16XI=
 github.com/uber-go/tally/v4 v4.1.16/go.mod h1:RW5DgqsyEPs0lA4b0YNf4zKj7DveKHd73hnO6zVlyW0=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
-github.com/unicornultrafoundation/go-u2u v1.1.4 h1:MZd7u+7fHja9BXYhhmEuMGJjnAPvGzVVMq368GsBKHE=
+github.com/unicornultrafoundation/go-u2u v1.1.4 h1:GnZYlvPMSRAkS/pEkfAjD5isCQSfC3v0DFQzh/7XV6E=
 github.com/unicornultrafoundation/go-u2u v1.1.4/go.mod h1:b9zcgcucO/9gFdJV6c8V6pIJtpFQpzBhzWRPrcjq1l0=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

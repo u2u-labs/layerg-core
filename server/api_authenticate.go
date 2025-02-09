@@ -1130,7 +1130,6 @@ func generateUsername() string {
 }
 
 func (s *ApiServer) SendTelegramAuthOTP(ctx context.Context, in *api.SendTelegramOTPRequest) (*emptypb.Empty, error) {
-
 	if in.TelegramId == "" {
 		return nil, status.Error(codes.InvalidArgument, "Telegram ID is required.")
 	}

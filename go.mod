@@ -24,6 +24,7 @@ require (
 	github.com/u2u-labs/go-layerg-common v0.0.0-20250209164904-54c11c273d17
 	github.com/u2u-labs/layerg-kit v0.0.0-20241023235723-b6a14baaaa29
 	github.com/uber-go/tally/v4 v4.1.16
+	github.com/unicornultrafoundation/go-u2u v1.1.4
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.32.0
@@ -119,7 +120,6 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/twmb/murmur3 v1.1.8 // indirect
-	github.com/unicornultrafoundation/go-u2u v1.1.4
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
