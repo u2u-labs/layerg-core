@@ -1195,17 +1195,50 @@ func SendTelegramAuthOTP(ctx context.Context, logger *zap.Logger, config Config,
 }
 
 func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, telegramId string, chainId int, username, firstname, lastname, avatarUrl, otp string, create bool) (string, string, string, int64, int64, bool, error) {
-	// Attempt login with the provided OTP
-	loginRequest := TelegramLoginRequest{
-		TelegramID: telegramId,
-		ChainID:    chainId,
-		Username:   username,
-		Firstname:  firstname,
-		Lastname:   lastname,
-		AvatarURL:  avatarUrl,
-		OTP:        otp,
+	found := true
+	// Look for an existing account.
+	query := "SELECT id, username, display_name, avatar_url FROM users WHERE telegram_id = $1"
+	var dbUserID string
+	var dbUsername string
+	var dbDisplayName sql.NullString
+	var dbAvatarURL sql.NullString
+	err := db.QueryRowContext(ctx, query, telegramId).Scan(&dbUserID, &dbUsername, &dbDisplayName, &dbAvatarURL)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			found = false
+		} else {
+			logger.Error("Error looking up user by Telegram ID.", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", username), zap.Bool("create", create))
+			return "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding user account.")
+		}
 	}
 
+	// Prepare login request based on whether user exists or is being created
+	var loginRequest TelegramLoginRequest
+	if found {
+		// Use existing user data for login
+		loginRequest = TelegramLoginRequest{
+			TelegramID: telegramId,
+			ChainID:    chainId,
+			Username:   dbUsername,
+			Firstname:  strings.Split(dbDisplayName.String, " ")[0],
+			Lastname:   strings.Split(dbDisplayName.String, " ")[1],
+			AvatarURL:  dbAvatarURL.String,
+			OTP:        otp,
+		}
+	} else {
+		// Use provided data for new user creation
+		loginRequest = TelegramLoginRequest{
+			TelegramID: telegramId,
+			ChainID:    chainId,
+			Username:   username,
+			Firstname:  firstname,
+			Lastname:   lastname,
+			AvatarURL:  avatarUrl,
+			OTP:        otp,
+		}
+	}
+	logger.Info("Login request", zap.Any("loginRequest", loginRequest))
+	// Attempt login with the prepared request
 	loginResponse, err := TelegramLogin(ctx, "", loginRequest, config)
 	if err != nil {
 		logger.Error("Error logging in to AA", zap.Error(err))
@@ -1219,32 +1252,16 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 		return "", "", "", 0, 0, false, status.Error(codes.Internal, loginResponse.Message)
 	}
 
-	found := true
-	// Look for an existing account.
-	query := "SELECT id, username FROM users WHERE telegram_id = $1"
-	var dbUserID string
-	var dbUsername string
-	err = db.QueryRowContext(ctx, query, telegramId).Scan(&dbUserID, &dbUsername)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			found = false
-		} else {
-			logger.Error("Error looking up user by Telegram ID.", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", username), zap.Bool("create", create))
-			return "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding user account.")
-		}
-	}
-
-	// Existing account found.
+	// Existing account found
 	if found {
 		// Update onchain_id if it's not set
 		if loginResponse.Data.AAWallet.AAAddress != "" {
 			_, err = db.ExecContext(ctx, "UPDATE users SET onchain_id = $1 WHERE id = $2", loginResponse.Data.AAWallet.AAAddress, dbUserID)
 			if err != nil {
-				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", username))
-				// Don't return error here as the authentication itself was successful
+				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", dbUsername))
 			}
 		}
-		return dbUserID, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, true, nil
+		return dbUserID, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, false, nil
 	}
 
 	if !create {
@@ -1252,10 +1269,10 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 		return "", "", "", 0, 0, false, status.Error(codes.NotFound, "User account not found.")
 	}
 
-	// Create a new account.
+	// Create a new account
 	userID := uuid.Must(uuid.NewV4()).String()
-	query = "INSERT INTO users (id, username, telegram_id, onchain_id, create_time, update_time) VALUES ($1, $2, $3, $4, now(), now())"
-	result, err := db.ExecContext(ctx, query, userID, username, telegramId, loginResponse.Data.AAWallet.AAAddress)
+	query = "INSERT INTO users (id, username, display_name, avatar_url, telegram_id, onchain_id, create_time, update_time) VALUES ($1, $2, $3, $4, $5, $6, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, username, firstname+" "+lastname, avatarUrl, telegramId, loginResponse.Data.AAWallet.AAAddress)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
