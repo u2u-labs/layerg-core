@@ -132,18 +132,6 @@ VALUES ('f3e3bf76-62dc-42a7-ad0d-ef9033bc13a5', '', 'default');
 INSERT INTO chains (id, chain, name, rpc_url, chain_id, explorer, latest_block, block_time)
 VALUES (1, 'U2U', 'Nebulas Testnet', 'https://rpc-nebulas-testnet.uniultra.xyz', 2484, 'https://testnet.u2uscan.xyz/', 40984307, 500);
 
-INSERT INTO collections (id, chain_id, collection_address, type, created_at, updated_at, decimal_data, initial_block, last_updated)
-VALUES ('1:0xdFAe88F8610a038AFcDF47A5BC77C0963C65087c', 1, '0xdFAe88F8610a038AFcDF47A5BC77C0963C65087c', 'ERC20', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 18, 0, CURRENT_TIMESTAMP);
-
-INSERT INTO collections (id, chain_id, collection_address, type, created_at, updated_at, decimal_data, initial_block, last_updated)
-VALUES ('2:0xC5f15624b4256C1206e4BB93f2CCc9163A75b703', 1, '0xC5f15624b4256C1206e4BB93f2CCc9163A75b703', 'ERC20', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 18, 0, CURRENT_TIMESTAMP);
-
-INSERT INTO collections (id, chain_id, collection_address, type, created_at, updated_at, decimal_data, initial_block, last_updated)
-VALUES ('1:0x0091BD12166d29539Db6bb37FB79670779aBf266', 1, '0x0091BD12166d29539Db6bb37FB79670779aBf266', 'ERC721', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 0, CURRENT_TIMESTAMP);
-
-INSERT INTO collections (id, chain_id, collection_address, type, created_at, updated_at, decimal_data, initial_block, last_updated)
-VALUES ('1:0x9E87754dAB31dAD057DCDF233000F71fF55fA37f', 1, '0x9E87754dAB31dAD057DCDF233000F71fF55fA37f', 'ERC1155', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 0, CURRENT_TIMESTAMP);
-
 
 -- +migrate Down
 
