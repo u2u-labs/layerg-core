@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strconv"
 	"time"
 
 	"github.com/u2u-labs/go-layerg-common/runtime"
@@ -107,7 +108,7 @@ type OnchainTransactionPayload struct {
 	TransactionReq *OnchainTransactionRequest `json:"transactionReq"`
 }
 
-func SendUAOnchainTX(ctx context.Context, token string, request runtime.UATransactionRequest, config Config) (*runtime.UATransactionResponse, error) {
+func SendUAOnchainTX(ctx context.Context, token string, request runtime.UATransactionRequest, config Config) (*runtime.ReceiptResponse, error) {
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/onchain/send"
 	headers, err := GetUAAuthHeaders(config)
@@ -120,7 +121,32 @@ func SendUAOnchainTX(ctx context.Context, token string, request runtime.UATransa
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
 	}
 
-	return &response, nil
+	endpoint = baseUrl + "/onchain/user-op-receipt/" + strconv.Itoa(request.ChainID) + "/" + response.Data.UserOpHash
+	fmt.Println("endpoint", endpoint)
+
+	// Implement polling with timeout
+	maxAttempts := 10 // Try up to 10 times
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		time.Sleep(5 * time.Second) // Wait 5 seconds between attempts
+
+		var receiptResponse runtime.ReceiptResponse
+		err = http.GET(ctx, endpoint, token, nil, &receiptResponse)
+		if err != nil {
+			fmt.Printf("Error getting receipt (attempt %d/%d): %v\n", attempt, maxAttempts, err)
+			continue
+		}
+
+		fmt.Printf("Receipt Response (attempt %d/%d): %+v\n", attempt, maxAttempts, receiptResponse)
+
+		// Check if we have actual transaction data
+		if receiptResponse.Data.Success && receiptResponse.Data.UserOpHash != "" {
+			return &receiptResponse, nil
+		}
+
+		fmt.Printf("Transaction not ready yet (attempt %d/%d), waiting...\n", attempt, maxAttempts)
+	}
+
+	return nil, fmt.Errorf("transaction receipt not available after %d attempts", maxAttempts)
 }
 
 func RefreshUAToken(ctx context.Context, token string, config Config) (*runtime.UARefreshTokenResponse, error) {
