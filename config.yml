@@ -11,10 +11,12 @@ cluster:
   gossip_bindport: 8353
   # membersưaocalhost:7353"
 socket:
-  port: 8350
+  port: 7350
 console:
-  port: 8351
+  port: 7351
 layerg_core:
   url: "https://agg-dev.layerg.xyz"
   api_key: "syip1g6wd29f4tn8p78yc"
   api_key_id: "f74c1b2e-33c0-4189-b639-f3162c84b13b"
+redis_db:
+  url: "localhost:6379"

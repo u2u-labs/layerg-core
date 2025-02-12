@@ -370,7 +370,7 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 	case "/layerg.api.LayerG/AuthenticateUA":
 		fallthrough
 	case "/layerg.api.LayerG/SendTelegramAuthOTP":
-		fallthrough
+		break
 	case "/layerg.api.LayerG/AuthenticateSteam":
 		// Session refresh and authentication functions only require server key.
 		md, ok := metadata.FromIncomingContext(ctx)

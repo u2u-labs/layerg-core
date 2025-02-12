@@ -267,14 +267,6 @@ service LayerG {
         post: "/v2/account/authenticate-ua/telegram-otp",
         body: "*"
       };
-      option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-        security: {
-          security_requirement: {
-            key: "BasicAuth";
-            value: {};
-          }
-        }
-      };
   }
 
   rpc AuthenticateUA (api.AuthenticateUA) returns (api.Session) {
