@@ -127,7 +127,7 @@ func SendUAOnchainTX(ctx context.Context, token string, request runtime.UATransa
 	// Implement polling with timeout
 	maxAttempts := 10 // Try up to 10 times
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		time.Sleep(5 * time.Second) // Wait 5 seconds between attempts
+		time.Sleep(2 * time.Second) // Wait 2 seconds between attempts
 
 		var receiptResponse runtime.ReceiptResponse
 		err = http.GET(ctx, endpoint, token, nil, &receiptResponse)
