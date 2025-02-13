@@ -380,9 +380,8 @@ func (n *RuntimeGoLayerGModule) BuildContractCallRequest(ctx context.Context, pa
 	return BuildContractCallRequest(params)
 }
 
-func (n *RuntimeGoLayerGModule) SendUAOnchainTX(ctx context.Context, params runtime.UATransactionRequest) (*runtime.ReceiptResponse, error) {
-	userID := ctx.Value(ctxUserIDKey{}).(uuid.UUID)
-	uaToken, _ := n.tokenPairCache.Get(userID.String())
+func (n *RuntimeGoLayerGModule) SendUAOnchainTX(ctx context.Context, userID string, params runtime.UATransactionRequest) (*runtime.ReceiptResponse, error) {
+	uaToken, _ := n.tokenPairCache.Get(userID)
 	request := params
 
 	return SendUAOnchainTX(ctx, uaToken.AccessToken, request, n.config)
