@@ -1789,7 +1789,7 @@ func (n *runtimeJavascriptLayerGModule) authenticateTelegram(r *goja.Runtime) fu
 			panic(r.NewTypeError("expects chainId to be a valid integer"))
 		}
 
-		dbUserID, token, _, _, _, created, err := AuthenticateTelegram(n.ctx, n.logger, n.db, n.config, telegramId, chainIdInt, username, firstname, lastname, avatarUrl, otp, create)
+		dbUserID, _, token, _, _, _, created, err := AuthenticateTelegram(n.ctx, n.logger, n.db, n.config, telegramId, chainIdInt, username, firstname, lastname, avatarUrl, otp, create)
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}
