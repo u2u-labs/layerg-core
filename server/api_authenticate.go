@@ -1184,7 +1184,7 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 
 	create := in.Create == nil || in.Create.Value
 
-	dbUserID, uaAccessToken, uaRefreshToken, uaAccessExp, uaRefreshExp, created, err := AuthenticateTelegram(ctx, s.logger, s.db, s.config, in.Account.TelegramId, int(in.Account.ChainId), username, in.Account.Firstname, in.Account.Lastname, in.Account.AvatarUrl, in.Account.Otp, create)
+	dbUserID, dbUsername, uaAccessToken, uaRefreshToken, uaAccessExp, uaRefreshExp, created, err := AuthenticateTelegram(ctx, s.logger, s.db, s.config, in.Account.TelegramId, int(in.Account.ChainId), username, in.Account.Firstname, in.Account.Lastname, in.Account.AvatarUrl, in.Account.Otp, create)
 	if err != nil {
 		return nil, err
 	}
@@ -1206,7 +1206,7 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 	// After hook.
 	if fn := s.runtime.AfterAuthenticateTelegram(); fn != nil {
 		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, token, refreshToken, in.Account.Vars, exp, clientIP, clientPort, session, in)
+			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.

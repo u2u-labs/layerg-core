@@ -1194,7 +1194,7 @@ func SendTelegramAuthOTP(ctx context.Context, logger *zap.Logger, config Config,
 	return nil
 }
 
-func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, telegramId string, chainId int, username, firstname, lastname, avatarUrl, otp string, create bool) (string, string, string, int64, int64, bool, error) {
+func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, telegramId string, chainId int, username, firstname, lastname, avatarUrl, otp string, create bool) (string, string, string, string, int64, int64, bool, error) {
 	found := true
 	// Look for an existing account.
 	query := "SELECT id, username, display_name, avatar_url FROM users WHERE telegram_id = $1"
@@ -1208,7 +1208,7 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 			found = false
 		} else {
 			logger.Error("Error looking up user by Telegram ID.", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", username), zap.Bool("create", create))
-			return "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding user account.")
+			return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding user account.")
 		}
 	}
 
@@ -1242,14 +1242,14 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 	loginResponse, err := TelegramLogin(ctx, "", loginRequest, config)
 	if err != nil {
 		logger.Error("Error logging in to AA", zap.Error(err))
-		return "", "", "", 0, 0, false, status.Error(codes.Internal, "Error logging in to AA")
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error logging in to AA")
 	}
 
 	logger.Info("Login response", zap.Any("loginResponse", loginResponse))
 
 	if !loginResponse.Success {
 		logger.Error("Failed to login", zap.String("message", loginResponse.Message))
-		return "", "", "", 0, 0, false, status.Error(codes.Internal, loginResponse.Message)
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, loginResponse.Message)
 	}
 
 	// Existing account found
@@ -1261,12 +1261,12 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", dbUsername))
 			}
 		}
-		return dbUserID, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, false, nil
+		return dbUserID, dbUsername, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, false, nil
 	}
 
 	if !create {
 		// No user account found, and creation is not allowed.
-		return "", "", "", 0, 0, false, status.Error(codes.NotFound, "User account not found.")
+		return "", "", "", "", 0, 0, false, status.Error(codes.NotFound, "User account not found.")
 	}
 
 	// Create a new account
@@ -1278,22 +1278,23 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
 			if strings.Contains(pgErr.Message, "users_username_key") {
 				// Username is already in use by a different account.
-				return "", "", "", 0, 0, false, status.Error(codes.AlreadyExists, "Username is already in use.")
+				return "", "", "", "", 0, 0, false, status.Error(codes.AlreadyExists, "Username is already in use.")
 			} else if strings.Contains(pgErr.Message, "users_telegram_id_key") {
 				// A concurrent write has inserted this Telegram ID.
 				logger.Info("Did not insert new user as Telegram ID already exists.", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", username), zap.Bool("create", create))
-				return "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
+				return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 			}
 		}
 		logger.Error("Cannot find or create user with Telegram ID.", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", username), zap.Bool("create", create))
-		return "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
 	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
 		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
-		return "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 	dbUserID = userID
+	dbUsername = username
 
-	return dbUserID, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, true, nil
+	return dbUserID, dbUsername, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, true, nil
 }
