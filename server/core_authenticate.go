@@ -1293,6 +1293,7 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
 		return "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
+	dbUserID = userID
 
 	return dbUserID, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, true, nil
 }
