@@ -549,6 +549,12 @@ type Runtime struct {
 	fleetManager runtime.FleetManager
 
 	peer Peer
+
+	webhookRegistry *WebhookRegistry
+}
+
+func (r *Runtime) GetWebhookRegistry() *WebhookRegistry {
+	return r.webhookRegistry
 }
 
 type MatchNamesListFunction func() []string
@@ -649,7 +655,7 @@ func CheckRuntime(logger *zap.Logger, config Config, version string) error {
 	return nil
 }
 
-func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, version string, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, fmCallbackHandler runtime.FmCallbackHandler, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache) (*Runtime, *RuntimeInfo, error) {
+func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, version string, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, fmCallbackHandler runtime.FmCallbackHandler, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache, webhookRegistry *WebhookRegistry) (*Runtime, *RuntimeInfo, error) {
 	runtimeConfig := config.GetRuntime()
 	startupLogger.Info("Initialising runtime", zap.String("path", runtimeConfig.Path))
 
@@ -664,7 +670,7 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 
 	matchProvider := NewMatchProvider()
 
-	goModules, goRPCFns, goBeforeRtFns, goAfterRtFns, goBeforeReqFns, goAfterReqFns, goMatchmakerMatchedFn, goMatchmakerCustomMatchingFn, goTournamentEndFn, goTournamentResetFn, goLeaderboardResetFn, goShutdownFn, goPurchaseNotificationAppleFn, goSubscriptionNotificationAppleFn, goPurchaseNotificationGoogleFn, goSubscriptionNotificationGoogleFn, goIndexFilterFns, fleetManager, allEventFns, goMatchNamesListFn, err := NewRuntimeProviderGo(ctx, logger, startupLogger, db, protojsonMarshaler, config, version, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, storageIndex, runtimeConfig.Path, paths, eventQueue, matchProvider, fmCallbackHandler, activeCache, tokenPairCache)
+	goModules, goRPCFns, goBeforeRtFns, goAfterRtFns, goBeforeReqFns, goAfterReqFns, goMatchmakerMatchedFn, goMatchmakerCustomMatchingFn, goTournamentEndFn, goTournamentResetFn, goLeaderboardResetFn, goShutdownFn, goPurchaseNotificationAppleFn, goSubscriptionNotificationAppleFn, goPurchaseNotificationGoogleFn, goSubscriptionNotificationGoogleFn, goIndexFilterFns, fleetManager, allEventFns, goMatchNamesListFn, err := NewRuntimeProviderGo(ctx, logger, startupLogger, db, protojsonMarshaler, config, version, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, storageIndex, runtimeConfig.Path, paths, eventQueue, matchProvider, fmCallbackHandler, activeCache, tokenPairCache, webhookRegistry)
 	if err != nil {
 		startupLogger.Error("Error initialising Go runtime provider", zap.Error(err))
 		return nil, nil, err
@@ -1200,10 +1206,6 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	// 	allBeforeReqFunctions.beforeLinkFacebookInstantGameFunction = luaBeforeReqFns.beforeLinkFacebookInstantGameFunction
 	// 	startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "linkfacebookinstantgame"))
 	// }
-	// if luaBeforeReqFns.beforeLinkGameCenterFunction != nil {
-	// 	allBeforeReqFunctions.beforeLinkGameCenterFunction = luaBeforeReqFns.beforeLinkGameCenterFunction
-	// 	startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "linkgamecenter"))
-	// }
 	// if luaBeforeReqFns.beforeLinkGoogleFunction != nil {
 	// 	allBeforeReqFunctions.beforeLinkGoogleFunction = luaBeforeReqFns.beforeLinkGoogleFunction
 	// 	startupLogger.Info("Registered Lua runtime Before function invocation", zap.String("id", "linkgoogle"))
@@ -1397,10 +1399,6 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if goBeforeReqFns.beforeAuthenticateFacebookInstantGameFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateFacebookInstantGameFunction = goBeforeReqFns.beforeAuthenticateFacebookInstantGameFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticatefacebookinstantgame"))
-	}
-	if goBeforeReqFns.beforeAuthenticateGameCenterFunction != nil {
-		allBeforeReqFunctions.beforeAuthenticateGameCenterFunction = goBeforeReqFns.beforeAuthenticateGameCenterFunction
-		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticategamecenter"))
 	}
 	if goBeforeReqFns.beforeAuthenticateGoogleFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateGoogleFunction = goBeforeReqFns.beforeAuthenticateGoogleFunction
@@ -1602,10 +1600,6 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		allBeforeReqFunctions.beforeUnlinkAppleFunction = goBeforeReqFns.beforeUnlinkAppleFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "unlinkapple"))
 	}
-	if goBeforeReqFns.beforeUnlinkCustomFunction != nil {
-		allBeforeReqFunctions.beforeUnlinkCustomFunction = goBeforeReqFns.beforeUnlinkCustomFunction
-		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "unlinkcustom"))
-	}
 	if goBeforeReqFns.beforeUnlinkDeviceFunction != nil {
 		allBeforeReqFunctions.beforeUnlinkDeviceFunction = goBeforeReqFns.beforeUnlinkDeviceFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "unlinkdevice"))
@@ -1806,9 +1800,6 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if allAfterReqFunctions.afterWriteLeaderboardRecordFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "writeleaderboardrecord"))
 	}
-	if allAfterReqFunctions.afterListLeaderboardRecordsAroundOwnerFunction != nil {
-		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "listleaderboardrecordsaroundowner"))
-	}
 	if allAfterReqFunctions.afterLinkAppleFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "linkapple"))
 	}
@@ -2006,10 +1997,6 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	// if luaAfterReqFns.afterListFriendsFunction != nil {
 	// 	allAfterReqFunctions.afterListFriendsFunction = luaAfterReqFns.afterListFriendsFunction
 	// 	startupLogger.Info("Registered Lua runtime After function invocation", zap.String("id", "listfriends"))
-	// }
-	// if luaAfterReqFns.afterAddFriendsFunction != nil {
-	// 	allAfterReqFunctions.afterAddFriendsFunction = luaAfterReqFns.afterAddFriendsFunction
-	// 	startupLogger.Info("Registered Lua runtime After function invocation", zap.String("id", "addfriends"))
 	// }
 	// if luaAfterReqFns.afterDeleteFriendsFunction != nil {
 	// 	allAfterReqFunctions.afterDeleteFriendsFunction = luaAfterReqFns.afterDeleteFriendsFunction
@@ -2409,10 +2396,6 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		allAfterReqFunctions.afterListUserGroupsFunction = goAfterReqFns.afterListUserGroupsFunction
 		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "listusergroups"))
 	}
-	if goAfterReqFns.afterListGroupsFunction != nil {
-		allAfterReqFunctions.afterListGroupsFunction = goAfterReqFns.afterListGroupsFunction
-		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "listgroups"))
-	}
 	if goAfterReqFns.afterDeleteLeaderboardRecordFunction != nil {
 		allAfterReqFunctions.afterDeleteLeaderboardRecordFunction = goAfterReqFns.afterDeleteLeaderboardRecordFunction
 		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "deleteleaderboardrecord"))
@@ -2775,6 +2758,8 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		fleetManager: fleetManager,
 
 		eventFunctions: allEventFns,
+
+		webhookRegistry: webhookRegistry,
 	}, rInfo, nil
 }
 

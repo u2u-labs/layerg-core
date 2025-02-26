@@ -53,9 +53,10 @@ type RuntimeGoLayerGModule struct {
 	storageIndex         StorageIndex
 	activeTokenCacheUser ActiveTokenCache
 	tokenPairCache       *TokenPairCache
+	webhookRegistry      *WebhookRegistry
 }
 
-func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache) *RuntimeGoLayerGModule {
+func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache, webhookRegistry *WebhookRegistry) *RuntimeGoLayerGModule {
 	return &RuntimeGoLayerGModule{
 		logger:               logger,
 		db:                   db,
@@ -76,6 +77,7 @@ func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler
 		storageIndex:         storageIndex,
 		activeTokenCacheUser: activeCache,
 		tokenPairCache:       tokenPairCache,
+		webhookRegistry:      webhookRegistry,
 
 		node: config.GetName(),
 
@@ -392,16 +394,6 @@ func (n *RuntimeGoLayerGModule) AuthenticateTwitter(ctx context.Context, usernam
 func (n *RuntimeGoLayerGModule) GetRequiredHeadersUA() (map[string]string, error) {
 	return GetUAAuthHeaders(n.config)
 }
-
-// @group contract
-// @summary Build a contract call request from provided contract call parameters.
-// @param params(type=ContractCallParams) The contract call parameters.
-// @return txRequest(*TransactionRequest) The built transaction request.
-// @return error(error) An optional error if building the transaction fails.
-// func (n *RuntimeGoLayerGModule) BuildContractCallRequest(ctx context.Context, params ContractCallParams) (*TransactionRequest, error) {
-// 	n.logger.Info("Building contract call request", zap.Any("params", params))
-// 	return BuildContractCallRequest(params)
-// }
 
 // @group contract
 // @summary Build a contract call request from separate base type parameters.
@@ -2431,7 +2423,7 @@ func (n *RuntimeGoLayerGModule) MultiUpdate(ctx context.Context, accountUpdates 
 // @param leaderboardID(type=string) The unique identifier for the new leaderboard. This is used by clients to submit scores.
 // @param authoritative(type=bool, default=false) Mark the leaderboard as authoritative which ensures updates can only be made via the Go runtime. No client can submit a score directly.
 // @param sortOrder(type=string, default="desc") The sort order for records in the leaderboard. Possible values are "asc" or "desc".
-// @param operator(type=string, default="best") The operator that determines how scores behave when submitted. Possible values are "best", "set", or "incr".
+// @param operator(type=string, default="best") The operator that determines how scores behave when submitted. Possible values are "best", "set", "incr", or "decr".
 // @param resetSchedule(type=string) The cron format used to define the reset schedule for the leaderboard. This controls when a leaderboard is reset and can be used to power daily/weekly/monthly leaderboards.
 // @param metadata(type=map[string]interface{}) The metadata you want associated to the leaderboard. Some good examples are weather conditions for a racing game.
 // @return error(error) An optional error value if an error occurred.
@@ -4449,7 +4441,6 @@ func (n *RuntimeGoLayerGModule) GetFleetManager() runtime.FleetManager {
 	return n.fleetManager
 }
 
-// TODO: not implemented yet
 func (n *RuntimeGoLayerGModule) RegisterWebhook(ctx context.Context, config runtime.WebhookConfig, handler runtime.WebhookHandler) error {
-	return nil
+	return n.webhookRegistry.RegisterWebhook(ctx, config, handler)
 }
