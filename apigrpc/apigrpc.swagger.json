@@ -625,6 +625,43 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "code",
+            "description": "Google info account and code, state that are used for UA callback",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "profile.displayName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "profile.avatarImageUrl",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "profile.googleId",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -765,7 +802,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/layergapiAuthenticateUA"
+              "$ref": "#/definitions/apiAuthenticateUA"
             }
           }
         ],
@@ -1570,7 +1607,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/layergapiEvent"
+              "$ref": "#/definitions/apiEvent"
             }
           }
         ],
@@ -2055,7 +2092,30 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/LayerGUpdateGroupBody"
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description string."
+                },
+                "langTag": {
+                  "type": "string",
+                  "description": "Lang tag."
+                },
+                "avatarUrl": {
+                  "type": "string",
+                  "description": "Avatar URL."
+                },
+                "open": {
+                  "type": "boolean",
+                  "description": "Open is true if anyone should be allowed to join, or false if joins must be approved by a group admin."
+                }
+              },
+              "description": "Update fields in a given group."
             }
           }
         ],
@@ -3869,32 +3929,6 @@
       },
       "description": "A single user-role pair."
     },
-    "LayerGUpdateGroupBody": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name."
-        },
-        "description": {
-          "type": "string",
-          "description": "Description string."
-        },
-        "langTag": {
-          "type": "string",
-          "description": "Lang tag."
-        },
-        "avatarUrl": {
-          "type": "string",
-          "description": "Avatar URL."
-        },
-        "open": {
-          "type": "boolean",
-          "description": "Open is true if anyone should be allowed to join, or false if joins must be approved by a group admin."
-        }
-      },
-      "description": "Update fields in a given group."
-    },
     "UserGroupListUserGroup": {
       "type": "object",
       "properties": {
@@ -4237,6 +4271,26 @@
       },
       "description": "Send a Telegram token to the server. Used with authenticate/link/unlink."
     },
+    "apiAuthenticateUA": {
+      "type": "object",
+      "properties": {
+        "jwt": {
+          "type": "string"
+        },
+        "refreshJwt": {
+          "type": "string"
+        },
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "create": {
+          "type": "boolean"
+        }
+      }
+    },
     "apiChannelMessage": {
       "type": "object",
       "properties": {
@@ -4387,6 +4441,32 @@
       },
       "description": "Batch delete storage objects."
     },
+    "apiEvent": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "An event name, type, category, or identifier."
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Arbitrary event property values."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The time when the event was triggered."
+        },
+        "external": {
+          "type": "boolean",
+          "description": "True if the event came directly from a client call, false otherwise."
+        }
+      },
+      "description": "Represents an event to be passed through the server to registered event handlers."
+    },
     "apiFriend": {
       "type": "object",
       "properties": {
@@ -4442,6 +4522,20 @@
         }
       },
       "title": "A List of friends of friends"
+    },
+    "apiGoogleProfile": {
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string"
+        },
+        "avatarImageUrl": {
+          "type": "string"
+        },
+        "googleId": {
+          "type": "string"
+        }
+      }
     },
     "apiGroup": {
       "type": "object",
@@ -5657,52 +5751,6 @@
         }
       },
       "description": "Write objects to the storage engine."
-    },
-    "layergapiAuthenticateUA": {
-      "type": "object",
-      "properties": {
-        "jwt": {
-          "type": "string"
-        },
-        "refreshJwt": {
-          "type": "string"
-        },
-        "vars": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "create": {
-          "type": "boolean"
-        }
-      }
-    },
-    "layergapiEvent": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "An event name, type, category, or identifier."
-        },
-        "properties": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Arbitrary event property values."
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The time when the event was triggered."
-        },
-        "external": {
-          "type": "boolean",
-          "description": "True if the event came directly from a client call, false otherwise."
-        }
-      },
-      "description": "Represents an event to be passed through the server to registered event handlers."
     },
     "protobufAny": {
       "type": "object",

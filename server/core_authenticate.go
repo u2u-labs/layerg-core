@@ -610,11 +610,21 @@ func RemapGoogleId(ctx context.Context, logger *zap.Logger, db *sql.DB, googlePr
 	return err
 }
 
-func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, idToken, username string, create bool) (string, string, bool, error) {
-	googleProfile, err := client.CheckGoogleToken(ctx, idToken)
-	if err != nil {
-		logger.Info("Could not authenticate Google profile.", zap.Error(err))
-		return "", "", false, status.Error(codes.Unauthenticated, "Could not authenticate Google profile.")
+func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, idToken, username string, create bool, uaInfo *GoogleLoginCallBackRequest) (string, string, *GoogleLoginCallbackResponse, bool, error) {
+	var googleProfile social.GoogleProfile
+	var err error
+	if idToken != "" {
+		googleProfile, err = client.CheckGoogleToken(ctx, idToken)
+		if err != nil {
+			logger.Info("Could not authenticate Google profile.", zap.Error(err))
+			return "", "", nil, false, status.Error(codes.Unauthenticated, "Could not authenticate Google profile.")
+		}
+	} else {
+		googleProfile = &social.GooglePlayServiceProfile{
+			PlayerId:       uaInfo.GoogleProfile.GoogleId,
+			DisplayName:    uaInfo.GoogleProfile.DisplayName,
+			AvatarImageUrl: uaInfo.GoogleProfile.AvatarImageUrl,
+		}
 	}
 	found := true
 
@@ -641,7 +651,7 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 				zap.String("googleID", googleProfile.GetGoogleId()),
 				zap.String("originalGoogleID", googleProfile.GetOriginalGoogleId()),
 				zap.String("username", username), zap.Bool("create", create))
-			return "", "", false, status.Error(codes.Internal, "Error finding user account.")
+			return "", "", nil, false, status.Error(codes.Internal, "Error finding user account.")
 		}
 	}
 
@@ -659,12 +669,21 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 		logger.Warn("Skipping updating avatar_url: value received from Google longer than max length of 512 chars.", zap.String("avatar_url", avatarURL))
 	}
 
+	data, err := GoogleLoginCallback(ctx, "", GoogleLoginCallBackRequest{
+		Code:  uaInfo.Code,
+		Error: uaInfo.Error,
+		State: uaInfo.State,
+	}, config)
+	if err != nil {
+		return "", "", nil, false, status.Error(codes.Internal, "Error request google login call back")
+	}
+
 	// Existing account found.
 	if found {
 		// Check if it's disabled.
 		if dbDisableTime.Valid && dbDisableTime.Time.Unix() != 0 {
 			logger.Info("User account is disabled.", zap.String("googleID", googleProfile.GetGoogleId()), zap.String("username", username), zap.Bool("create", create))
-			return "", "", false, status.Error(codes.PermissionDenied, "User account banned.")
+			return "", "", nil, false, status.Error(codes.PermissionDenied, "User account banned.")
 		}
 
 		// Check if the display name or avatar received from Google have values but the DB does not.
@@ -692,12 +711,19 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 			}
 		}
 
-		return dbUserID, dbUsername, false, nil
+		// Update onchain_id if it's not set
+		if data.Data.W.AAAddress != "" {
+			_, err = db.ExecContext(ctx, "UPDATE users SET onchain_id = $1 WHERE id = $2", data.Data.W.AAAddress, dbUserID)
+			if err != nil {
+				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("googleId", data.Data.User.GoogleID), zap.String("username", dbUsername))
+			}
+		}
+		return dbUserID, dbUsername, data, false, nil
 	}
 
 	if !create {
 		// No user account found, and creation is not allowed.
-		return "", "", false, status.Error(codes.NotFound, "User account not found.")
+		return "", "", nil, false, status.Error(codes.NotFound, "User account not found.")
 	}
 
 	// Create a new account.
@@ -709,20 +735,20 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
 			if strings.Contains(pgErr.Message, "users_username_key") {
 				// Username is already in use by a different account.
-				return "", "", false, status.Error(codes.AlreadyExists, "Username is already in use.")
+				return "", "", nil, false, status.Error(codes.AlreadyExists, "Username is already in use.")
 			} else if strings.Contains(pgErr.Message, "users_google_id_key") {
 				// A concurrent write has inserted this Google ID.
 				logger.Info("Did not insert new user as Google ID already exists.", zap.Error(err), zap.String("googleID", googleProfile.GetGoogleId()), zap.String("username", username), zap.Bool("create", create))
-				return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+				return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
 			}
 		}
 		logger.Error("Cannot find or create user with Google ID.", zap.Error(err), zap.String("googleID", googleProfile.GetGoogleId()), zap.String("username", username), zap.Bool("create", create))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
 	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
 		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
 	// Import email address, if it exists.
@@ -734,12 +760,12 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 				logger.Warn("Skipping google account email import as it is already set in another user.", zap.Error(err), zap.String("googleID", googleProfile.GetGoogleId()), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
 			} else {
 				logger.Error("Failed to import google account email.", zap.Error(err), zap.String("googleID", googleProfile.GetGoogleId()), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
-				return "", "", false, status.Error(codes.Internal, "Error importing google account email.")
+				return "", "", nil, false, status.Error(codes.Internal, "Error importing google account email.")
 			}
 		}
 	}
 
-	return userID, username, true, nil
+	return userID, username, data, true, nil
 }
 
 func AuthenticateSteam(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, appID int, publisherKey, token, username string, create bool) (string, string, string, bool, error) {

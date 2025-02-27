@@ -1727,7 +1727,7 @@ func (n *runtimeJavascriptLayerGModule) authenticateGoogle(r *goja.Runtime) func
 			create = getJsBool(r, f.Argument(2))
 		}
 
-		dbUserID, dbUsername, created, err := AuthenticateGoogle(n.ctx, n.logger, n.db, n.socialClient, token, username, create)
+		dbUserID, dbUsername, _, created, err := AuthenticateGoogle(n.ctx, n.logger, n.db, n.socialClient, n.config, token, username, create, nil)
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}

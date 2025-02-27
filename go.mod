@@ -127,3 +127,5 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240730163845-b1a4ccb954bf // indirect
 )
+
+replace github.com/u2u-labs/go-layerg-common => ../go-layerg-common

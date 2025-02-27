@@ -2111,7 +2111,7 @@ func (n *RuntimeLuaLayerGModule) authenticateGoogle(l *lua.LState) int {
 	// Parse create flag, if any.
 	create := l.OptBool(3, true)
 
-	dbUserID, dbUsername, created, err := AuthenticateGoogle(l.Context(), n.logger, n.db, n.socialClient, token, username, create)
+	dbUserID, dbUsername, _, created, err := AuthenticateGoogle(l.Context(), n.logger, n.db, n.socialClient, n.config, token, username, create, nil)
 	if err != nil {
 		l.RaiseError("error authenticating: %v", err.Error())
 		return 0

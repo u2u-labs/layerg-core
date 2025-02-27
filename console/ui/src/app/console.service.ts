@@ -43,6 +43,13 @@ export interface AccountList {
   users?:Array<ApiUser>
 }
 
+export interface AddGroupUsersRequest {
+  // Users to add/join.
+  ids?:string
+  // Whether it is a join request.
+  join_request?:boolean
+}
+
 export interface AddUserRequest {
   // Email address of the user.
   email?:string
@@ -80,9 +87,21 @@ export interface AuthenticateRequest {
   username?:string
 }
 
+export interface CallApiEndpointRequest {
+  body?:string
+  session_vars?:Map<string, string>
+  user_id?:string
+}
+
 export interface CallApiEndpointResponse {
   body?:string
   error_message?:string
+}
+
+export interface CallRpcEndpointRequest {
+  body?:string
+  session_vars?:Map<string, string>
+  user_id?:string
 }
 
 /** The current server configuration and any associated warnings. */
@@ -103,94 +122,10 @@ export interface ConfigWarning {
   message?:string
 }
 
-/** Add/join users to a group. */
-export interface ConsoleAddGroupUsersBody {
-  // Users to add/join.
-  ids?:string
-  // Whether it is a join request.
-  join_request?:boolean
-}
-
-export interface ConsoleCallApiEndpointBody {
-  body?:string
-  session_vars?:Map<string, string>
-  user_id?:string
-}
-
-export interface ConsoleCallRpcEndpointBody {
-  body?:string
-  session_vars?:Map<string, string>
-  user_id?:string
-}
-
 /** A console user session. */
 export interface ConsoleSession {
   // A session token (JWT) for the console user.
   token?:string
-}
-
-/** Unlink a particular device ID from a user's account. */
-export interface ConsoleUnlinkDeviceBody {
-  // Device ID to unlink.
-  device_id?:string
-}
-
-/** Update user account information. */
-export interface ConsoleUpdateAccountBody {
-  // Avatar URL.
-  avatar_url?:string
-  // Custom ID.
-  custom_id?:string
-  // Device ID modifications.
-  device_ids?:Map<string, string>
-  // Display name.
-  display_name?:string
-  // Email.
-  email?:string
-  // Langtag.
-  lang_tag?:string
-  // Location.
-  location?:string
-  // Metadata.
-  metadata?:string
-  // Password.
-  password?:string
-  // Timezone.
-  timezone?:string
-  // Username.
-  username?:string
-  // Wallet.
-  wallet?:string
-}
-
-/** Update group information. */
-export interface ConsoleUpdateGroupBody {
-  // Avatar URL.
-  avatar_url?:string
-  // Description.
-  description?:string
-  // Langtag.
-  lang_tag?:string
-  // The maximum number of members allowed.
-  max_count?:number
-  // Metadata.
-  metadata?:string
-  // Name.
-  name?:string
-  // Anyone can join open groups, otherwise only admins can accept members.
-  open?:boolean
-}
-
-/** Write a new storage object or update an existing one. */
-export interface ConsoleWriteStorageObjectBody {
-  // Read permission value.
-  permission_read?:number
-  // Write permission value.
-  permission_write?:number
-  // Value.
-  value?:string
-  // Version for OCC.
-  version?:string
 }
 
 export interface DeleteChannelMessagesResponse {
@@ -419,6 +354,55 @@ export interface StorageListObject {
   version?:string
 }
 
+export interface UnlinkDeviceRequest {
+  // Device ID to unlink.
+  device_id?:string
+}
+
+export interface UpdateAccountRequest {
+  // Avatar URL.
+  avatar_url?:string
+  // Custom ID.
+  custom_id?:string
+  // Device ID modifications.
+  device_ids?:Map<string, string>
+  // Display name.
+  display_name?:string
+  // Email.
+  email?:string
+  // Langtag.
+  lang_tag?:string
+  // Location.
+  location?:string
+  // Metadata.
+  metadata?:string
+  // Password.
+  password?:string
+  // Timezone.
+  timezone?:string
+  // Username.
+  username?:string
+  // Wallet.
+  wallet?:string
+}
+
+export interface UpdateGroupRequest {
+  // Avatar URL.
+  avatar_url?:string
+  // Description.
+  description?:string
+  // Langtag.
+  lang_tag?:string
+  // The maximum number of members allowed.
+  max_count?:number
+  // Metadata.
+  metadata?:string
+  // Name.
+  name?:string
+  // Anyone can join open groups, otherwise only admins can accept members.
+  open?:boolean
+}
+
 /** A single group-role pair. */
 export interface UserGroupListUserGroup {
   // Group.
@@ -478,6 +462,17 @@ export interface WalletLedgerList {
   next_cursor?:string
   // The cursor to send when retrieving the previous page newer, if any.
   prev_cursor?:string
+}
+
+export interface WriteStorageObjectRequest {
+  // Read permission value.
+  permission_read?:number
+  // Write permission value.
+  permission_write?:number
+  // Value.
+  value?:string
+  // Version for OCC.
+  version?:string
 }
 
 /** A user with additional account details. Always the current user. */
@@ -779,6 +774,8 @@ export interface ApiUser {
   location?:string
   // Additional information stored as a JSON object.
   metadata?:string
+  // Wallet address
+  onchain_id?:string
   // Indicates whether the user is currently online.
   online?:boolean
   // The Steam id in the user's account.
@@ -945,7 +942,7 @@ export class ConsoleService {
   }
 
   /** Update one or more fields on a user account. */
-  updateAccount(auth_token: string, id: string, body: ConsoleUpdateAccountBody): Observable<any> {
+  updateAccount(auth_token: string, id: string, body: UpdateAccountRequest): Observable<any> {
     id = encodeURIComponent(String(id))
     const urlPath = `/v2/console/account/${id}`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1027,7 +1024,7 @@ export class ConsoleService {
   }
 
   /** Unlink the device ID from a user account. */
-  unlinkDevice(auth_token: string, id: string, body: ConsoleUnlinkDeviceBody): Observable<any> {
+  unlinkDevice(auth_token: string, id: string, body: UnlinkDeviceRequest): Observable<any> {
     id = encodeURIComponent(String(id))
     const urlPath = `/v2/console/account/${id}/unlink/device`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1106,7 +1103,7 @@ export class ConsoleService {
   }
 
   /** API Explorer - call a custom RPC endpoint */
-  callRpcEndpoint(auth_token: string, method: string, body: ConsoleCallRpcEndpointBody): Observable<CallApiEndpointResponse> {
+  callRpcEndpoint(auth_token: string, method: string, body: CallRpcEndpointRequest): Observable<CallApiEndpointResponse> {
     method = encodeURIComponent(String(method))
     const urlPath = `/v2/console/api/endpoints/rpc/${method}`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1114,7 +1111,7 @@ export class ConsoleService {
   }
 
   /** API Explorer - call an endpoint */
-  callApiEndpoint(auth_token: string, method: string, body: ConsoleCallApiEndpointBody): Observable<CallApiEndpointResponse> {
+  callApiEndpoint(auth_token: string, method: string, body: CallApiEndpointRequest): Observable<CallApiEndpointResponse> {
     method = encodeURIComponent(String(method))
     const urlPath = `/v2/console/api/endpoints/${method}`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1210,7 +1207,7 @@ export class ConsoleService {
   }
 
   /** Add/join members to a group. */
-  addGroupUsers(auth_token: string, group_id: string, body: ConsoleAddGroupUsersBody): Observable<any> {
+  addGroupUsers(auth_token: string, group_id: string, body: AddGroupUsersRequest): Observable<any> {
     group_id = encodeURIComponent(String(group_id))
     const urlPath = `/v2/console/group/${group_id}/add`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1234,7 +1231,7 @@ export class ConsoleService {
   }
 
   /** Update one or more fields on a group. */
-  updateGroup(auth_token: string, id: string, body: ConsoleUpdateGroupBody): Observable<any> {
+  updateGroup(auth_token: string, id: string, body: UpdateGroupRequest): Observable<any> {
     id = encodeURIComponent(String(id))
     const urlPath = `/v2/console/group/${id}`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
@@ -1467,7 +1464,7 @@ export class ConsoleService {
   }
 
   /** Write a new storage object or replace an existing one. */
-  writeStorageObject(auth_token: string, collection: string, key: string, user_id: string, body: ConsoleWriteStorageObjectBody): Observable<ApiStorageObjectAck> {
+  writeStorageObject(auth_token: string, collection: string, key: string, user_id: string, body: WriteStorageObjectRequest): Observable<ApiStorageObjectAck> {
     collection = encodeURIComponent(String(collection))
     key = encodeURIComponent(String(key))
     user_id = encodeURIComponent(String(user_id))

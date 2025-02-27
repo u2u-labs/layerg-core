@@ -965,7 +965,7 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 		}
 	}
 
-	if in.Account == nil || in.Account.Token == "" {
+	if in.Account == nil || (in.Account.Token == "" && in.Code == "") {
 		return nil, status.Error(codes.InvalidArgument, "Google access token is required.")
 	}
 
@@ -980,7 +980,21 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 
 	create := in.Create == nil || in.Create.Value
 
-	dbUserID, dbUsername, created, err := AuthenticateGoogle(ctx, s.logger, s.db, s.socialClient, in.Account.Token, username, create)
+	uaInfo := &GoogleLoginCallBackRequest{
+		Code:  in.Code,
+		Error: in.Error,
+		State: in.State,
+		GoogleProfile: struct {
+			DisplayName    string `json:"displayName"`
+			AvatarImageUrl string `json:"avatarImageUrl"`
+			GoogleId       string `json:"googleId"`
+		}{
+			DisplayName:    in.Profile.DisplayName,
+			AvatarImageUrl: in.Profile.AvatarImageUrl,
+			GoogleId:       in.Profile.GoogleId,
+		},
+	}
+	dbUserID, dbUsername, uaTokens, created, err := AuthenticateGoogle(ctx, s.logger, s.db, s.socialClient, s.config, in.Account.Token, username, create, uaInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -989,11 +1003,13 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
 	}
 
+	// Store both native and UA tokens in the caches
 	tokenID := uuid.Must(uuid.NewV4()).String()
 	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
 	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	s.tokenPairCache.Add(dbUserID, uaTokens.Data.AccessToken, uaTokens.Data.RefreshToken, uaTokens.Data.AccessTokenExpire, uaTokens.Data.RefreshTokenExpire)
 
 	// After hook.
 	if fn := s.runtime.AfterAuthenticateGoogle(); fn != nil {

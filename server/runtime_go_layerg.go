@@ -352,7 +352,8 @@ func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, u
 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
 	}
 
-	return AuthenticateGoogle(ctx, n.logger, n.db, n.socialClient, token, username, create)
+	dbUserID, token, _, created, err := AuthenticateGoogle(ctx, n.logger, n.db, n.socialClient, n.config, token, username, create, nil)
+	return dbUserID, token, created, err
 }
 
 // @group contract
