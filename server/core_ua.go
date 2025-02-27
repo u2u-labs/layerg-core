@@ -189,6 +189,7 @@ type GoogleLoginCallBackRequest struct {
 		DisplayName    string `json:"displayName"`
 		AvatarImageUrl string `json:"avatarImageUrl"`
 		GoogleId       string `json:"googleId"`
+		Email          string `json:"email"`
 	} `json:"googleProfile"`
 }
 

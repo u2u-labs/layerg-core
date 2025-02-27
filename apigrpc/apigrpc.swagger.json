@@ -662,6 +662,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "profile.email",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -4533,6 +4539,9 @@
           "type": "string"
         },
         "googleId": {
+          "type": "string"
+        },
+        "email": {
           "type": "string"
         }
       }

@@ -988,10 +988,12 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 			DisplayName    string `json:"displayName"`
 			AvatarImageUrl string `json:"avatarImageUrl"`
 			GoogleId       string `json:"googleId"`
+			Email          string `json:"email"`
 		}{
 			DisplayName:    in.Profile.DisplayName,
 			AvatarImageUrl: in.Profile.AvatarImageUrl,
 			GoogleId:       in.Profile.GoogleId,
+			Email:          in.Profile.Email,
 		},
 	}
 	dbUserID, dbUsername, uaTokens, created, err := AuthenticateGoogle(ctx, s.logger, s.db, s.socialClient, s.config, in.Account.Token, username, create, uaInfo)
