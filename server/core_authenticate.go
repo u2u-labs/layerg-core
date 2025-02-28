@@ -613,6 +613,7 @@ func RemapGoogleId(ctx context.Context, logger *zap.Logger, db *sql.DB, googlePr
 func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, idToken, username string, create bool, uaInfo *GoogleLoginCallBackRequest) (string, string, *GoogleLoginCallbackResponse, bool, error) {
 	var googleProfile social.GoogleProfile
 	var err error
+	var data *GoogleLoginCallbackResponse
 	if idToken != "" {
 		googleProfile, err = client.CheckGoogleToken(ctx, idToken)
 		if err != nil {
@@ -620,10 +621,20 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 			return "", "", nil, false, status.Error(codes.Unauthenticated, "Could not authenticate Google profile.")
 		}
 	} else {
+		// get google profile from ua callback
+		data, err = GoogleLoginCallback(ctx, "", GoogleLoginCallBackRequest{
+			Code:  uaInfo.Code,
+			Error: uaInfo.Error,
+			State: uaInfo.State,
+		}, config)
+		if err != nil {
+			return "", "", nil, false, status.Error(codes.Internal, "Error request google login call back")
+		}
+
 		googleProfile = &social.GooglePlayServiceProfile{
-			PlayerId:       uaInfo.GoogleProfile.GoogleId,
-			DisplayName:    uaInfo.GoogleProfile.DisplayName,
-			AvatarImageUrl: uaInfo.GoogleProfile.AvatarImageUrl,
+			PlayerId:       data.Data.User.GoogleID,
+			DisplayName:    data.Data.User.GoogleFirstName + " " + data.Data.User.GoogleLastName,
+			AvatarImageUrl: data.Data.User.GoogleAvatarURL,
 		}
 	}
 	found := true
@@ -669,15 +680,6 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 		logger.Warn("Skipping updating avatar_url: value received from Google longer than max length of 512 chars.", zap.String("avatar_url", avatarURL))
 	}
 
-	data, err := GoogleLoginCallback(ctx, "", GoogleLoginCallBackRequest{
-		Code:  uaInfo.Code,
-		Error: uaInfo.Error,
-		State: uaInfo.State,
-	}, config)
-	if err != nil {
-		return "", "", nil, false, status.Error(codes.Internal, "Error request google login call back")
-	}
-
 	// Existing account found.
 	if found {
 		// Check if it's disabled.
@@ -712,7 +714,7 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 		}
 
 		// Update onchain_id if it's not set
-		if data.Data.W.AAAddress != "" {
+		if data != nil && data.Data.W.AAAddress != "" {
 			_, err = db.ExecContext(ctx, "UPDATE users SET onchain_id = $1 WHERE id = $2", data.Data.W.AAAddress, dbUserID)
 			if err != nil {
 				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("googleId", data.Data.User.GoogleID), zap.String("username", dbUsername))
@@ -752,8 +754,13 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 	}
 
 	// Import email address, if it exists.
-	if googleProfile.GetEmail() != "" {
-		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", googleProfile.GetEmail(), userID)
+	if googleProfile.GetEmail() != "" || (data != nil && data.Data.User.GoogleEmail != "") {
+		email := googleProfile.GetEmail()
+		if data != nil && data.Data.User.GoogleEmail != "" {
+			email = data.Data.User.GoogleEmail
+		}
+
+		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", email, userID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {

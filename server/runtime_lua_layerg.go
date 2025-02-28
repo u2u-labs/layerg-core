@@ -300,6 +300,7 @@ func (n *RuntimeLuaLayerGModule) Loader(l *lua.LState) int {
 		"channel_id_build":                          n.channelIdBuild,
 		"storage_index_list":                        n.storageIndexList,
 		"get_satori":                                n.getSatori,
+		"get_required_headers_ua":                   n.getRequiredHeadersUA,
 	}
 
 	mod := l.SetFuncs(l.CreateTable(0, len(functions)), functions)
@@ -10791,4 +10792,18 @@ func RuntimeLuaConvertLuaTableString(vars *lua.LTable) (map[string]string, error
 		}
 	}
 	return varsMap, nil
+}
+
+func (n *RuntimeLuaLayerGModule) getRequiredHeadersUA(l *lua.LState) int {
+	headers, err := GetUAAuthHeaders(n.config)
+	if err != nil {
+		l.RaiseError("failed to get required headers: %v", err.Error())
+		return 0
+	}
+	for k, v := range headers {
+		l.Push(lua.LString(k))
+		l.Push(lua.LString(v))
+	}
+
+	return 1
 }

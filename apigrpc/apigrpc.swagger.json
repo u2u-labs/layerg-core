@@ -644,30 +644,6 @@
             "in": "query",
             "required": false,
             "type": "string"
-          },
-          {
-            "name": "profile.displayName",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "profile.avatarImageUrl",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "profile.googleId",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "profile.email",
-            "in": "query",
-            "required": false,
-            "type": "string"
           }
         ],
         "tags": [
@@ -4485,23 +4461,6 @@
         }
       },
       "title": "A List of friends of friends"
-    },
-    "apiGoogleProfile": {
-      "type": "object",
-      "properties": {
-        "displayName": {
-          "type": "string"
-        },
-        "avatarImageUrl": {
-          "type": "string"
-        },
-        "googleId": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        }
-      }
     },
     "apiGroup": {
       "type": "object",

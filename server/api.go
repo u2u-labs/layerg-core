@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net"
@@ -220,6 +221,7 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 	// Special case routes. Do NOT enable compression on WebSocket route, it results in "http: response.Write on hijacked connection" errors.
 	grpcGatewayRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) }).Methods("GET")
 	grpcGatewayRouter.HandleFunc("/ws", NewSocketWsAcceptor(logger, config, sessionRegistry, sessionCache, statusRegistry, matchmaker, tracker, metrics, runtime, protojsonMarshaler, protojsonUnmarshaler, pipeline)).Methods("GET")
+	grpcGatewayRouter.HandleFunc("/ua-headers", GetUAHeadersHandler(config)).Methods("GET")
 
 	// Another nested router to hijack RPC requests bound for GRPC Gateway.
 	grpcGatewayMux := mux.NewRouter()
@@ -716,4 +718,25 @@ func handleRoutingError(ctx context.Context, mux *grpcgw.ServeMux, marshaler grp
 
 	// Set empty ServerMetadata to prevent logging error on nil metadata.
 	grpcgw.DefaultHTTPErrorHandler(grpcgw.NewServerMetadataContext(ctx, grpcgw.ServerMetadata{}), mux, marshaler, w, r, sterr)
+}
+
+func GetUAHeadersHandler(config Config) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		headers, err := GetUAAuthHeaders(config)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		headersBytes, err := json.Marshal(headers)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(200)
+		w.Write(headersBytes)
+	}
 }

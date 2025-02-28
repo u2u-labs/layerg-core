@@ -182,15 +182,9 @@ func GetUAAuthHeaders(config Config) (map[string]string, error) {
 }
 
 type GoogleLoginCallBackRequest struct {
-	Code          string `json:"code"`
-	Error         string `json:"error,omitempty"`
-	State         string `json:"state"`
-	GoogleProfile struct {
-		DisplayName    string `json:"displayName"`
-		AvatarImageUrl string `json:"avatarImageUrl"`
-		GoogleId       string `json:"googleId"`
-		Email          string `json:"email"`
-	} `json:"googleProfile"`
+	Code  string `json:"code"`
+	Error string `json:"error,omitempty"`
+	State string `json:"state"`
 }
 
 type GoogleLoginCallbackResponse struct {
@@ -247,4 +241,12 @@ func GoogleLoginCallback(ctx context.Context, token string, request GoogleLoginC
 	}
 
 	return &response, nil
+}
+
+func NewGoogleLoginCallBackRequest(code, errorStr, state string) *GoogleLoginCallBackRequest {
+	return &GoogleLoginCallBackRequest{
+		Code:  code,
+		Error: errorStr,
+		State: state,
+	}
 }
