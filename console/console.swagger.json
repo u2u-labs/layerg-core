@@ -4142,6 +4142,10 @@
         "apple_id": {
           "type": "string",
           "description": "The Apple Sign In ID in the user's account."
+        },
+        "onchain_id": {
+          "type": "string",
+          "title": "Wallet address"
         }
       },
       "description": "A user in the server."

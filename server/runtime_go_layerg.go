@@ -335,11 +335,14 @@ func (n *RuntimeGoLayerGModule) AuthenticateGameCenter(ctx context.Context, play
 // @param token(type=string) Google OAuth access token.
 // @param username(type=string) The user's username. If left empty, one is generated.
 // @param create(type=bool) Create user if one didn't exist previously.
+// @param code(type=string) The code returned from the Google OAuth flow.
+// @param state(type=string) The state returned from the Google OAuth flow.
+// @param errStr(type=string) The error string returned from the Google OAuth flow.
 // @return userID(string) The user ID of the authenticated user.
 // @return username(string) The username of the authenticated user.
 // @return create(bool) Value indicating if this account was just created or already existed.
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, username string, create bool) (string, string, bool, error) {
+func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, username string, create bool, code, state, errStr string) (string, string, bool, error) {
 	if token == "" {
 		return "", "", false, errors.New("expects ID token string")
 	}
@@ -352,7 +355,16 @@ func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, u
 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
 	}
 
-	return AuthenticateGoogle(ctx, n.logger, n.db, n.socialClient, token, username, create)
+	uaInfo := NewGoogleLoginCallBackRequest(code, errStr, state)
+	dbUserID, token, _, created, err := AuthenticateGoogle(ctx, n.logger, n.db, n.socialClient, n.config, token, username, create, uaInfo)
+	return dbUserID, token, created, err
+}
+
+// @group metadata
+// @summary required headers for UA requests
+// @return map[string]string headers
+func (n *RuntimeGoLayerGModule) GetRequiredHeadersUA() (map[string]string, error) {
+	return GetUAAuthHeaders(n.config)
 }
 
 // @group contract

@@ -625,6 +625,25 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "code",
+            "description": "Google info account and code, state that are used for UA callback",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

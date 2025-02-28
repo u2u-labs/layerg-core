@@ -292,6 +292,7 @@ func (n *runtimeJavascriptLayerGModule) mappings(r *goja.Runtime) map[string]fun
 		"binaryToString":                       n.binaryToString(r),
 		"stringToBinary":                       n.stringToBinary(r),
 		"storageIndexList":                     n.storageIndexList(r),
+		"getRequiredHeadersUA":                 n.getRequiredHeadersUA(r),
 	}
 }
 
@@ -413,6 +414,17 @@ func (n *runtimeJavascriptLayerGModule) storageIndexList(r *goja.Runtime) func(g
 		}
 
 		return r.ToValue(objects)
+	}
+}
+
+func (n *runtimeJavascriptLayerGModule) getRequiredHeadersUA(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		headers, err := GetUAAuthHeaders(n.config)
+		if err != nil {
+			panic(r.NewGoError(fmt.Errorf("failed to get required headers: %s", err.Error())))
+		}
+
+		return r.ToValue(headers)
 	}
 }
 
@@ -1705,9 +1717,6 @@ func (n *runtimeJavascriptLayerGModule) authenticateGameCenter(r *goja.Runtime) 
 func (n *runtimeJavascriptLayerGModule) authenticateGoogle(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return func(f goja.FunctionCall) goja.Value {
 		token := getJsString(r, f.Argument(0))
-		if token == "" {
-			panic(r.NewTypeError("expects ID token string"))
-		}
 
 		username := ""
 		if f.Argument(1) != goja.Undefined() {
@@ -1726,8 +1735,26 @@ func (n *runtimeJavascriptLayerGModule) authenticateGoogle(r *goja.Runtime) func
 		if f.Argument(2) != goja.Undefined() {
 			create = getJsBool(r, f.Argument(2))
 		}
+		code := ""
+		if f.Argument(3) != goja.Undefined() {
+			code = getJsString(r, f.Argument(3))
+		}
+		if token == "" && code == "" {
+			panic(r.NewTypeError("expects ID token string"))
+		}
 
-		dbUserID, dbUsername, created, err := AuthenticateGoogle(n.ctx, n.logger, n.db, n.socialClient, token, username, create)
+		errStr := ""
+		if f.Argument(4) != goja.Undefined() {
+			errStr = getJsString(r, f.Argument(4))
+		}
+
+		state := ""
+		if f.Argument(5) != goja.Undefined() {
+			state = getJsString(r, f.Argument(5))
+		}
+		uaInfo := NewGoogleLoginCallBackRequest(code, errStr, state)
+
+		dbUserID, dbUsername, _, created, err := AuthenticateGoogle(n.ctx, n.logger, n.db, n.socialClient, n.config, token, username, create, uaInfo)
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}

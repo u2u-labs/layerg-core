@@ -779,6 +779,8 @@ export interface ApiUser {
   location?:string
   // Additional information stored as a JSON object.
   metadata?:string
+  // Wallet address
+  onchain_id?:string
   // Indicates whether the user is currently online.
   online?:boolean
   // The Steam id in the user's account.

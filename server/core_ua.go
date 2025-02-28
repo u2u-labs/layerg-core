@@ -180,3 +180,73 @@ func GetUAAuthHeaders(config Config) (map[string]string, error) {
 	}
 	return headers, nil
 }
+
+type GoogleLoginCallBackRequest struct {
+	Code  string `json:"code"`
+	Error string `json:"error,omitempty"`
+	State string `json:"state"`
+}
+
+type GoogleLoginCallbackResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Data    struct {
+		User struct {
+			Type                string    `json:"type"`
+			APIKey              string    `json:"apiKey"`
+			EOAWallet           string    `json:"eoaWallet"`
+			EncryptedPrivateKey string    `json:"encryptedPrivateKey"`
+			GoogleID            string    `json:"googleId"`
+			GoogleEmail         string    `json:"googleEmail"`
+			GoogleFirstName     string    `json:"googleFirstName"`
+			GoogleLastName      string    `json:"googleLastName"`
+			GoogleAvatarURL     string    `json:"googleAvatarUrl"`
+			AAWallets           []string  `json:"aaWallets"`
+			DeveloperKeys       []string  `json:"developerKeys"`
+			ID                  string    `json:"id"`
+			CreatedAt           time.Time `json:"createdAt"`
+			UpdatedAt           time.Time `json:"updatedAt"`
+		} `json:"user"`
+		W struct {
+			AAAddress      string    `json:"aaAddress"`
+			OwnerAddress   string    `json:"ownerAddress"`
+			FactoryAddress string    `json:"factoryAddress"`
+			UserID         string    `json:"userId"`
+			ID             string    `json:"id"`
+			CreatedAt      time.Time `json:"createdAt"`
+			UpdatedAt      time.Time `json:"updatedAt"`
+		} `json:"w"`
+		RefreshToken       string `json:"refreshToken"`
+		RefreshTokenExpire int64  `json:"refreshTokenExpire"`
+		AccessToken        string `json:"accessToken"`
+		AccessTokenExpire  int64  `json:"accessTokenExpire"`
+		UserID             string `json:"userId"`
+		APIKey             string `json:"apiKey"`
+	} `json:"data"`
+}
+
+func GoogleLoginCallback(ctx context.Context, token string, request GoogleLoginCallBackRequest, config Config) (*GoogleLoginCallbackResponse, error) {
+	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
+	endpoint := baseUrl + "/auth/google/callback"
+
+	headers, err := GetUAAuthHeaders(config)
+	if err != nil {
+		return nil, err
+	}
+
+	var response GoogleLoginCallbackResponse
+	err = http.POST(ctx, endpoint, token, "", headers, request, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send google login callback: %w", err)
+	}
+
+	return &response, nil
+}
+
+func NewGoogleLoginCallBackRequest(code, errorStr, state string) *GoogleLoginCallBackRequest {
+	return &GoogleLoginCallBackRequest{
+		Code:  code,
+		Error: errorStr,
+		State: state,
+	}
+}
