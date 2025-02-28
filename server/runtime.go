@@ -1400,6 +1400,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		allBeforeReqFunctions.beforeAuthenticateFacebookInstantGameFunction = goBeforeReqFns.beforeAuthenticateFacebookInstantGameFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticatefacebookinstantgame"))
 	}
+	if goBeforeReqFns.beforeAuthenticateGameCenterFunction != nil {
+		allBeforeReqFunctions.beforeAuthenticateGameCenterFunction = goBeforeReqFns.beforeAuthenticateGameCenterFunction
+		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticategamecenter"))
+	}
 	if goBeforeReqFns.beforeAuthenticateGoogleFunction != nil {
 		allBeforeReqFunctions.beforeAuthenticateGoogleFunction = goBeforeReqFns.beforeAuthenticateGoogleFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticategoogle"))
@@ -1600,6 +1604,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		allBeforeReqFunctions.beforeUnlinkAppleFunction = goBeforeReqFns.beforeUnlinkAppleFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "unlinkapple"))
 	}
+	if goBeforeReqFns.beforeUnlinkCustomFunction != nil {
+		allBeforeReqFunctions.beforeUnlinkCustomFunction = goBeforeReqFns.beforeUnlinkCustomFunction
+		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "unlinkcustom"))
+	}
 	if goBeforeReqFns.beforeUnlinkDeviceFunction != nil {
 		allBeforeReqFunctions.beforeUnlinkDeviceFunction = goBeforeReqFns.beforeUnlinkDeviceFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "unlinkdevice"))
@@ -1799,6 +1807,9 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	}
 	if allAfterReqFunctions.afterWriteLeaderboardRecordFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "writeleaderboardrecord"))
+	}
+	if allAfterReqFunctions.afterListLeaderboardRecordsAroundOwnerFunction != nil {
+		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "listleaderboardrecordsaroundowner"))
 	}
 	if allAfterReqFunctions.afterLinkAppleFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "linkapple"))
@@ -2395,6 +2406,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if goAfterReqFns.afterListUserGroupsFunction != nil {
 		allAfterReqFunctions.afterListUserGroupsFunction = goAfterReqFns.afterListUserGroupsFunction
 		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "listusergroups"))
+	}
+	if goAfterReqFns.afterListGroupsFunction != nil {
+		allAfterReqFunctions.afterListGroupsFunction = goAfterReqFns.afterListGroupsFunction
+		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "listgroups"))
 	}
 	if goAfterReqFns.afterDeleteLeaderboardRecordFunction != nil {
 		allAfterReqFunctions.afterDeleteLeaderboardRecordFunction = goAfterReqFns.afterDeleteLeaderboardRecordFunction
