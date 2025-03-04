@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"net/url"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -46,4 +47,13 @@ func BuildContractCallRequest(p runtime.ContractCallParams) (*runtime.Transactio
 // ptr is a helper function to return a pointer to a string
 func ptr[T any](v T) *T {
 	return &v
+}
+
+func decodeURIToken(encoded string) (string, error) {
+	uriDecoded, err := url.QueryUnescape(encoded)
+	if err != nil {
+		return "", fmt.Errorf("URI decode failed: %v", err)
+	}
+
+	return uriDecoded, nil
 }

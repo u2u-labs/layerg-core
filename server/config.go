@@ -1194,7 +1194,7 @@ func NewLayerGCore() *LayerGCoreConfig {
 		UAApiKey:            "sys-dev-api-key",
 		UAPublicApiKey:      "7c581609293E503dE149d93f34767DFF33d32C16",
 		UAPrivateApiKey:     "c194c2a77814de98c486836da3ae6747769ed6e6064186f2943b33f25dba284c",
-		UADomain:            "http://localhost:7351",
+		UADomain:            "http://localhost:7350",
 	}
 }
 func NewRedisDb() *RedisConfig {

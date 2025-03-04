@@ -316,6 +316,22 @@ service LayerG {
     };
   }
 
+  // Authenticate a user with Twitter against the server.
+  rpc AuthenticateTwitter (api.AuthenticateTwitterRequest) returns (api.Session) {
+    option (google.api.http) = {
+      post: "/v2/account/authenticate/twitter",
+      body: "account"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      security: {
+        security_requirement: {
+          key: "BasicAuth";
+          value: {};
+        }
+      }
+    };
+  }
+
   // Ban a set of users from a group.
   rpc BanGroupUsers (api.BanGroupUsersRequest) returns (google.protobuf.Empty) {
     option (google.api.http).post = "/v2/group/{group_id}/ban";

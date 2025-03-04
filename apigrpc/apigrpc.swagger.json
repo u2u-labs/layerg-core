@@ -761,6 +761,78 @@
         ]
       }
     },
+    "/v2/account/authenticate/twitter": {
+      "post": {
+        "summary": "Authenticate a user with Twitter against the server.",
+        "operationId": "LayerG_AuthenticateTwitter",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiSession"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "account",
+            "description": "The Twitter account details.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiAccountTwitter"
+            }
+          },
+          {
+            "name": "create",
+            "description": "Register the account if the user does not already exist.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "username",
+            "description": "Set the username on the account at register. Must be unique.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "code",
+            "description": "Twitter info account and code, state that are used for UA callback",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LayerG"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/v2/account/authenticate/ua": {
       "post": {
         "operationId": "LayerG_AuthenticateUA",
@@ -4255,6 +4327,19 @@
         }
       },
       "description": "Send a Telegram token to the server. Used with authenticate/link/unlink."
+    },
+    "apiAccountTwitter": {
+      "type": "object",
+      "properties": {
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Extra information that will be bundled in the session token."
+        }
+      },
+      "description": "Send a Twitter token to the server. Used with authenticate/link/unlink."
     },
     "apiChannelMessage": {
       "type": "object",

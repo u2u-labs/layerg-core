@@ -168,6 +168,7 @@ func (n *runtimeJavascriptLayerGModule) mappings(r *goja.Runtime) map[string]fun
 		"authenticateGoogle":                   n.authenticateGoogle(r),
 		"authenticateTelegram":                 n.authenticateTelegram(r),
 		"authenticateSteam":                    n.authenticateSteam(r),
+		"authenticateTwitter":                  n.authenticateTwitter(r),
 		"authenticateTokenGenerate":            n.authenticateTokenGenerate(r),
 		"accountGetId":                         n.accountGetId(r),
 		"accountsGetId":                        n.accountsGetId(r),
@@ -1828,6 +1829,7 @@ func (n *runtimeJavascriptLayerGModule) authenticateTelegram(r *goja.Runtime) fu
 		})
 	}
 }
+
 func (n *runtimeJavascriptLayerGModule) sendTelegramAuthOTP(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return func(f goja.FunctionCall) goja.Value {
 		telegramId := getJsString(r, f.Argument(0))
@@ -1897,6 +1899,65 @@ func (n *runtimeJavascriptLayerGModule) authenticateSteam(r *goja.Runtime) func(
 		if importFriends {
 			// Errors are logged before this point and failure here does not invalidate the whole operation.
 			_ = importSteamFriends(n.ctx, n.logger, n.db, n.tracker, n.router, n.socialClient, uuid.FromStringOrNil(dbUserID), dbUsername, n.config.GetSocial().Steam.PublisherKey, steamID, false)
+		}
+
+		return r.ToValue(map[string]interface{}{
+			"userId":   dbUserID,
+			"username": dbUsername,
+			"created":  created,
+		})
+	}
+}
+
+// @group authenticate
+// @summary Authenticate user and create a session token using a UA code.
+// @param username(type=string, optional=true) The user's username. If left empty, one is generated.
+// @param create(type=bool, optional=true, default=true) Create user if one didn't exist previously.
+// @return userID(string) The user ID of the authenticated user.
+// @return username(string) The username of the authenticated user.
+// @return create(bool) Value indicating if this account was just created or already existed.
+// @return error(error) An optional error value if an error occurred.
+func (n *runtimeJavascriptLayerGModule) authenticateTwitter(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		username := ""
+		if f.Argument(1) != goja.Undefined() {
+			username = getJsString(r, f.Argument(0))
+		}
+
+		if username == "" {
+			username = generateUsername()
+		} else if invalidUsernameRegex.MatchString(username) {
+			panic(r.NewTypeError("expects username to be valid, no spaces or control characters allowed"))
+		} else if len(username) > 128 {
+			panic(r.NewTypeError("expects id to be valid, must be 1-128 bytes"))
+		}
+
+		create := true
+		if f.Argument(1) != goja.Undefined() {
+			create = getJsBool(r, f.Argument(1))
+		}
+		code := ""
+		if f.Argument(2) != goja.Undefined() {
+			code = getJsString(r, f.Argument(2))
+		}
+		if code == "" {
+			panic(r.NewTypeError("expects ID token string"))
+		}
+
+		state := ""
+		if f.Argument(3) != goja.Undefined() {
+			state = getJsString(r, f.Argument(3))
+		}
+
+		errStr := ""
+		if f.Argument(4) != goja.Undefined() {
+			errStr = getJsString(r, f.Argument(4))
+		}
+		uaInfo := NewGoogleLoginCallBackRequest(code, errStr, state)
+
+		dbUserID, dbUsername, _, created, err := AuthenticateTwitter(n.ctx, n.logger, n.db, n.socialClient, n.config, username, create, uaInfo)
+		if err != nil {
+			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}
 
 		return r.ToValue(map[string]interface{}{

@@ -71,6 +71,8 @@ type (
 	RuntimeAfterAuthenticateEvmFunction                    func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateEvmRequest) error
 	RuntimeBeforeAuthenticateSteamFunction                 func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateSteamRequest) (*api.AuthenticateSteamRequest, error, codes.Code)
 	RuntimeAfterAuthenticateSteamFunction                  func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateSteamRequest) error
+	RuntimeBeforeAuthenticateTwitterFunction               func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateTwitterRequest) (*api.AuthenticateTwitterRequest, error, codes.Code)
+	RuntimeAfterAuthenticateTwitterFunction                func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateTwitterRequest) error
 	RuntimeBeforeListChannelMessagesFunction               func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.ListChannelMessagesRequest) (*api.ListChannelMessagesRequest, error, codes.Code)
 	RuntimeAfterListChannelMessagesFunction                func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.ChannelMessageList, in *api.ListChannelMessagesRequest) error
 	RuntimeBeforeListFriendsFunction                       func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.ListFriendsRequest) (*api.ListFriendsRequest, error, codes.Code)
@@ -355,6 +357,7 @@ type RuntimeBeforeReqFunctions struct {
 	beforeAuthenticateTelegramFunction              RuntimeBeforeAuthenticateTelegramFunction
 	beforeAuthenticateUAFunction                    RuntimeBeforeAuthenticateUAFunction
 	beforeAuthenticateSteamFunction                 RuntimeBeforeAuthenticateSteamFunction
+	beforeAuthenticateTwitterFunction               RuntimeBeforeAuthenticateTwitterFunction
 	beforeListChannelMessagesFunction               RuntimeBeforeListChannelMessagesFunction
 	beforeListFriendsFunction                       RuntimeBeforeListFriendsFunction
 	beforeListFriendsOfFriendsFunction              RuntimeBeforeListFriendsOfFriendsFunction
@@ -443,6 +446,7 @@ type RuntimeAfterReqFunctions struct {
 	afterAuthenticateUAFunction                    RuntimeAfterAuthenticateUAFunction
 	afterAuthenticateEvmFunction                   RuntimeAfterAuthenticateEvmFunction
 	afterAuthenticateSteamFunction                 RuntimeAfterAuthenticateSteamFunction
+	afterAuthenticateTwitterFunction               RuntimeAfterAuthenticateTwitterFunction
 	afterListChannelMessagesFunction               RuntimeAfterListChannelMessagesFunction
 	afterListFriendsFunction                       RuntimeAfterListFriendsFunction
 	afterListFriendsOfFriendsFunction              RuntimeAfterListFriendsOfFriendsFunction
@@ -800,6 +804,9 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	}
 	if allBeforeReqFunctions.beforeAuthenticateSteamFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticatesteam"))
+	}
+	if allBeforeReqFunctions.beforeAuthenticateTwitterFunction != nil {
+		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "authenticatetwitter"))
 	}
 	if allBeforeReqFunctions.beforeListChannelMessagesFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime Before function invocation", zap.String("id", "listchannelmessages"))
@@ -1403,6 +1410,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 		allBeforeReqFunctions.beforeAuthenticateSteamFunction = goBeforeReqFns.beforeAuthenticateSteamFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticatesteam"))
 	}
+	if goBeforeReqFns.beforeAuthenticateTwitterFunction != nil {
+		allBeforeReqFunctions.beforeAuthenticateTwitterFunction = goBeforeReqFns.beforeAuthenticateTwitterFunction
+		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "authenticatetwitter"))
+	}
 	if goBeforeReqFns.beforeListChannelMessagesFunction != nil {
 		allBeforeReqFunctions.beforeListChannelMessagesFunction = goBeforeReqFns.beforeListChannelMessagesFunction
 		startupLogger.Info("Registered Go runtime Before function invocation", zap.String("id", "listchannelmessages"))
@@ -1719,6 +1730,9 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	}
 	if allAfterReqFunctions.afterAuthenticateSteamFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticatesteam"))
+	}
+	if allAfterReqFunctions.afterAuthenticateTwitterFunction != nil {
+		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "authenticatetwitter"))
 	}
 	if allAfterReqFunctions.afterListChannelMessagesFunction != nil {
 		startupLogger.Info("Registered JavaScript runtime After function invocation", zap.String("id", "listchannelmessages"))
@@ -2310,6 +2324,10 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	if goAfterReqFns.afterAuthenticateSteamFunction != nil {
 		allAfterReqFunctions.afterAuthenticateSteamFunction = goAfterReqFns.afterAuthenticateSteamFunction
 		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "authenticatesteam"))
+	}
+	if goAfterReqFns.afterAuthenticateTwitterFunction != nil {
+		allAfterReqFunctions.afterAuthenticateTwitterFunction = goAfterReqFns.afterAuthenticateTwitterFunction
+		startupLogger.Info("Registered Go runtime After function invocation", zap.String("id", "authenticatetwitter"))
 	}
 	if goAfterReqFns.afterListChannelMessagesFunction != nil {
 		allAfterReqFunctions.afterListChannelMessagesFunction = goAfterReqFns.afterListChannelMessagesFunction
@@ -2982,6 +3000,14 @@ func (r *Runtime) BeforeAuthenticateSteam() RuntimeBeforeAuthenticateSteamFuncti
 
 func (r *Runtime) AfterAuthenticateSteam() RuntimeAfterAuthenticateSteamFunction {
 	return r.afterReqFunctions.afterAuthenticateSteamFunction
+}
+
+func (r *Runtime) BeforeAuthenticateTwitter() RuntimeBeforeAuthenticateTwitterFunction {
+	return r.beforeReqFunctions.beforeAuthenticateTwitterFunction
+}
+
+func (r *Runtime) AfterAuthenticateTwitter() RuntimeAfterAuthenticateTwitterFunction {
+	return r.afterReqFunctions.afterAuthenticateTwitterFunction
 }
 
 func (r *Runtime) BeforeListChannelMessages() RuntimeBeforeListChannelMessagesFunction {
