@@ -1753,7 +1753,7 @@ func (n *runtimeJavascriptLayerGModule) authenticateGoogle(r *goja.Runtime) func
 		if f.Argument(5) != goja.Undefined() {
 			state = getJsString(r, f.Argument(5))
 		}
-		uaInfo := NewGoogleLoginCallBackRequest(code, errStr, state)
+		uaInfo := NewUALoginCallBackRequest(code, errStr, state)
 
 		dbUserID, dbUsername, _, created, err := AuthenticateGoogle(n.ctx, n.logger, n.db, n.socialClient, n.config, token, username, create, uaInfo)
 		if err != nil {
@@ -1953,7 +1953,7 @@ func (n *runtimeJavascriptLayerGModule) authenticateTwitter(r *goja.Runtime) fun
 		if f.Argument(4) != goja.Undefined() {
 			errStr = getJsString(r, f.Argument(4))
 		}
-		uaInfo := NewGoogleLoginCallBackRequest(code, errStr, state)
+		uaInfo := NewUALoginCallBackRequest(code, errStr, state)
 
 		dbUserID, dbUsername, _, created, err := AuthenticateTwitter(n.ctx, n.logger, n.db, n.socialClient, n.config, username, create, uaInfo)
 		if err != nil {

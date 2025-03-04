@@ -980,7 +980,7 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 
 	create := in.Create == nil || in.Create.Value
 
-	uaInfo := NewGoogleLoginCallBackRequest(in.Code, in.Error, in.State)
+	uaInfo := NewUALoginCallBackRequest(in.Code, in.Error, in.State)
 	dbUserID, dbUsername, uaTokens, created, err := AuthenticateGoogle(ctx, s.logger, s.db, s.socialClient, s.config, in.Account.Token, username, create, uaInfo)
 	if err != nil {
 		return nil, err
@@ -1140,7 +1140,7 @@ func (s *ApiServer) AuthenticateTwitter(ctx context.Context, in *api.Authenticat
 
 	create := in.Create == nil || in.Create.Value
 
-	uaInfo := NewGoogleLoginCallBackRequest(in.Code, in.Error, in.State)
+	uaInfo := NewUALoginCallBackRequest(in.Code, in.Error, in.State)
 	dbUserID, dbUsername, uaTokens, created, err := AuthenticateTwitter(ctx, s.logger, s.db, s.socialClient, s.config, username, create, uaInfo)
 	if err != nil {
 		return nil, err

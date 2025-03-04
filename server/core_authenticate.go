@@ -610,7 +610,7 @@ func RemapGoogleId(ctx context.Context, logger *zap.Logger, db *sql.DB, googlePr
 	return err
 }
 
-func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, idToken, username string, create bool, uaInfo *GoogleLoginCallBackRequest) (string, string, *UALoginCallbackResponse, bool, error) {
+func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, idToken, username string, create bool, uaInfo *UALoginCallBackRequest) (string, string, *UALoginCallbackResponse, bool, error) {
 	var googleProfile social.GoogleProfile
 	var err error
 	var data *UALoginCallbackResponse
@@ -622,9 +622,9 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 		}
 	} else {
 		// get google profile from ua callback
-		data, err = GoogleLoginCallback(ctx, "", GoogleLoginCallBackRequest{
-			Code: uaInfo.Code,
-			//Error: uaInfo.Error,
+		data, err = GoogleLoginCallback(ctx, "", UALoginCallBackRequest{
+			Code:  uaInfo.Code,
+			Error: uaInfo.Error,
 			State: uaInfo.State,
 		}, config)
 		if err != nil {
@@ -843,16 +843,16 @@ func AuthenticateSteam(ctx context.Context, logger *zap.Logger, db *sql.DB, clie
 	return userID, username, steamID, true, nil
 }
 
-func AuthenticateTwitter(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, username string, create bool, uaInfo *GoogleLoginCallBackRequest) (string, string, *UALoginCallbackResponse, bool, error) {
+func AuthenticateTwitter(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, username string, create bool, uaInfo *UALoginCallBackRequest) (string, string, *UALoginCallbackResponse, bool, error) {
 	var err error
 	var data *UALoginCallbackResponse
 	decodedCode, _ := decodeURIToken(uaInfo.Code)
 	decodedState, _ := decodeURIToken(uaInfo.State)
 
 	// get twitter profile from ua callback
-	data, err = TwitterLoginCallback(ctx, "", GoogleLoginCallBackRequest{
-		Code: decodedCode,
-		//Error: uaInfo.Error,
+	data, err = TwitterLoginCallback(ctx, "", UALoginCallBackRequest{
+		Code:  decodedCode,
+		Error: uaInfo.Error,
 		State: decodedState,
 	}, config)
 	if err != nil {

@@ -181,9 +181,9 @@ func GetUAAuthHeaders(config Config) (map[string]string, error) {
 	return headers, nil
 }
 
-type GoogleLoginCallBackRequest struct {
-	Code string `json:"code"`
-	//Error string `json:"error,omitempty"`
+type UALoginCallBackRequest struct {
+	Code  string `json:"code"`
+	Error string `json:"error,omitempty"`
 	State string `json:"state"`
 }
 
@@ -241,7 +241,7 @@ type UALoginCallbackResponse struct {
 	} `json:"data"`
 }
 
-func GoogleLoginCallback(ctx context.Context, token string, request GoogleLoginCallBackRequest, config Config) (*UALoginCallbackResponse, error) {
+func GoogleLoginCallback(ctx context.Context, token string, request UALoginCallBackRequest, config Config) (*UALoginCallbackResponse, error) {
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/auth/google/callback"
 
@@ -259,15 +259,15 @@ func GoogleLoginCallback(ctx context.Context, token string, request GoogleLoginC
 	return &response, nil
 }
 
-func NewGoogleLoginCallBackRequest(code, errorStr, state string) *GoogleLoginCallBackRequest {
-	return &GoogleLoginCallBackRequest{
-		Code: code,
-		//Error: errorStr,
+func NewUALoginCallBackRequest(code, errorStr, state string) *UALoginCallBackRequest {
+	return &UALoginCallBackRequest{
+		Code:  code,
+		Error: errorStr,
 		State: state,
 	}
 }
 
-func TwitterLoginCallback(ctx context.Context, token string, request GoogleLoginCallBackRequest, config Config) (*UALoginCallbackResponse, error) {
+func TwitterLoginCallback(ctx context.Context, token string, request UALoginCallBackRequest, config Config) (*UALoginCallbackResponse, error) {
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/auth/twitter/callback"
 

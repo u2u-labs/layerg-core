@@ -355,7 +355,7 @@ func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, u
 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
 	}
 
-	uaInfo := NewGoogleLoginCallBackRequest(code, errStr, state)
+	uaInfo := NewUALoginCallBackRequest(code, errStr, state)
 	dbUserID, token, _, created, err := AuthenticateGoogle(ctx, n.logger, n.db, n.socialClient, n.config, token, username, create, uaInfo)
 	return dbUserID, token, created, err
 }
@@ -381,7 +381,7 @@ func (n *RuntimeGoLayerGModule) AuthenticateTwitter(ctx context.Context, usernam
 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
 	}
 
-	uaInfo := NewGoogleLoginCallBackRequest(code, errStr, state)
+	uaInfo := NewUALoginCallBackRequest(code, errStr, state)
 	dbUserID, token, _, created, err := AuthenticateTwitter(ctx, n.logger, n.db, n.socialClient, n.config, username, create, uaInfo)
 	return dbUserID, token, created, err
 }
