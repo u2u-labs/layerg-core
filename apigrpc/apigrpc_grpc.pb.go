@@ -55,6 +55,7 @@ const (
 	LayerG_AuthenticateUA_FullMethodName                    = "/layerg.api.LayerG/AuthenticateUA"
 	LayerG_AuthenticateEvm_FullMethodName                   = "/layerg.api.LayerG/AuthenticateEvm"
 	LayerG_AuthenticateSteam_FullMethodName                 = "/layerg.api.LayerG/AuthenticateSteam"
+	LayerG_AuthenticateTwitter_FullMethodName               = "/layerg.api.LayerG/AuthenticateTwitter"
 	LayerG_BanGroupUsers_FullMethodName                     = "/layerg.api.LayerG/BanGroupUsers"
 	LayerG_BlockFriends_FullMethodName                      = "/layerg.api.LayerG/BlockFriends"
 	LayerG_CreateGroup_FullMethodName                       = "/layerg.api.LayerG/CreateGroup"
@@ -168,6 +169,8 @@ type LayerGClient interface {
 	AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest, opts ...grpc.CallOption) (*api.Session, error)
 	// Authenticate a user with Steam against the server.
 	AuthenticateSteam(ctx context.Context, in *api.AuthenticateSteamRequest, opts ...grpc.CallOption) (*api.Session, error)
+	// Authenticate a user with Twitter against the server.
+	AuthenticateTwitter(ctx context.Context, in *api.AuthenticateTwitterRequest, opts ...grpc.CallOption) (*api.Session, error)
 	// Ban a set of users from a group.
 	BanGroupUsers(ctx context.Context, in *api.BanGroupUsersRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Block one or more users by ID or username.
@@ -484,6 +487,16 @@ func (c *layerGClient) AuthenticateSteam(ctx context.Context, in *api.Authentica
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(api.Session)
 	err := c.cc.Invoke(ctx, LayerG_AuthenticateSteam_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *layerGClient) AuthenticateTwitter(ctx context.Context, in *api.AuthenticateTwitterRequest, opts ...grpc.CallOption) (*api.Session, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(api.Session)
+	err := c.cc.Invoke(ctx, LayerG_AuthenticateTwitter_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1240,6 +1253,8 @@ type LayerGServer interface {
 	AuthenticateEvm(context.Context, *api.AuthenticateEvmRequest) (*api.Session, error)
 	// Authenticate a user with Steam against the server.
 	AuthenticateSteam(context.Context, *api.AuthenticateSteamRequest) (*api.Session, error)
+	// Authenticate a user with Twitter against the server.
+	AuthenticateTwitter(context.Context, *api.AuthenticateTwitterRequest) (*api.Session, error)
 	// Ban a set of users from a group.
 	BanGroupUsers(context.Context, *api.BanGroupUsersRequest) (*emptypb.Empty, error)
 	// Block one or more users by ID or username.
@@ -1442,6 +1457,9 @@ func (UnimplementedLayerGServer) AuthenticateEvm(context.Context, *api.Authentic
 }
 func (UnimplementedLayerGServer) AuthenticateSteam(context.Context, *api.AuthenticateSteamRequest) (*api.Session, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateSteam not implemented")
+}
+func (UnimplementedLayerGServer) AuthenticateTwitter(context.Context, *api.AuthenticateTwitterRequest) (*api.Session, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateTwitter not implemented")
 }
 func (UnimplementedLayerGServer) BanGroupUsers(context.Context, *api.BanGroupUsersRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BanGroupUsers not implemented")
@@ -1979,6 +1997,24 @@ func _LayerG_AuthenticateSteam_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LayerGServer).AuthenticateSteam(ctx, req.(*api.AuthenticateSteamRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LayerG_AuthenticateTwitter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(api.AuthenticateTwitterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LayerGServer).AuthenticateTwitter(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LayerG_AuthenticateTwitter_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LayerGServer).AuthenticateTwitter(ctx, req.(*api.AuthenticateTwitterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3335,6 +3371,10 @@ var LayerG_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AuthenticateSteam",
 			Handler:    _LayerG_AuthenticateSteam_Handler,
+		},
+		{
+			MethodName: "AuthenticateTwitter",
+			Handler:    _LayerG_AuthenticateTwitter_Handler,
 		},
 		{
 			MethodName: "BanGroupUsers",

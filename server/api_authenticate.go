@@ -980,7 +980,7 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 
 	create := in.Create == nil || in.Create.Value
 
-	uaInfo := NewGoogleLoginCallBackRequest(in.Code, in.Error, in.State)
+	uaInfo := NewUALoginCallBackRequest(in.Code, in.Error, in.State)
 	dbUserID, dbUsername, uaTokens, created, err := AuthenticateGoogle(ctx, s.logger, s.db, s.socialClient, s.config, in.Account.Token, username, create, uaInfo)
 	if err != nil {
 		return nil, err
@@ -1085,6 +1085,83 @@ func (s *ApiServer) AuthenticateSteam(ctx context.Context, in *api.AuthenticateS
 	if fn := s.runtime.AfterAuthenticateSteam(); fn != nil {
 		afterFn := func(clientIP, clientPort string) error {
 			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
+		}
+
+		// Execute the after function lambda wrapped in a trace for stats measurement.
+		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	}
+	// global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if in.AuthGlobal.Value == true {
+	// 	return global, nil
+	// }
+	return session, nil
+}
+
+func (s *ApiServer) AuthenticateTwitter(ctx context.Context, in *api.AuthenticateTwitterRequest) (*api.Session, error) {
+	// Before hook.
+	if fn := s.runtime.BeforeAuthenticateTwitter(); fn != nil {
+		beforeFn := func(clientIP, clientPort string) error {
+			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+			if err != nil {
+				return status.Error(code, err.Error())
+			}
+			if result == nil {
+				// If result is nil, requested resource is disabled.
+				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+				return status.Error(codes.NotFound, "Requested resource was not found.")
+			}
+			in = result
+			return nil
+		}
+
+		// Execute the before function lambda wrapped in a trace for stats measurement.
+		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if in.Code == "" {
+		return nil, status.Error(codes.InvalidArgument, "Twitter UA code is required.")
+	}
+
+	username := in.Username
+	if username == "" {
+		username = generateUsername()
+	} else if invalidUsernameRegex.MatchString(username) {
+		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	} else if len(username) > 128 {
+		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	}
+
+	create := in.Create == nil || in.Create.Value
+
+	uaInfo := NewUALoginCallBackRequest(in.Code, in.Error, in.State)
+	dbUserID, dbUsername, uaTokens, created, err := AuthenticateTwitter(ctx, s.logger, s.db, s.socialClient, s.config, username, create, uaInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.config.GetSession().SingleSession {
+		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
+	}
+
+	// Store both native and UA tokens in the caches
+	tokenID := uuid.Must(uuid.NewV4()).String()
+	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
+	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	s.tokenPairCache.Add(dbUserID, uaTokens.Data.AccessToken, uaTokens.Data.RefreshToken, uaTokens.Data.AccessTokenExpire, uaTokens.Data.RefreshTokenExpire)
+
+	// After hook.
+	if fn := s.runtime.AfterAuthenticateTwitter(); fn != nil {
+		afterFn := func(clientIP, clientPort string) error {
+			return fn(ctx, s.logger, dbUserID, dbUsername, nil, exp, clientIP, clientPort, session, in)
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.

@@ -610,10 +610,10 @@ func RemapGoogleId(ctx context.Context, logger *zap.Logger, db *sql.DB, googlePr
 	return err
 }
 
-func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, idToken, username string, create bool, uaInfo *GoogleLoginCallBackRequest) (string, string, *GoogleLoginCallbackResponse, bool, error) {
+func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, idToken, username string, create bool, uaInfo *UALoginCallBackRequest) (string, string, *UALoginCallbackResponse, bool, error) {
 	var googleProfile social.GoogleProfile
 	var err error
-	var data *GoogleLoginCallbackResponse
+	var data *UALoginCallbackResponse
 	if idToken != "" {
 		googleProfile, err = client.CheckGoogleToken(ctx, idToken)
 		if err != nil {
@@ -622,7 +622,7 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 		}
 	} else {
 		// get google profile from ua callback
-		data, err = GoogleLoginCallback(ctx, "", GoogleLoginCallBackRequest{
+		data, err = GoogleLoginCallback(ctx, "", UALoginCallBackRequest{
 			Code:  uaInfo.Code,
 			Error: uaInfo.Error,
 			State: uaInfo.State,
@@ -841,6 +841,147 @@ func AuthenticateSteam(ctx context.Context, logger *zap.Logger, db *sql.DB, clie
 	}
 
 	return userID, username, steamID, true, nil
+}
+
+func AuthenticateTwitter(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, username string, create bool, uaInfo *UALoginCallBackRequest) (string, string, *UALoginCallbackResponse, bool, error) {
+	var err error
+	var data *UALoginCallbackResponse
+	decodedCode, _ := decodeURIToken(uaInfo.Code)
+	decodedState, _ := decodeURIToken(uaInfo.State)
+
+	// get twitter profile from ua callback
+	data, err = TwitterLoginCallback(ctx, "", UALoginCallBackRequest{
+		Code:  decodedCode,
+		Error: uaInfo.Error,
+		State: decodedState,
+	}, config)
+	if err != nil {
+		return "", "", nil, false, status.Error(codes.Internal, "Error request twitter login call back")
+	}
+
+	found := true
+
+	// Look for an existing account.
+	query := "SELECT id, username, disable_time, display_name, avatar_url FROM users WHERE twitter_id = $1"
+	var dbUserID string
+	var dbUsername string
+	var dbDisableTime pgtype.Timestamptz
+	var dbDisplayName sql.NullString
+	var dbAvatarURL sql.NullString
+	err = db.QueryRowContext(ctx, query, data.Data.User.TwitterId).Scan(&dbUserID, &dbUsername, &dbDisableTime, &dbDisplayName, &dbAvatarURL)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			found = false
+		} else {
+			logger.Error("Error looking up user by Twitter ID.", zap.Error(err),
+				zap.String("twitterID", data.Data.User.TwitterId),
+				zap.String("username", username), zap.Bool("create", create))
+			return "", "", nil, false, status.Error(codes.Internal, "Error finding user account.")
+		}
+	}
+
+	var displayName string
+	if len(data.Data.User.TwitterFirstName)+len(data.Data.User.TwitterLastName) <= 255 {
+		displayName = data.Data.User.TwitterFirstName + " " + data.Data.User.TwitterLastName
+	} else {
+		logger.Warn("Skipping updating display_name: value received from Twitter longer than max length of 255 chars.", zap.String("display_name", data.Data.User.TwitterFirstName+" "+data.Data.User.TwitterLastName))
+	}
+
+	var avatarURL string
+	if len(data.Data.User.TwitterAvatarURL) <= 512 {
+		avatarURL = data.Data.User.TwitterAvatarURL
+	} else {
+		logger.Warn("Skipping updating avatar_url: value received from Twitter longer than max length of 512 chars.", zap.String("avatar_url", data.Data.User.TwitterAvatarURL))
+	}
+
+	// Existing account found.
+	if found {
+		// Check if it's disabled.
+		if dbDisableTime.Valid && dbDisableTime.Time.Unix() != 0 {
+			logger.Info("User account is disabled.", zap.String("twitterID", data.Data.User.TwitterId), zap.String("username", username), zap.Bool("create", create))
+			return "", "", nil, false, status.Error(codes.PermissionDenied, "User account banned.")
+		}
+
+		// Check if the display name or avatar received from Twitter have values but the DB does not.
+		if (dbDisplayName.String == "" && displayName != "") || (dbAvatarURL.String == "" && avatarURL != "") {
+			// At least one valid change found, update the DB to reflect changes.
+			params := make([]interface{}, 0, 3)
+			params = append(params, dbUserID)
+
+			// Ensure only changed values are applied.
+			statements := make([]string, 0, 2)
+			if dbDisplayName.String == "" && displayName != "" {
+				params = append(params, displayName)
+				statements = append(statements, "display_name = $"+strconv.Itoa(len(params)))
+			}
+			if dbAvatarURL.String == "" && avatarURL != "" {
+				params = append(params, avatarURL)
+				statements = append(statements, "avatar_url = $"+strconv.Itoa(len(params)))
+			}
+
+			if len(statements) > 0 {
+				if _, err = db.ExecContext(ctx, "UPDATE users SET "+strings.Join(statements, ", ")+", update_time = now() WHERE id = $1", params...); err != nil {
+					// Failure to update does not interrupt the execution. Just log the error and continue.
+					logger.Error("Error in updating twitter profile details", zap.Error(err), zap.String("twitterID", data.Data.User.TwitterId), zap.String("display_name", displayName), zap.String("avatar_url", avatarURL))
+				}
+			}
+		}
+
+		// Update onchain_id if it's not set
+		if data.Data.W.AAAddress != "" {
+			_, err = db.ExecContext(ctx, "UPDATE users SET onchain_id = $1 WHERE id = $2", data.Data.W.AAAddress, dbUserID)
+			if err != nil {
+				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("twitterId", data.Data.User.TwitterId), zap.String("username", dbUsername))
+			}
+		}
+		return dbUserID, dbUsername, data, false, nil
+	}
+
+	if !create {
+		// No user account found, and creation is not allowed.
+		return "", "", nil, false, status.Error(codes.NotFound, "User account not found.")
+	}
+
+	// Create a new account.
+	userID := uuid.Must(uuid.NewV4()).String()
+	query = "INSERT INTO users (id, username, twitter_id, display_name, avatar_url, create_time, update_time) VALUES ($1, $2, $3, $4, $5, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, username, data.Data.User.TwitterId, displayName, avatarURL)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
+			if strings.Contains(pgErr.Message, "users_username_key") {
+				// Username is already in use by a different account.
+				return "", "", nil, false, status.Error(codes.AlreadyExists, "Username is already in use.")
+			} else if strings.Contains(pgErr.Message, "users_twitter_id_key") {
+				// A concurrent write has inserted this Twitter ID.
+				logger.Info("Did not insert new user as Twitter ID already exists.", zap.Error(err), zap.String("twitterID", data.Data.User.TwitterId), zap.String("username", username), zap.Bool("create", create))
+				return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
+			}
+		}
+		logger.Error("Cannot find or create user with Twitter ID.", zap.Error(err), zap.String("twitterID", data.Data.User.TwitterId), zap.String("username", username), zap.Bool("create", create))
+		return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
+		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
+		return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	// Import email address, if it exists.
+	if data.Data.User.TwitterEmail != "" {
+		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", data.Data.User.TwitterEmail, userID)
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
+				logger.Warn("Skipping twitter account email import as it is already set in another user.", zap.Error(err), zap.String("twitterID", data.Data.User.TwitterId), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
+			} else {
+				logger.Error("Failed to import twitter account email.", zap.Error(err), zap.String("twitterID", data.Data.User.TwitterId), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
+				return "", "", nil, false, status.Error(codes.Internal, "Error importing twitter account email.")
+			}
+		}
+	}
+
+	return userID, username, data, true, nil
 }
 
 func importSteamFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tracker, messageRouter MessageRouter, client *social.Client, userID uuid.UUID, username, publisherKey, steamId string, reset bool) error {

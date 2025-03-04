@@ -843,6 +843,14 @@ func NewRuntimeProviderJS(ctx context.Context, logger, startupLogger *zap.Logger
 						}
 						return result.(*api.AuthenticateSteamRequest), nil, 0
 					}
+				case "authenticatetwitter":
+					beforeReqFunctions.beforeAuthenticateTwitterFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateTwitterRequest) (*api.AuthenticateTwitterRequest, error, codes.Code) {
+						result, err, code := runtimeProviderJS.BeforeReq(ctx, id, logger, userID, username, vars, expiry, clientIP, clientPort, in)
+						if result == nil || err != nil {
+							return nil, err, code
+						}
+						return result.(*api.AuthenticateTwitterRequest), nil, 0
+					}
 				case "listchannelmessages":
 					beforeReqFunctions.beforeListChannelMessagesFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.ListChannelMessagesRequest) (*api.ListChannelMessagesRequest, error, codes.Code) {
 						result, err, code := runtimeProviderJS.BeforeReq(ctx, id, logger, userID, username, vars, expiry, clientIP, clientPort, in)
@@ -1419,6 +1427,10 @@ func NewRuntimeProviderJS(ctx context.Context, logger, startupLogger *zap.Logger
 					}
 				case "authenticatesteam":
 					afterReqFunctions.afterAuthenticateSteamFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateSteamRequest) error {
+						return runtimeProviderJS.AfterReq(ctx, id, logger, userID, username, vars, expiry, clientIP, clientPort, out, in)
+					}
+				case "authenticatetwitter":
+					afterReqFunctions.afterAuthenticateTwitterFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateTwitterRequest) error {
 						return runtimeProviderJS.AfterReq(ctx, id, logger, userID, username, vars, expiry, clientIP, clientPort, out, in)
 					}
 				case "listchannelmessages":

@@ -355,8 +355,34 @@ func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, u
 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
 	}
 
-	uaInfo := NewGoogleLoginCallBackRequest(code, errStr, state)
+	uaInfo := NewUALoginCallBackRequest(code, errStr, state)
 	dbUserID, token, _, created, err := AuthenticateGoogle(ctx, n.logger, n.db, n.socialClient, n.config, token, username, create, uaInfo)
+	return dbUserID, token, created, err
+}
+
+// @group authenticate
+// @summary Authenticate user and create a session token by delegating UA code.
+// @param ctx(type=context.Context) The context object represents information about the server and requester.
+// @param username(type=string) The user's username. If left empty, one is generated.
+// @param create(type=bool) Create user if one didn't exist previously.
+// @param code(type=string) The code returned from the Google OAuth flow.
+// @param state(type=string) The state returned from the Google OAuth flow.
+// @param errStr(type=string) The error string returned from the Google OAuth flow.
+// @return userID(string) The user ID of the authenticated user.
+// @return username(string) The username of the authenticated user.
+// @return create(bool) Value indicating if this account was just created or already existed.
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) AuthenticateTwitter(ctx context.Context, username string, code, state, errStr string, create bool) (string, string, bool, error) {
+	if username == "" {
+		username = generateUsername()
+	} else if invalidUsernameRegex.MatchString(username) {
+		return "", "", false, errors.New("expects username to be valid, no spaces or control characters allowed")
+	} else if len(username) > 128 {
+		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
+	}
+
+	uaInfo := NewUALoginCallBackRequest(code, errStr, state)
+	dbUserID, token, _, created, err := AuthenticateTwitter(ctx, n.logger, n.db, n.socialClient, n.config, username, create, uaInfo)
 	return dbUserID, token, created, err
 }
 
@@ -4420,4 +4446,9 @@ func (n *RuntimeGoLayerGModule) GetSatori() runtime.Satori {
 
 func (n *RuntimeGoLayerGModule) GetFleetManager() runtime.FleetManager {
 	return n.fleetManager
+}
+
+// TODO: not implemented yet
+func (n *RuntimeGoLayerGModule) RegisterWebhook(ctx context.Context, config runtime.WebhookConfig, handler runtime.WebhookHandler) error {
+	return nil
 }
