@@ -1280,72 +1280,80 @@ func sendFriendAddedNotification(ctx context.Context, logger *zap.Logger, db *sq
 	_ = NotificationSend(ctx, logger, db, tracker, messageRouter, notifications)
 }
 
-// func AuthenticateEvm(ctx context.Context, logger *zap.Logger, db *sql.DB, address, signature, username string, create bool) (string, string, bool, error) {
-// 	query := "SELECT id, username, display_name FROM users WHERE onchain_id = $1"
-// 	var dbUserID string
-// 	var dbUsername string
-// 	var dbDisplayName sql.NullString
-// 	err := db.QueryRowContext(ctx, query, address).Scan(&dbUserID, &dbUsername, &dbDisplayName)
-// 	found := true
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			found = false
-// 		} else if err != nil {
-// 			logger.Error("Error looking up user by EVM ID.", zap.Error(err),
-// 				zap.String("address", address),
-// 				zap.Bool("create", create))
-// 			return "", "", false, status.Error(codes.Internal, "Error finding user account.")
-// 		}
-// 	}
+func AuthenticateEvm(ctx context.Context, logger *zap.Logger, db *sql.DB, address, signature, username string, create bool, config Config) (string, string, *UALoginCallbackResponse, bool, error) {
+	data, err := EVMAuthUA(ctx, "", UAWeb3AuthRequest{
+		Signature: signature,
+		Signer:    address,
+	}, config)
+	if err != nil {
+		return "", "", nil, false, status.Error(codes.Internal, "Error request twitter login call back")
+	}
 
-// 	// Existing account found.
-// 	if found {
-// 		return dbUserID, dbUsername, false, nil
-// 	}
+	query := "SELECT id, username, display_name FROM users WHERE onchain_id ILIKE $1"
+	var dbUserID string
+	var dbUsername string
+	var dbDisplayName sql.NullString
+	err = db.QueryRowContext(ctx, query, address).Scan(&dbUserID, &dbUsername, &dbDisplayName)
+	found := true
+	if err != nil {
+		if err == sql.ErrNoRows {
+			found = false
+		} else if err != nil {
+			logger.Error("Error looking up user by EVM ID.", zap.Error(err),
+				zap.String("address", address),
+				zap.Bool("create", create))
+			return "", "", nil, false, status.Error(codes.Internal, "Error finding user account.")
+		}
+	}
 
-// 	if !create {
-// 		// No user account found, and creation is not allowed.
-// 		return "", "", false, status.Error(codes.NotFound, "User account not found.")
-// 	}
+	// Existing account found.
+	if found {
+		return dbUserID, dbUsername, data, false, nil
+	}
 
-// 	// Create a new account.
-// 	userID := uuid.Must(uuid.NewV4()).String()
-// 	query = "INSERT INTO users (id, username, onchain_id, display_name, create_time, update_time) VALUES ($1, $2, $3, $4, now(), now())"
-// 	result, err := db.ExecContext(ctx, query, userID, username, address, username)
-// 	if err != nil {
-// 		var pgErr *pgconn.PgError
-// 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
-// 			if strings.Contains(pgErr.Message, "users_username_key") {
-// 				// Username is already in use by a different account
-// 				logger.Info("Username is already in use.", zap.Error(err),
-// 					zap.String("address", address),
-// 					zap.String("username", username))
-// 				return "", "", false, status.Error(codes.AlreadyExists, "Username is already in use.")
-// 			} else if strings.Contains(pgErr.Message, "users_onchain_id_key") {
-// 				// A concurrent write has inserted this Wallet address.
-// 				logger.Info("Did not insert new user as Wallet address already exists.",
-// 					zap.Error(err),
-// 					zap.String("address", address),
-// 					zap.String("username", username),
-// 					zap.Bool("create", create))
-// 				return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
-// 			}
-// 		}
-// 		logger.Error("Cannot find or create user with Wallet address.",
-// 			zap.Error(err),
-// 			zap.String("address", address),
-// 			zap.String("username", username),
-// 			zap.Bool("create", create))
-// 		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
-// 	}
+	if !create {
+		// No user account found, and creation is not allowed.
+		return "", "", data, false, status.Error(codes.NotFound, "User account not found.")
+	}
 
-// 	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
-// 		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
-// 		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
-// 	}
+	// Create a new account.
+	userID := uuid.Must(uuid.NewV4()).String()
+	query = "INSERT INTO users (id, username, onchain_id, display_name, create_time, update_time) VALUES ($1, $2, $3, $4, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, username, address, username)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
+			if strings.Contains(pgErr.Message, "users_username_key") {
+				// Username is already in use by a different account
+				logger.Info("Username is already in use.", zap.Error(err),
+					zap.String("address", address),
+					zap.String("username", username))
+				return "", "", data, false, status.Error(codes.AlreadyExists, "Username is already in use.")
+			} else if strings.Contains(pgErr.Message, "users_onchain_id_key") {
+				// A concurrent write has inserted this Wallet address.
+				logger.Info("Did not insert new user as Wallet address already exists.",
+					zap.Error(err),
+					zap.String("address", address),
+					zap.String("username", username),
+					zap.Bool("create", create))
+				return "", "", data, false, status.Error(codes.Internal, "Error finding or creating user account.")
+			}
+		}
+		logger.Error("Cannot find or create user with Wallet address.",
+			zap.Error(err),
+			zap.String("address", address),
+			zap.String("username", username),
+			zap.Bool("create", create))
+		return "", "", data, false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
 
-// 	return userID, username, true, nil
-// }
+	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
+		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
+		return "", "", data, false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	return userID, username, data, true, nil
+}
 
 func SendTelegramAuthOTP(ctx context.Context, logger *zap.Logger, config Config, telegramId string) error {
 	// Request OTP
