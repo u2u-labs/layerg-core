@@ -470,24 +470,25 @@ func (n *RuntimeGoLayerGModule) SendTelegramAuthOTP(ctx context.Context, telegra
 // @return username(string) The username of the authenticated user.
 // @return create(bool) Value indicating if this account was just created or already existed.
 // @return error(error) An optional error value if an error occurred.
-// func (n *RuntimeGoLayerGModule) AuthenticateEvm(ctx context.Context, evmAddress, signature, username string, create bool) (string, string, bool, error) {
-// 	if evmAddress == "" {
-// 		return "", "", false, errors.New("expects Wallet address string")
-// 	}
-// 	if signature == "" {
-// 		return "", "", false, errors.New("expects signature from wallet string")
-// 	}
+func (n *RuntimeGoLayerGModule) AuthenticateEvm(ctx context.Context, evmAddress, signature, username string, create bool) (string, string, bool, error) {
+	if evmAddress == "" {
+		return "", "", false, errors.New("expects Wallet address string")
+	}
+	if signature == "" {
+		return "", "", false, errors.New("expects signature from wallet string")
+	}
 
-// 	if username == "" {
-// 		username = generateUsername()
-// 	} else if invalidUsernameRegex.MatchString(username) {
-// 		return "", "", false, errors.New("expects username to be valid, no spaces or control characters allowed")
-// 	} else if len(username) > 128 {
-// 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
-// 	}
+	if username == "" {
+		username = generateUsername()
+	} else if invalidUsernameRegex.MatchString(username) {
+		return "", "", false, errors.New("expects username to be valid, no spaces or control characters allowed")
+	} else if len(username) > 128 {
+		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
+	}
 
-// 	return AuthenticateEvm(ctx, n.logger, n.db, evmAddress, signature, username, create)
-// }
+	dbUserID, token, _, created, err := AuthenticateEvm(ctx, n.logger, n.db, evmAddress, signature, username, create, n.config)
+	return dbUserID, token, created, err
+}
 
 // @group authenticate
 // @summary Authenticate user and create a session token using a Steam account token.

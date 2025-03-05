@@ -230,83 +230,86 @@ func (c *TokenPairCache) Remove(nativeToken string) {
 // 	}
 // }
 
-// func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest) (*api.Session, error) {
-// 	// Before hook.
-// 	if fn := s.runtime.BeforeAuthenticateEvm(); fn != nil {
-// 		beforeFn := func(clientIP, clientPort string) error {
-// 			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
-// 			if err != nil {
-// 				return status.Error(code, err.Error())
-// 			}
-// 			if result == nil {
-// 				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
-// 				return status.Error(codes.NotFound, "Requested resource was not found.")
-// 			}
-// 			in = result
-// 			return nil
-// 		}
-// 		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	}
+const UALoginMessage = "logmein"
 
-// 	if in.Account == nil || in.Account.EvmAddress == "" || in.Account.EvmSignature == "" {
-// 		return nil, status.Error(codes.InvalidArgument, "Metamask address and signature are required.")
-// 	}
+func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest) (*api.Session, error) {
+	// Before hook.
+	if fn := s.runtime.BeforeAuthenticateEvm(); fn != nil {
+		beforeFn := func(clientIP, clientPort string) error {
+			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+			if err != nil {
+				return status.Error(code, err.Error())
+			}
+			if result == nil {
+				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+				return status.Error(codes.NotFound, "Requested resource was not found.")
+			}
+			in = result
+			return nil
+		}
+		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-// 	// Validate the signature
-// 	valid, err := verifySignature("sample", in.Account.EvmAddress, in.Account.EvmSignature)
-// 	if err != nil {
-// 		return nil, status.Error(codes.InvalidArgument, "Invalid signature.")
-// 	}
-// 	if !valid {
-// 		return nil, status.Error(codes.Unauthenticated, "Signature does not match the address.")
-// 	}
+	if in.Account == nil || in.Account.EvmAddress == "" || in.Account.EvmSignature == "" {
+		return nil, status.Error(codes.InvalidArgument, "Metamask address and signature are required.")
+	}
 
-// 	username := in.Account.Username
-// 	if username == "" {
-// 		username = generateUsername()
-// 	} else if invalidUsernameRegex.MatchString(username) {
-// 		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
-// 	} else if len(username) > 128 {
-// 		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
-// 	}
+	// Validate the signature
+	valid, err := verifySignature(UALoginMessage, in.Account.EvmAddress, in.Account.EvmSignature)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid signature.")
+	}
+	if !valid {
+		return nil, status.Error(codes.Unauthenticated, "Signature does not match the address.")
+	}
 
-// 	create := in.Create == nil || in.Create.Value
+	username := in.Account.Username
+	if username == "" {
+		username = generateUsername()
+	} else if invalidUsernameRegex.MatchString(username) {
+		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	} else if len(username) > 128 {
+		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	}
 
-// 	dbUserID, dbUsername, created, err := AuthenticateEvm(ctx, s.logger, s.db, in.Account.EvmAddress, in.Account.EvmAddress, username, create)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	create := in.Create == nil || in.Create.Value
 
-// 	if s.config.GetSession().SingleSession {
-// 		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
-// 	}
+	dbUserID, dbUsername, uaTokens, created, err := AuthenticateEvm(ctx, s.logger, s.db, in.Account.EvmAddress, in.Account.EvmSignature, username, create, s.config)
+	if err != nil {
+		return nil, err
+	}
 
-// 	tokenID := uuid.Must(uuid.NewV4()).String()
-// 	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
-// 	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
-// 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
-// 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	if s.config.GetSession().SingleSession {
+		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
+	}
 
-// 	// After hook.
-// 	if fn := s.runtime.AfterAuthenticateEvm(); fn != nil {
-// 		afterFn := func(clientIP, clientPort string) error {
-// 			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
-// 		}
-// 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
-// 	}
-// 	// global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
-// 	// }
-// 	// if err != nil {
-// 	// 	return nil, err
-// 	// }
-// 	// if in.GetAccount().AuthGlobal.Value == true {
-// 	// 	return global, nil
-// 	// }
-// 	return session, nil
-// }
+	tokenID := uuid.Must(uuid.NewV4()).String()
+	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
+	s.tokenPairCache.Add(dbUserID, uaTokens.Data.AccessToken, uaTokens.Data.RefreshToken, uaTokens.Data.AccessTokenExpire, uaTokens.Data.RefreshTokenExpire)
+	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+
+	// After hook.
+	if fn := s.runtime.AfterAuthenticateEvm(); fn != nil {
+		afterFn := func(clientIP, clientPort string) error {
+			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
+		}
+		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	}
+	// global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if in.GetAccount().AuthGlobal.Value == true {
+	// 	return global, nil
+	// }
+	return session, nil
+}
 
 func verifySignature(message, address, signature string) (bool, error) {
 	// Ethereum specific prefix

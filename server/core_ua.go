@@ -284,3 +284,26 @@ func TwitterLoginCallback(ctx context.Context, token string, request UALoginCall
 
 	return &response, nil
 }
+
+type UAWeb3AuthRequest struct {
+	Signature string `json:"signature"`
+	Signer    string `json:"signer"`
+}
+
+func EVMAuthUA(ctx context.Context, token string, request UAWeb3AuthRequest, config Config) (*UALoginCallbackResponse, error) {
+	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
+	endpoint := baseUrl + "/auth/web3"
+
+	headers, err := GetUAAuthHeaders(config)
+	if err != nil {
+		return nil, err
+	}
+
+	var response UALoginCallbackResponse
+	err = http.POST(ctx, endpoint, token, "", headers, request, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send twitter login callback: %w", err)
+	}
+
+	return &response, nil
+}
