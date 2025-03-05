@@ -223,6 +223,12 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 	grpcGatewayRouter.HandleFunc("/ws", NewSocketWsAcceptor(logger, config, sessionRegistry, sessionCache, statusRegistry, matchmaker, tracker, metrics, runtime, protojsonMarshaler, protojsonUnmarshaler, pipeline)).Methods("GET")
 	grpcGatewayRouter.HandleFunc("/ua-headers", GetUAHeadersHandler(config)).Methods("GET")
 
+	// Add webhook routes before wrapping the router
+	webhookRegistry := runtime.GetWebhookRegistry()
+	if webhookRegistry != nil {
+		webhookRegistry.HandleWebhook(grpcGatewayRouter)
+	}
+
 	// Another nested router to hijack RPC requests bound for GRPC Gateway.
 	grpcGatewayMux := mux.NewRouter()
 	grpcGatewayMux.HandleFunc("/v2/rpc/{id:.*}", s.RpcFuncHttp).Methods("GET", "POST")
