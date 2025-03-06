@@ -614,7 +614,7 @@ func local_request_LayerG_SendTelegramAuthOTP_0(ctx context.Context, marshaler r
 }
 
 func request_LayerG_AuthenticateUA_0(ctx context.Context, marshaler runtime.Marshaler, client LayerGClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq api.AuthenticateUA
+	var protoReq api.UASocialLoginRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -627,7 +627,7 @@ func request_LayerG_AuthenticateUA_0(ctx context.Context, marshaler runtime.Mars
 }
 
 func local_request_LayerG_AuthenticateUA_0(ctx context.Context, marshaler runtime.Marshaler, server LayerGServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq api.AuthenticateUA
+	var protoReq api.UASocialLoginRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
