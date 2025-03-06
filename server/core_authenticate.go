@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/u2u-labs/go-layerg-common/api"
+	"github.com/u2u-labs/go-layerg-common/runtime"
 	"github.com/u2u-labs/layerg-core/social"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -1280,6 +1281,52 @@ func sendFriendAddedNotification(ctx context.Context, logger *zap.Logger, db *sq
 	_ = NotificationSend(ctx, logger, db, tracker, messageRouter, notifications)
 }
 
+func AuthenticateUA(ctx context.Context, logger *zap.Logger, db *sql.DB, in runtime.UADirectLoginData) (string, string, bool, error) {
+	// Get username from social data if not provided
+	// username := ""
+	// if in.User.Username != nil {
+	// 	username = *in.User.Username
+	// }
+	username := ""
+
+	// If username is empty, try to get it from social profiles
+	if username == "" {
+		if in.User.TelegramUsername != nil && *in.User.TelegramUsername != "" {
+			username = *in.User.TelegramUsername
+		} else if in.User.GoogleEmail != nil && *in.User.GoogleEmail != "" {
+			username = *in.User.GoogleEmail
+		} else if in.User.FacebookEmail != nil && *in.User.FacebookEmail != "" {
+			username = *in.User.FacebookEmail
+		} else if in.User.TwitterEmail != nil && *in.User.TwitterEmail != "" {
+			username = *in.User.TwitterEmail
+		} else {
+			username = generateUsername()
+		}
+	}
+
+	// Create user if doesn't exist
+	userID := in.UserID
+	if userID == "" {
+		userID = uuid.Must(uuid.NewV4()).String()
+	}
+
+	err := createUAUser(ctx, db, userID, username, &in)
+	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == dbErrorUniqueViolation {
+			err = updateUAUserData(ctx, db, &in)
+			if err != nil {
+				logger.Error("Error updating user data", zap.Error(err))
+				return "", "", false, status.Error(codes.Internal, "Error updating user account")
+			}
+			return userID, username, false, nil
+		}
+		logger.Error("Error creating user", zap.Error(err))
+		return "", "", false, status.Error(codes.Internal, "Error creating user account")
+	}
+
+	return userID, username, true, nil
+}
+
 func AuthenticateEvm(ctx context.Context, logger *zap.Logger, db *sql.DB, address, signature, username string, create bool, config Config) (string, string, *UALoginCallbackResponse, bool, error) {
 	data, err := EVMAuthUA(ctx, "", UAWeb3AuthRequest{
 		Signature: signature,
@@ -1479,4 +1526,188 @@ func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 	dbUsername = username
 
 	return dbUserID, dbUsername, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, true, nil
+}
+
+func createUAUser(ctx context.Context, db *sql.DB, userID, username string, in *runtime.UADirectLoginData) error {
+	// Base query with common fields
+	query := `
+        INSERT INTO users (
+            id, username, onchain_id, create_time, update_time
+        ) VALUES ($1, $2, $3, now(), now())`
+
+	var err error
+	aaAddress := ""
+	aaAddress = in.W.AAAddress
+
+	// Handle different social auth types
+	if in.User.TelegramID != nil && *in.User.TelegramID != "" {
+		query = `
+            INSERT INTO users (
+                id, username, telegram_id, display_name, onchain_id,
+                create_time, update_time
+            ) VALUES ($1, $2, $3, $4, $5, now(), now())`
+
+		displayName := ""
+		if in.User.TelegramFirstName != nil && *in.User.TelegramFirstName != "" {
+			displayName = *in.User.TelegramFirstName
+			if in.User.TelegramLastName != nil && *in.User.TelegramLastName != "" {
+				displayName += " " + *in.User.TelegramLastName
+			}
+		}
+
+		_, err = db.ExecContext(ctx, query,
+			userID, username, *in.User.TelegramID, displayName, aaAddress)
+	} else if in.User.GoogleID != nil && *in.User.GoogleID != "" {
+		query = `
+            INSERT INTO users (
+                id, username, google_id, email,
+                display_name, onchain_id, create_time, update_time
+            ) VALUES ($1, $2, $3, $4, $5, $6, now(), now())`
+
+		displayName := ""
+		if in.User.GoogleFirstName != nil && *in.User.GoogleFirstName != "" {
+			displayName = *in.User.GoogleFirstName
+			if in.User.GoogleLastName != nil && *in.User.GoogleLastName != "" {
+				displayName += " " + *in.User.GoogleLastName
+			}
+		}
+
+		_, err = db.ExecContext(ctx, query,
+			userID, username, in.User.GoogleID, in.User.GoogleEmail, displayName, aaAddress)
+	} else if in.User.FacebookID != nil && *in.User.FacebookID != "" {
+		query = `
+            INSERT INTO users (
+                id, username, facebook_id, email,
+                display_name, onchain_id, create_time, update_time
+            ) VALUES ($1, $2, $3, $4, $5, $6, now(), now())`
+
+		displayName := ""
+		if in.User.FacebookFirstName != nil && *in.User.FacebookFirstName != "" {
+			displayName = *in.User.FacebookFirstName
+			if in.User.FacebookLastName != nil && *in.User.FacebookLastName != "" {
+				displayName += " " + *in.User.FacebookLastName
+			}
+		}
+
+		_, err = db.ExecContext(ctx, query,
+			userID, username, in.User.FacebookID, in.User.FacebookEmail, displayName, aaAddress)
+	} else if in.User.TwitterID != nil && *in.User.TwitterID != "" {
+		query = `
+            INSERT INTO users (
+                id, username, twitter_id, email,
+                display_name, onchain_id, create_time, update_time
+            ) VALUES ($1, $2, $3, $4, $5, $6, now(), now())`
+
+		displayName := ""
+		if in.User.TwitterFirstName != nil && *in.User.TwitterFirstName != "" {
+			displayName = *in.User.TwitterFirstName
+			if in.User.TwitterLastName != nil && *in.User.TwitterLastName != "" {
+				displayName += " " + *in.User.TwitterLastName
+			}
+		}
+
+		_, err = db.ExecContext(ctx, query,
+			userID, username, in.User.TwitterID, in.User.TwitterEmail, displayName, aaAddress)
+	} else {
+		// Basic user creation if no social auth
+		_, err = db.ExecContext(ctx, query, userID, username)
+	}
+
+	return err
+}
+
+func updateUAUserData(ctx context.Context, db *sql.DB, in *runtime.UADirectLoginData) error {
+	var query string
+	var args []interface{}
+
+	// Handle different social auth types
+	if in.User.TelegramID != nil && *in.User.TelegramID != "" {
+		query = `
+            UPDATE users SET
+                telegram_id = $2,
+                display_name = CASE 
+                    WHEN $3 <> '' THEN $3 
+                    ELSE display_name 
+                END,
+                update_time = now()
+            WHERE id = $1`
+
+		displayName := ""
+		if in.User.TelegramFirstName != nil && *in.User.TelegramFirstName != "" {
+			displayName = *in.User.TelegramFirstName
+			if in.User.TelegramLastName != nil && *in.User.TelegramLastName != "" {
+				displayName += " " + *in.User.TelegramLastName
+			}
+		}
+
+		args = []interface{}{in.UserID, in.User.TelegramID, displayName}
+	} else if in.User.GoogleID != nil && *in.User.GoogleID != "" {
+		query = `
+            UPDATE users SET
+                google_id = $2,
+                email = COALESCE($3, email),
+                display_name = CASE 
+                    WHEN $4 <> '' THEN $4 
+                    ELSE display_name 
+                END,
+                update_time = now()
+            WHERE id = $1`
+
+		displayName := ""
+		if in.User.GoogleFirstName != nil && *in.User.GoogleFirstName != "" {
+			displayName = *in.User.GoogleFirstName
+			if in.User.GoogleLastName != nil && *in.User.GoogleLastName != "" {
+				displayName += " " + *in.User.GoogleLastName
+			}
+		}
+
+		args = []interface{}{in.UserID, in.User.GoogleID, in.User.GoogleEmail, displayName}
+	} else if in.User.FacebookID != nil && *in.User.FacebookID != "" {
+		query = `
+            UPDATE users SET
+                facebook_id = $2,
+                email = COALESCE($3, email),
+                display_name = CASE 
+                    WHEN $4 <> '' THEN $4 
+                    ELSE display_name 
+                END,
+                update_time = now()
+            WHERE id = $1`
+
+		displayName := ""
+		if in.User.FacebookFirstName != nil && *in.User.FacebookFirstName != "" {
+			displayName = *in.User.FacebookFirstName
+			if in.User.FacebookLastName != nil && *in.User.FacebookLastName != "" {
+				displayName += " " + *in.User.FacebookLastName
+			}
+		}
+
+		args = []interface{}{in.UserID, in.User.FacebookID, in.User.FacebookEmail, displayName}
+	} else if in.User.TwitterID != nil && *in.User.TwitterID != "" {
+		query = `
+            UPDATE users SET
+                twitter_id = $2,
+                email = COALESCE($3, email),
+                display_name = CASE 
+                    WHEN $4 <> '' THEN $4 
+                    ELSE display_name 
+                END,
+                update_time = now()
+            WHERE id = $1`
+
+		displayName := ""
+		if in.User.TwitterFirstName != nil && *in.User.TwitterFirstName != "" {
+			displayName = *in.User.TwitterFirstName
+			if in.User.TwitterLastName != nil && *in.User.TwitterLastName != "" {
+				displayName += " " + *in.User.TwitterLastName
+			}
+		}
+
+		args = []interface{}{in.UserID, in.User.TwitterID, in.User.TwitterEmail, displayName}
+	} else {
+		return nil
+	}
+
+	_, err := db.ExecContext(ctx, query, args...)
+	return err
 }

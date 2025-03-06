@@ -1298,3 +1298,63 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 
 	return session, nil
 }
+
+func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.UASocialLoginRequest) (*api.Session, error) {
+	// Before hook.
+	if fn := s.runtime.BeforeAuthenticateUA(); fn != nil {
+		beforeFn := func(clientIP, clientPort string) error {
+			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+			if err != nil {
+				return status.Error(code, err.Error())
+			}
+			if result == nil {
+				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+				return status.Error(codes.NotFound, "Requested resource was not found.")
+			}
+			in = result
+			return nil
+		}
+
+		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Call UA service to get login data
+	uaLoginData, err := SocialLoginUA(ctx, "", in, s.config)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Error authenticating with UA service")
+	}
+
+	dbUserID, dbUsername, created, err := AuthenticateUA(ctx, s.logger, s.db, uaLoginData.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.config.GetSession().SingleSession {
+		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
+	}
+
+	// Generate native tokens
+	tokenID := uuid.Must(uuid.NewV4()).String()
+	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, nil)
+	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, nil)
+
+	// Store both native and UA tokens in the caches
+	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
+	s.tokenPairCache.Add(dbUserID, uaLoginData.Data.AccessToken, uaLoginData.Data.RefreshToken,
+		uaLoginData.Data.AccessTokenExpire, uaLoginData.Data.RefreshTokenExpire)
+
+	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+
+	// After hook.
+	if fn := s.runtime.AfterAuthenticateUA(); fn != nil {
+		afterFn := func(clientIP, clientPort string) error {
+			return fn(ctx, s.logger, dbUserID, dbUsername, nil, exp, clientIP, clientPort, session, in)
+		}
+		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	}
+
+	return session, nil
+}

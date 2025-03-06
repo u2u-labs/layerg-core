@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/u2u-labs/go-layerg-common/api"
 	"github.com/u2u-labs/go-layerg-common/runtime"
 	"github.com/u2u-labs/layerg-core/server/http"
 )
@@ -304,6 +305,40 @@ func EVMAuthUA(ctx context.Context, token string, request UAWeb3AuthRequest, con
 	if err != nil {
 		return nil, fmt.Errorf("failed to send twitter login callback: %w", err)
 	}
+
+	return &response, nil
+}
+
+type UASocialLoginRequest struct {
+	Code  string `json:"code"`
+	State string `json:"state"`
+}
+
+func SocialLoginUA(ctx context.Context, token string, param *api.UASocialLoginRequest, config Config) (*runtime.UADirectLoginResponse, error) {
+	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
+	endpoint := baseUrl + "/auth/" + param.GetSource().String() + "/callback"
+
+	fmt.Println("endpoint callback: ", endpoint)
+
+	headers, err := GetUAAuthHeaders(config)
+	if err != nil {
+		return nil, err
+	}
+
+	request := UASocialLoginRequest{
+		Code:  param.Code,
+		State: param.State,
+	}
+
+	fmt.Println("request: ", request)
+
+	var response runtime.UADirectLoginResponse
+	err = http.POST(ctx, endpoint, token, "", headers, request, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send social login callback: %w", err)
+	}
+
+	fmt.Println("response: ", response)
 
 	return &response, nil
 }

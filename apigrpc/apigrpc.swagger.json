@@ -856,7 +856,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/layergapiAuthenticateUA"
+              "$ref": "#/definitions/apiUASocialLoginRequest"
             }
           }
         ],
@@ -3986,6 +3986,16 @@
       },
       "description": "Update fields in a given group."
     },
+    "UASocialLoginRequestSocialSource": {
+      "type": "string",
+      "enum": [
+        "telegram",
+        "google",
+        "twitter"
+      ],
+      "default": "telegram",
+      "title": "- telegram: Telegram\n - google: Google\n - twitter: Huawei App Gallery"
+    },
     "UserGroupListUserGroup": {
       "type": "object",
       "properties": {
@@ -5342,6 +5352,26 @@
       },
       "description": "A set of tournament records which may be part of a tournament records page or a batch of individual records."
     },
+    "apiUASocialLoginRequest": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/UASocialLoginRequestSocialSource"
+        },
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "apiUpdateAccountRequest": {
       "type": "object",
       "properties": {
@@ -5761,26 +5791,6 @@
         }
       },
       "description": "Write objects to the storage engine."
-    },
-    "layergapiAuthenticateUA": {
-      "type": "object",
-      "properties": {
-        "jwt": {
-          "type": "string"
-        },
-        "refreshJwt": {
-          "type": "string"
-        },
-        "vars": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "create": {
-          "type": "boolean"
-        }
-      }
     },
     "layergapiEvent": {
       "type": "object",

@@ -269,7 +269,7 @@ service LayerG {
       };
   }
 
-  rpc AuthenticateUA (api.AuthenticateUA) returns (api.Session) {
+  rpc AuthenticateUA (api.UASocialLoginRequest) returns (api.Session) {
       option (google.api.http) = {
         post: "/v2/account/authenticate/ua",
         body: "*"

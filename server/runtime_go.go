@@ -531,10 +531,10 @@ func (ri *RuntimeGoInitializer) RegisterBeforeAuthenticateTelegram(fn func(ctx c
 	}
 	return nil
 }
-func (ri *RuntimeGoInitializer) RegisterBeforeAuthenticateUA(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, in *api.AuthenticateUA) (*api.AuthenticateUA, error)) error {
-	ri.beforeReq.beforeAuthenticateUAFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateUA) (*api.AuthenticateUA, error, codes.Code) {
+func (ri *RuntimeGoInitializer) RegisterBeforeAuthenticateUA(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, in *api.UASocialLoginRequest) (*api.UASocialLoginRequest, error)) error {
+	ri.beforeReq.beforeAuthenticateUAFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.UASocialLoginRequest) (*api.UASocialLoginRequest, error, codes.Code) {
 		ctx = NewRuntimeGoContext(ctx, ri.node, ri.version, ri.env, RuntimeExecutionModeBefore, nil, nil, expiry, userID, username, vars, "", clientIP, clientPort, "")
-		loggerFields := map[string]interface{}{"api_id": "authenticatetelegram", "mode": RuntimeExecutionModeBefore.String()}
+		loggerFields := map[string]interface{}{"api_id": "authenticateua", "mode": RuntimeExecutionModeBefore.String()}
 		result, fnErr := fn(ctx, ri.logger.WithFields(loggerFields), ri.db, ri.nk, in)
 		if fnErr != nil {
 			if runtimeErr, ok := fnErr.(*runtime.Error); ok {
@@ -580,8 +580,8 @@ func (ri *RuntimeGoInitializer) RegisterAfterAuthenticateTelegram(fn func(ctx co
 	}
 	return nil
 }
-func (ri *RuntimeGoInitializer) RegisterAfterAuthenticateUA(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, out *api.Session, in *api.AuthenticateUA) error) error {
-	ri.afterReq.afterAuthenticateUAFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateUA) error {
+func (ri *RuntimeGoInitializer) RegisterAfterAuthenticateUA(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, out *api.Session, in *api.UASocialLoginRequest) error) error {
+	ri.afterReq.afterAuthenticateUAFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.UASocialLoginRequest) error {
 		ctx = NewRuntimeGoContext(ctx, ri.node, ri.version, ri.env, RuntimeExecutionModeAfter, nil, nil, expiry, userID, username, vars, "", clientIP, clientPort, "")
 		loggerFields := map[string]interface{}{"api_id": "authenticateua", "mode": RuntimeExecutionModeAfter.String()}
 		return fn(ctx, ri.logger.WithFields(loggerFields), ri.db, ri.nk, out, in)

@@ -820,12 +820,12 @@ func NewRuntimeProviderJS(ctx context.Context, logger, startupLogger *zap.Logger
 						return result.(*api.AuthenticateTelegramRequest), nil, 0
 					}
 				case "authenticateua":
-					beforeReqFunctions.beforeAuthenticateUAFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateUA) (*api.AuthenticateUA, error, codes.Code) {
+					beforeReqFunctions.beforeAuthenticateUAFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.UASocialLoginRequest) (*api.UASocialLoginRequest, error, codes.Code) {
 						result, err, code := runtimeProviderJS.BeforeReq(ctx, id, logger, userID, username, vars, expiry, clientIP, clientPort, in)
 						if result == nil || err != nil {
 							return nil, err, code
 						}
-						return result.(*api.AuthenticateUA), nil, 0
+						return result.(*api.UASocialLoginRequest), nil, 0
 					}
 				case "authenticateevm":
 					beforeReqFunctions.beforeAuthenticateEvmFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AuthenticateEvmRequest) (*api.AuthenticateEvmRequest, error, codes.Code) {
@@ -1419,6 +1419,10 @@ func NewRuntimeProviderJS(ctx context.Context, logger, startupLogger *zap.Logger
 					}
 				case "authenticatetelegram":
 					afterReqFunctions.afterAuthenticateTelegramFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.AuthenticateTelegramRequest) error {
+						return runtimeProviderJS.AfterReq(ctx, id, logger, userID, username, vars, expiry, clientIP, clientPort, out, in)
+					}
+				case "authenticateua":
+					afterReqFunctions.afterAuthenticateUAFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.Session, in *api.UASocialLoginRequest) error {
 						return runtimeProviderJS.AfterReq(ctx, id, logger, userID, username, vars, expiry, clientIP, clientPort, out, in)
 					}
 				case "authenticateevm":
