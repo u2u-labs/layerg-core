@@ -153,12 +153,15 @@ func SendUAOnchainTX(ctx context.Context, token string, request runtime.UATransa
 func RefreshUAToken(ctx context.Context, token string, config Config) (*runtime.UARefreshTokenResponse, error) {
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/auth/refresh"
-
+	headers, err := GetUAAuthHeaders(config)
+	if err != nil {
+		return nil, err
+	}
 	request := runtime.UARefreshTokenRequest{
 		RefreshToken: token,
 	}
 	var response runtime.UARefreshTokenResponse
-	err := http.POST(ctx, endpoint, "", "", nil, request, &response)
+	err = http.POST(ctx, endpoint, "", "", headers, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
 	}
