@@ -163,7 +163,7 @@ func RefreshUAToken(ctx context.Context, token string, config Config) (*runtime.
 	var response runtime.UARefreshTokenResponse
 	err = http.POST(ctx, endpoint, "", "", headers, request, &response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
+		return nil, fmt.Errorf("Failed to refresh UA token: %w", err)
 	}
 
 	return &response, nil

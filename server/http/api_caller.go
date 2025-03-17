@@ -111,6 +111,7 @@ func POST(ctx context.Context, endpoint string, token string, signature string, 
 
 	// Read and unmarshal response into provided struct
 	respBody, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(respBody))
 	if err != nil {
 		return fmt.Errorf("failed to read POST response body: %w", err)
 	}
