@@ -1,0 +1,73 @@
+<h2 class="pb-1">Collections</h2>
+<div class="d-flex justify-content-between align-items-center">
+    <h6 class="pb-3">{{collectionsCount}} collections found.</h6>
+    <button type="button" [disabled]="" class="btn btn-lg btn-primary" [routerLink]="['create']">Create Collection</button>
+</div>
+
+<div class="row no-gutters mb-4">
+    <div class="col d-flex justify-content-between no-gutters align-items-center">
+        <div class="col-md-9">
+            <form [formGroup]="searchForm" (ngSubmit)="search(0)">
+                <div class="input-group">
+                    <input type="text" class="form-control border-right-0" formControlName="search" placeholder="Filter by name"/>
+
+                    <div class="input-group-append">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary dropdown-radius" (click)="search(0)">Search</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<ngb-alert [dismissible]="false" type="danger" class="mb-3" *ngIf="error">
+    <img src="/static/svg/red-triangle.svg" alt="" width="16" height="" class="mr-2">
+    <h6 class="mr-2 d-inline font-weight-bold">Error when querying collections: {{error}}</h6>
+</ngb-alert>
+
+<ngb-alert [dismissible]="false" type="danger" class="mb-3" *ngIf="ongoingQuery">
+    <img src="/static/svg/red-triangle.svg" alt="" width="16" height="" class="mr-2">
+    <h6 class="mr-2 d-inline font-weight-bold">Query ongoing...</h6>
+    <button type="button" class="btn btn-danger" (click)="cancelQuery()">Cancel!</button>
+</ngb-alert>
+
+<ngb-pagination
+        class="justify-content-end d-flex"
+        (pageChange)="onPageChange($event)"
+        [(page)]="page"
+        [pageSize]="limit"
+        [collectionSize]="collectionsCount || 1">
+</ngb-pagination>
+<div class="row no-gutters">
+    <table class="table table-sm table-hover table-bordered">
+        <thead class="thead-light">
+        <tr>
+            <th style="">ID</th>
+            <th>Name</th>
+            <th>Avatar</th>
+            <th style="">Total Assets</th>
+            <th style="">Created At</th>
+<!--            <th style="">Owner</th>-->
+<!--            <th style="width: 90px" *ngIf="deleteAllowed()">Action</th>-->
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngIf="collections.length === 0">
+            <td colSpan="5" class="text-muted">No users found - change the filter criteria or add new user collections.</td>
+        </tr>
+        <tr *ngFor="let u of collections; index as i;">
+            <td (click)="viewAccount(u);">{{u.id}}</td>
+            <td (click)="viewAccount(u);">{{u.name}}</td>
+            <td (click)="viewAccount(u);">
+              <img [src]="u.avatarUrl" class="img-thumbnail" alt="Preview" width="50" />
+            </td>
+            <td (click)="viewAccount(u);">{{u.totalAssets}}</td>
+            <td (click)="viewAccount(u);">{{u.createdAt}}</td>
+<!--            <td *ngIf="deleteAllowed() && u.id === systemUserId"></td>-->
+<!--            <td *ngIf="deleteAllowed() && u.id !== systemUserId" class="text-center"><button type="button" class="btn btn-sm btn-danger" (click)="deleteAccount($event, i, u);">Delete</button></td>-->
+        </tr>
+        </tbody>
+    </table>
+</div>

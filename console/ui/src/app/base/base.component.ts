@@ -18,6 +18,7 @@ import {SegmentService} from 'ngx-segment-analytics';
 import {ConsoleService, UserRole} from '../console.service';
 import {Globals} from '../globals';
 import {environment} from "../../environments/environment";
+import {LayergPortalService} from "../layergPortal.service";
 
 @Component({
   templateUrl: './base.component.html',
@@ -33,6 +34,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     {navItem: 'status', routerLink: ['/status'], label: 'Status', minRole: UserRole.USER_ROLE_READONLY, icon: 'status'},
     {navItem: 'users', routerLink: ['/users'], label: 'User Management', minRole: UserRole.USER_ROLE_ADMIN, icon: 'user-management'},
     {navItem: 'config', routerLink: ['/config'], label: 'Configuration', minRole: UserRole.USER_ROLE_DEVELOPER, icon: 'configuration'},
+    {navItem: 'collections', routerLink: ['/collections'], label: 'Collections', minRole: UserRole.USER_ROLE_DEVELOPER, icon: 'runtime-modules'},
     {navItem: 'modules', routerLink: ['/modules'], label: 'Runtime Modules', minRole: UserRole.USER_ROLE_DEVELOPER, separator: true, icon: 'runtime-modules'},
     {navItem: 'accounts', routerLink: ['/accounts'], label: 'Accounts', minRole: UserRole.USER_ROLE_READONLY, icon: 'accounts'},
     {navItem: 'groups', routerLink: ['/groups'], label: 'Groups', minRole: UserRole.USER_ROLE_READONLY, icon: 'groups'},
@@ -50,6 +52,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private segment: SegmentService,
     private readonly consoleService: ConsoleService,
+    private readonly layergPortalService: LayergPortalService,
     private readonly authService: AuthenticationService,
   ) {
     this.loading = false;

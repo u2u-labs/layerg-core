@@ -76,6 +76,7 @@ export class AuthenticationService {
       token: this.currentSessionSubject.getValue()?.token,
     }).pipe(tap(() => {
       localStorage.removeItem(SESSION_LOCALSTORAGE_KEY);
+      localStorage.removeItem('accessToken');
       this.currentSessionSubject.next(null);
     }));
   }
