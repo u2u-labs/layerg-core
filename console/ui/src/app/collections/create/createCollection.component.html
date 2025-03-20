@@ -1,0 +1,59 @@
+<h2 class="pb-1">Create Collection</h2>
+
+<ngb-alert [dismissible]="false" type="danger" class="mb-3" *ngIf="error">
+  <img src="/static/svg/red-triangle.svg" alt="" width="16" height="" class="mr-2">
+  <h6 class="mr-2 d-inline font-weight-bold">Error when querying create collection: {{error}}</h6>
+</ngb-alert>
+
+<!--<ngb-alert [dismissible]="false" type="danger" class="mb-3" *ngIf="ongoingQuery">-->
+<!--  <img src="/static/svg/red-triangle.svg" alt="" width="16" height="" class="mr-2">-->
+<!--  <h6 class="mr-2 d-inline font-weight-bold">Query ongoing...</h6>-->
+<!--  <button type="button" class="btn btn-danger" (click)="cancelQuery()">Cancel!</button>-->
+<!--</ngb-alert>-->
+
+<form [formGroup]="collectionForm" (ngSubmit)="createCollection()" class="add-border">
+  <div class="row">
+    <div class="col-md-6 d-flex justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline" for="name">Name</label>
+      </div>
+      <input type="text" id="name" class="form-control form-control-sm my-2" placeholder="Name" required formControlName="name" [ngClass]="{'is-invalid': f.name.dirty && f.name.errors}">
+      <div class="invalid-tooltip" [hidden]="f.name.disabled || f.name.valid || f.name.pristine">Name is required</div>
+    </div>
+  </div>
+
+<!--  <div class="row">-->
+<!--    <div class="col-md-6 d-flex justify-content-start align-items-baseline">-->
+<!--      <div class="col-3 pl-0">-->
+<!--        <label class="d-inline" for="avatarUrl">Avatar URL</label>-->
+<!--      </div>-->
+<!--      <input type="text" id="avatarUrl" class="form-control form-control-sm my-2" placeholder="Avatar Url" formControlName="avatarUrl" [ngClass]="{'is-invalid': f.avatarUrl.dirty && f.avatarUrl.errors}">-->
+<!--      <div class="invalid-tooltip" [hidden]="f.avatarUrl.disabled || f.avatarUrl.valid || f.avatarUrl.pristine">Avatar Url is required</div>-->
+<!--    </div>-->
+<!--  </div>-->
+
+  <div class="row mb-3 add-border-single-row-bottom">
+    <div class="col-md-6 d-flex justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline" for="description">Description</label>
+      </div>
+      <textarea id="description" class="form-control form-control-sm my-2" placeholder="Description" formControlName="description" [ngClass]="{'is-invalid': f.description.dirty && f.description.errors}"></textarea>
+      <div class="invalid-tooltip" [hidden]="f.description.disabled || f.description.valid || f.description.pristine">Description max 255</div>
+    </div>
+  </div>
+  <!-- Image Upload -->
+  <div class="mb-3">
+    <label class="form-label">Upload Avatar</label>
+    <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*" />
+  </div>
+
+  <!-- Image Preview -->
+  <div *ngIf="imagePreview" class="mb-3">
+    <h5>Preview:</h5>
+    <img [src]="imagePreview" class="img-thumbnail" alt="Preview" width="200" />
+  </div>
+  <div class="d-flex align-items-center">
+    <button type="submit" class="btn btn-primary mr-2" [disabled]="false">Create</button>
+    <button type="button" class="btn btn-secondary" (click)="handleBack()">Back</button>
+  </div>
+</form>

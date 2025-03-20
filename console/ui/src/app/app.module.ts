@@ -6,7 +6,7 @@ import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {WINDOW_PROVIDERS} from './window.provider';
-import {environment} from '../environments/environment';
+import {environment, environmentLayerg} from '../environments/environment';
 import {NgxChartsModule} from '@swimlane/ngx-charts';
 import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
@@ -49,6 +49,14 @@ import {PurchasesComponent} from './account/purchases/purchases.component';
 import {SubscriptionsComponent} from './account/subscriptions/subscriptions.component';
 import {DeleteConfirmDialogComponent} from './shared/delete-confirm-dialog/delete-confirm-dialog.component';
 import {SubscriptionsListComponent} from './subscriptions/subscriptions-list.component';
+import {CollectionsComponent} from './collections/collections.component';
+import {CollectionDetailComponent} from './collections/detail/collectionDetail.component';
+import {CreateCollectionComponent} from './collections/create/createCollection.component';
+import {CollectionComponent} from './collection/collection.component';
+import {CollectionDetail1Component} from './collection/detail/collectionDetail.component';
+import {LayergPortalConfig} from './layergPortal.service';
+import {ModalCreateNftComponent} from './components/collection/modalCreateNft/modal-create-nft.component';
+import {ModalUpdateNftComponent} from "./components/collection/modalUpdateNft/modal-update-nft.component";
 
 @NgModule({
   declarations: [
@@ -84,7 +92,14 @@ import {SubscriptionsListComponent} from './subscriptions/subscriptions-list.com
     ChatListComponent,
     DeleteConfirmDialogComponent,
     PurchasesListComponent,
-    SubscriptionsListComponent
+    SubscriptionsListComponent,
+    CollectionsComponent,
+    CreateCollectionComponent,
+    CollectionComponent,
+    CollectionDetailComponent,
+    CollectionDetail1Component,
+    ModalCreateNftComponent,
+    ModalUpdateNftComponent,
   ],
   imports: [
     NgxFileDropModule,
@@ -104,6 +119,8 @@ import {SubscriptionsListComponent} from './subscriptions/subscriptions-list.com
     WINDOW_PROVIDERS,
     Globals,
     {provide: ConfigParams, useValue: {host: environment.production ? document.location.origin : environment.apiBaseUrl, timeout: 15000}},
+    // tslint:disable-next-line:max-line-length
+    {provide: LayergPortalConfig, useValue: {host: environmentLayerg.production ? document.location.origin : environmentLayerg.apiBaseUrl, timeout: 15000}},
     {provide: HTTP_INTERCEPTORS, useClass: SessionInterceptor, multi: true},
     {provide: HTTP_INTERCEPTORS, useClass: AuthenticationErrorInterceptor, multi: true}
   ],

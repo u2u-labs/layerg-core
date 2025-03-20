@@ -453,7 +453,8 @@ a {
 
 
 .table-hover tbody tr:hover td {
-  background-color: lighten($brand-black, 30%);
+  //background-color: lighten($brand-black, 30%);
+  background-color: #b0acac;
 }
 
 /* Snazzy background gradient */
