@@ -9,6 +9,7 @@ import {JSONEditor, Mode, toTextContent} from 'vanilla-jsoneditor';
 import {NgbModal, NgbModalOptions} from '@ng-bootstrap/ng-bootstrap';
 import {ModalCreateNftComponent} from '../../components/collection/modalCreateNft/modal-create-nft.component';
 import {ModalUpdateNftComponent} from '../../components/collection/modalUpdateNft/modal-update-nft.component';
+import {ModalLinkContractComponent} from '../../components/collection/modalLinkContract/modal-link-contract.component';
 
 @Component({
   templateUrl: './collectionDetail.component.html',
@@ -32,6 +33,7 @@ export class CollectionDetail1Component implements OnInit, AfterViewInit {
   @ViewChild('editor') private editor: ElementRef<HTMLElement>;
 
   public error = '';
+  public success = '';
   private jsonEditor: JSONEditor;
   public collectionForm: UntypedFormGroup;
   public collection: CollectionItem;
@@ -200,6 +202,49 @@ export class CollectionDetail1Component implements OnInit, AfterViewInit {
     const modalRef = this.modalService.open(ModalCreateNftComponent, modalOptions);
     modalRef.componentInstance.collectionData = collection; // Truyền dữ liệu vào modal
     modalRef.componentInstance.collectibleCreated.subscribe(() => {
+      this.getListCollectible();
+    });
+  }
+
+  // tslint:disable-next-line:typedef
+  detailCollection() {
+    this.layergPortalService.detailCollection(this.collection?.id).subscribe(
+      (data) => {
+        this.collection = data;
+        this.collectionForm.patchValue(this.collection);
+        console.log('Detail collection success', data);
+      },
+      (error) => {
+        this.error = error;
+        console.error('Detail collection error', error);
+      }
+    );
+  }
+  publicCollection(id: string): void {
+    this.success = '';
+    const res = this.layergPortalService.publicCollection(id);
+    res.subscribe(
+      (data) => {
+        this.detailCollection();
+        this.success = 'Public collection success';
+        console.log('Public collection success', data);
+      },
+      (error) => {
+        this.error = error;
+        console.error('Public collection error', error);
+      }
+    );
+  }
+
+  // tslint:disable-next-line:typedef
+  openLinkContractModal(collection: CollectionItem) {
+    const modalOptions: NgbModalOptions = {
+      backdrop: true,
+      centered: true,
+    };
+    const modalRef = this.modalService.open(ModalLinkContractComponent, modalOptions);
+    modalRef.componentInstance.collectionData = collection; // Truyền dữ liệu vào modal
+    modalRef.componentInstance.linkContractUpdated.subscribe(() => {
       this.getListCollectible();
     });
   }

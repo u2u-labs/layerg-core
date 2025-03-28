@@ -7,13 +7,13 @@
 <div class="row no-gutters mb-4">
     <div class="col d-flex justify-content-between no-gutters align-items-center">
         <div class="col-md-9">
-            <form [formGroup]="searchForm" (ngSubmit)="search(0)">
+            <form [formGroup]="searchForm" (ngSubmit)="search()">
                 <div class="input-group">
                     <input type="text" class="form-control border-right-0" formControlName="search" placeholder="Filter by name"/>
 
                     <div class="input-group-append">
                         <div class="btn-group">
-                            <button type="button" class="btn btn-primary dropdown-radius" (click)="search(0)">Search</button>
+                            <button type="button" class="btn btn-primary dropdown-radius" (click)="search()">Search</button>
                         </div>
                     </div>
                 </div>
@@ -48,25 +48,36 @@
             <th>Name</th>
             <th>Avatar</th>
             <th style="">Total Assets</th>
+            <th style="">Contract</th>
+            <th style="">Status</th>
             <th style="">Created At</th>
-<!--            <th style="">Owner</th>-->
-<!--            <th style="width: 90px" *ngIf="deleteAllowed()">Action</th>-->
+            <th style="width: 90px" >Action</th>
         </tr>
         </thead>
         <tbody>
         <tr *ngIf="collections.length === 0">
-            <td colSpan="5" class="text-muted">No users found - change the filter criteria or add new user collections.</td>
+            <td colSpan="8" class="text-muted">No collections found - change the filter criteria or add new collections.</td>
         </tr>
-        <tr *ngFor="let u of collections; index as i;">
-            <td (click)="viewAccount(u);">{{u.id}}</td>
-            <td (click)="viewAccount(u);">{{u.name}}</td>
-            <td (click)="viewAccount(u);">
+        <tr class="text-center" *ngFor="let u of collections; index as i;">
+            <td>{{u.id}}</td>
+            <td>{{u.name}}</td>
+            <td>
               <img [src]="u.avatarUrl" class="img-thumbnail" alt="Preview" width="50" />
             </td>
-            <td (click)="viewAccount(u);">{{u.totalAssets}}</td>
-            <td (click)="viewAccount(u);">{{u.createdAt}}</td>
-<!--            <td *ngIf="deleteAllowed() && u.id === systemUserId"></td>-->
-<!--            <td *ngIf="deleteAllowed() && u.id !== systemUserId" class="text-center"><button type="button" class="btn btn-sm btn-danger" (click)="deleteAccount($event, i, u);">Delete</button></td>-->
+            <td>{{u.totalAssets}}</td>
+            <td>
+              <button type="button"
+                      class="btn btn-sm"
+                      [ngClass]="u.SmartContract?.length ? 'btn-outline-success' : 'btn-outline-warning'"
+                      (click)="openLinkContractModal(u)">
+                {{ u.SmartContract?.length ? 'Contract' : 'Link Contract' }}
+              </button>
+            </td>
+            <td>
+              <div [ngClass]="u.isPublic ? 'badge badge-success' : 'badge badge-secondary'">{{u.isPublic ? 'Public' : 'Private'}}</div>
+            </td>
+            <td>{{u.createdAt}}</td>
+            <td class="text-center"><button type="button" class="btn btn-sm btn-outline-info" (click)="viewAccount(u)">Detail</button></td>
         </tr>
         </tbody>
     </table>

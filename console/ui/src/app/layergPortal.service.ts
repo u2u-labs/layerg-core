@@ -62,6 +62,7 @@ export interface CollectionItem {
   totalAssets: number;
   slug: string;
   SmartContract: SmartContract[];
+  isPublic: boolean;
 }
 /** A list of users. */
 export interface CollectionList {
@@ -81,6 +82,14 @@ export interface IUpdateCollection {
   description: string;
   avatarUrl: string;
   projectId: string;
+  smc?: ILinkContract;
+}
+
+export interface ILinkContract {
+  contractAddress: string;
+  contractType: string;
+  networkID: number;
+  tokenSymbol: string;
 }
 
 export interface Paging {
@@ -200,6 +209,12 @@ export class LayergPortalService {
     const urlPath = `/collection/${id}`;
     return this.httpClient.put<IUpdateCollection>(this.layerg.host + urlPath, data, { headers: this.getTokenAuthHeaders() });
   }
+
+  updateCollectionLinkContract(id: string, data: ILinkContract): Observable<ILinkContract> {
+    id = encodeURIComponent(String(id));
+    const urlPath = `/collection/${id}`;
+    return this.httpClient.put<ILinkContract>(this.layerg.host + urlPath, data, { headers: this.getTokenAuthHeaders() });
+  }
   detailCollection(id: string): Observable<CollectionItem> {
     id = encodeURIComponent(String(id));
     const urlPath = `/collection/${id}`;
@@ -232,6 +247,10 @@ export class LayergPortalService {
   detailCollectible(id: string): Observable<ICollectibleItem> {
     const urlPath = `/assets/${id}`;
     return this.httpClient.get<ICollectibleItem>(this.layerg.host + urlPath, { headers: this.getTokenAuthHeaders() });
+  }
+  publicCollection(id: string): Observable<any> {
+    const urlPath = `/collection/public/${id}`;
+    return this.httpClient.post<any>(this.layerg.host + urlPath, {}, { headers: this.getTokenAuthHeaders() });
   }
   private getTokenAuthHeaders(): HttpHeaders {
     const accessToken = JSON.parse(localStorage.getItem('accessToken') as string);
