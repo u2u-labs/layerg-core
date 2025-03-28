@@ -1,0 +1,61 @@
+<div class="modal-header">
+  <h4 class="modal-title">Link Contract</h4>
+  <button type="button" class="close" aria-describedby="Close" aria-label="Close" (click)="activeModal.dismiss()">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+<div class="modal-body">
+  <ngb-alert [dismissible]="false" type="danger" class="mb-3" *ngIf="error">
+    <img src="/static/svg/red-triangle.svg" alt="" width="16" height="" class="mr-2">
+    <h6 class="mr-2 d-inline font-weight-bold">Error when querying create collection: {{error}}</h6>
+  </ngb-alert>
+  <div class="d-flex flex-column justify-content-center">
+      <p><strong>Collection ID:</strong> {{ collectionData?.id }}</p>
+    <form [formGroup]="linkContractForm" (ngSubmit)="updateLinkContract()" autocomplete="off">
+      <div class="row">
+        <div class="col-md-12 d-flex justify-content-start align-items-baseline">
+          <div class="col-4 pl-0">
+            <label class="d-inline" for="contractAddress">Contract Address <span class="text-danger">*</span></label>
+          </div>
+          <input type="text" id="contractAddress" class="form-control form-control-sm my-2" placeholder="contractAddress" required formControlName="contractAddress" [ngClass]="{'is-invalid': f.contractAddress.dirty && f.contractAddress.errors}">
+          <div class="invalid-tooltip" [hidden]="f.contractAddress.disabled || f.contractAddress.valid || f.contractAddress.pristine">contractAddress is required</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 d-flex justify-content-start align-items-baseline">
+          <div class="col-4 pl-0">
+            <label class="d-inline" for="contractType">Contract Type <span class="text-danger">*</span></label>
+          </div>
+          <select id="contractType" class="form-control form-control-sm my-2" formControlName="contractType" [ngClass]="{'is-invalid': f.contractType.dirty && f.contractType.errors}">
+            <option value="">Select Contract Type</option>
+            <option value="ERC721">ERC721</option>
+            <option value="ERC1155">ERC1155</option>
+          </select>
+          <div class="invalid-tooltip" [hidden]="f.contractType.disabled || f.contractType.valid || f.contractType.pristine">Contract Type is required</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 d-flex justify-content-start align-items-baseline">
+          <div class="col-4 pl-0">
+            <label class="d-inline" for="networkID">Network ID <span class="text-danger">*</span></label>
+          </div>
+          <input type="number" id="networkID" class="form-control form-control-sm my-2" placeholder="networkID" required formControlName="networkID" [ngClass]="{'is-invalid': f.networkID.dirty && f.networkID.errors}">
+          <div class="invalid-tooltip" [hidden]="f.networkID.disabled || f.networkID.valid || f.networkID.pristine">networkID is required</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 d-flex justify-content-start align-items-baseline">
+          <div class="col-4 pl-0">
+            <label class="d-inline" for="tokenSymbol">Token Symbol<span class="text-danger">*</span></label>
+          </div>
+          <input type="text" id="tokenSymbol" class="form-control form-control-sm my-2" placeholder="tokenSymbol" required formControlName="tokenSymbol" [ngClass]="{'is-invalid': f.tokenSymbol.dirty && f.tokenSymbol.errors}">
+          <div class="invalid-tooltip" [hidden]="f.tokenSymbol.disabled || f.tokenSymbol.valid || f.tokenSymbol.pristine">tokenSymbol is required</div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<div *ngIf="!collectionData?.SmartContract || !collectionData?.SmartContract?.length" class="modal-footer">
+  <button type="submit" class="btn btn-primary mr-2" [disabled]="false" (click)="updateLinkContract()">Update</button>
+  <button type="button" class="btn btn-secondary" (click)="activeModal.dismiss()">Back</button>
+</div>

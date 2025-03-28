@@ -7,6 +7,8 @@ import {AuthenticationService} from '../authentication.service';
 import {DeleteConfirmService} from '../shared/delete-confirm.service';
 import {takeUntil} from 'rxjs/operators';
 import {AuthLoginApiKey, CollectionItem, CollectionList, LayergPortalService} from '../layergPortal.service';
+import {NgbModal, NgbModalOptions} from '@ng-bootstrap/ng-bootstrap';
+import {ModalLinkContractComponent} from '../components/collection/modalLinkContract/modal-link-contract.component';
 
 @Component({
   templateUrl: './collections.component.html',
@@ -34,6 +36,7 @@ export class CollectionsComponent implements OnInit, OnDestroy {
       private readonly authService: AuthenticationService,
       private readonly formBuilder: UntypedFormBuilder,
       private readonly deleteConfirmService: DeleteConfirmService,
+      private modalService: NgbModal,
   ) {}
 
   ngOnInit(): void {
@@ -51,7 +54,7 @@ export class CollectionsComponent implements OnInit, OnDestroy {
     this.f.page.setValue(qp.get('page'));
     this.f.limit.setValue(qp.get('limit'));
     this.f.search.setValue(qp.get('search'));
-    this.search(0);
+    this.search();
 
     this.route.data.subscribe(
         d => {
@@ -64,11 +67,11 @@ export class CollectionsComponent implements OnInit, OnDestroy {
             apiKeyID,
           };
           this.handleLogin(params);
-          this.collections.length = 0;
-          if (d) {
-            this.collections.push(...d[0][1].data);
-            this.collectionsCount = d[0][1]?.paging?.total;
-          }
+          // this.collections.length = 0;
+          // if (d) {
+          //   this.collections.push(...d[0][1].data);
+          //   this.collectionsCount = d[0][1]?.paging?.total;
+          // }
         },
         err => {
           this.error = err;
@@ -94,7 +97,7 @@ export class CollectionsComponent implements OnInit, OnDestroy {
     this.querySubject.complete();
   }
 
-  search(state: number): void {
+  search(): void {
     if (this.ongoingQuery) {
       this.querySubject.next();
     }
@@ -133,7 +136,7 @@ export class CollectionsComponent implements OnInit, OnDestroy {
 
     onPageChange(page: number): void {
         this.f.page.setValue(page);
-        this.search(0);
+        this.search();
     }
 
   cancelQuery(): void {
@@ -170,6 +173,19 @@ export class CollectionsComponent implements OnInit, OnDestroy {
   get f(): any {
     return this.searchForm.controls;
   }
+
+  // tslint:disable-next-line:typedef
+  openLinkContractModal(collection: CollectionItem) {
+    const modalOptions: NgbModalOptions = {
+      backdrop: true,
+      centered: true,
+    };
+    const modalRef = this.modalService.open(ModalLinkContractComponent, modalOptions);
+    modalRef.componentInstance.collectionData = collection; // Truyền dữ liệu vào modal
+    modalRef.componentInstance.linkContractUpdated.subscribe(() => {
+      this.search();
+    });
+  }
 }
 
 @Injectable({providedIn: 'root'})
@@ -184,7 +200,7 @@ export class CollectionsResolver implements Resolve<any> {
       };
       const config = this.consoleService.getConfig('');
 
-      const collectionList = this.layergPortalService.listCollections(filter);
-      return forkJoin([config, collectionList]);
+      // const collectionList = this.layergPortalService.listCollections(filter);
+      return forkJoin([config]);
   }
 }

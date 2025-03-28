@@ -57,6 +57,7 @@ import {CollectionDetail1Component} from './collection/detail/collectionDetail.c
 import {LayergPortalConfig} from './layergPortal.service';
 import {ModalCreateNftComponent} from './components/collection/modalCreateNft/modal-create-nft.component';
 import {ModalUpdateNftComponent} from "./components/collection/modalUpdateNft/modal-update-nft.component";
+import {ModalLinkContractComponent} from "./components/collection/modalLinkContract/modal-link-contract.component";
 
 @NgModule({
   declarations: [
@@ -100,6 +101,7 @@ import {ModalUpdateNftComponent} from "./components/collection/modalUpdateNft/mo
     CollectionDetail1Component,
     ModalCreateNftComponent,
     ModalUpdateNftComponent,
+    ModalLinkContractComponent,
   ],
   imports: [
     NgxFileDropModule,
