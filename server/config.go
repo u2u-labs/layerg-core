@@ -536,7 +536,7 @@ func (c *config) Clone() (Config, error) {
 	configStorage := *(c.Storage)
 	configLayerGCore := *(c.LayerGCore)
 	configGoogleAuth := *(c.GoogleAuth)
-	configRedisDb := *(c.RedisDb)
+// 	configRedisDb := *(c.RedisDb)
 	nc := &config{
 		Name:             c.Name,
 		Datadir:          c.Datadir,
@@ -558,7 +558,7 @@ func (c *config) Clone() (Config, error) {
 		GoogleAuth:       &configGoogleAuth,
 		Storage:          &configStorage,
 		LayerGCore:       &configLayerGCore,
-		RedisDb:          &configRedisDb,
+// 		RedisDb:          &configRedisDb,
 		Cluster:          c.Cluster.Clone(),
 	}
 	nc.Socket.CertPEMBlock = make([]byte, len(c.Socket.CertPEMBlock))

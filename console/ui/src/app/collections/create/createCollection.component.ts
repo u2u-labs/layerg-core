@@ -92,7 +92,6 @@ export class CreateCollectionComponent implements OnInit, OnDestroy {
         avatarUrl: this.f.avatarUrl.value,
         projectId: JSON.parse(localStorage.getItem('accessToken') as string)?.projectId || null,
       };
-      console.log(body);
       this.layergPortalService.createCollections(body).subscribe((d) => {
         this.router.navigate(['/collections']);
       }, err => {

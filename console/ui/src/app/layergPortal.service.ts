@@ -118,6 +118,7 @@ export interface ICreateCollectible {
   media?: {
     mediaId?: string;
     S3Url?: string;
+    IPFSUrl?: string;
   };
 }
 
@@ -220,7 +221,7 @@ export class LayergPortalService {
     const urlPath = `/collection/${id}`;
     return this.httpClient.get<CollectionItem>(this.layerg.host + urlPath, { headers: this.getTokenAuthHeaders() });
   }
-  uploadImage(data: FormData): Observable<any> {
+  uploadImage(data: FormData): Observable<{fileHashes: string | string[]}> {
     const urlPath = `/common/upload-ipfs`;
     return this.httpClient.post<{fileHashes: string | string[]}>(this.layerg.host + urlPath, data, { headers: this.getTokenAuthHeaders() });
   }
