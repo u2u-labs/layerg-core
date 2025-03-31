@@ -83,11 +83,11 @@ export class ModalUpdateNftComponent implements OnInit, OnDestroy {
     const formData = new FormData();
     formData.append('files', this.selectedFile);
 
-    this.layergPortalService.uploadNft(formData).subscribe(
+    this.layergPortalService.uploadImage(formData).subscribe(
       (data) => {
         console.log('Image uploaded', data);
         // callback(data.url);
-        this.f.avatarUrl.setValue(data[0]);
+        this.f.avatarUrl.setValue(this.layergPortalService.getIpfsUrl(data.fileHashes[0]));
         console.log(this.f.avatarUrl.value);
       },
       (error) => {
@@ -116,7 +116,7 @@ export class ModalUpdateNftComponent implements OnInit, OnDestroy {
           }
         },
         media: {
-          S3Url: this.f.avatarUrl.value
+          IPFSUrl: this.f.avatarUrl.value
         }
       };
       this.layergPortalService.updateCollectibleNft(id, body).subscribe((d) => {
@@ -141,8 +141,8 @@ export class ModalUpdateNftComponent implements OnInit, OnDestroy {
         this.f.description.setValue(d.description);
         this.f.tokenId.setValue(d.tokenId);
         this.f.quantity.setValue(d.quantity);
-        this.imagePreview = d.media.S3Url || d.media.IPFSUrl;
-        this.f.avatarUrl.setValue(d.media.S3Url || d.media.IPFSUrl);
+        this.imagePreview = d.media.IPFSUrl || d.media.S3Url;
+        this.f.avatarUrl.setValue(d.media.IPFSUrl || d.media.S3Url);
         // Clear the existing attributes
         this.attributes.clear();
 

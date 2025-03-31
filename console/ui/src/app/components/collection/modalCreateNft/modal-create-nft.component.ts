@@ -80,11 +80,11 @@ export class ModalCreateNftComponent implements OnInit, OnDestroy {
     const formData = new FormData();
     formData.append('files', this.selectedFile);
 
-    this.layergPortalService.uploadNft(formData).subscribe(
+    this.layergPortalService.uploadImage(formData).subscribe(
       (data) => {
         console.log('Image uploaded', data);
         // callback(data.url);
-        this.f.avatarUrl.setValue(data[0]);
+        this.f.avatarUrl.setValue(this.layergPortalService.getIpfsUrl(data.fileHashes[0]));
         console.log(this.f.avatarUrl.value);
       },
       (error) => {
@@ -112,7 +112,7 @@ export class ModalCreateNftComponent implements OnInit, OnDestroy {
           }
         },
         media: {
-          S3Url: this.f.avatarUrl.value
+          IPFSUrl: this.f.avatarUrl.value
         }
       };
       if (this.f.tokenId.value.toString()) {

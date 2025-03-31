@@ -4,16 +4,16 @@ logger:
   stdout: true
   file: ""
 database:
-  address: ["root@localhost:26257"]
+  address: ["postgresql://postgres:postgres@localhost:5432/postgres"]
   database: "layerg"
 # cluster:
 #   gossip_bindport: 7353
 #   members:
 #     - "localhost:7352"
-socket:
-  port: 8350
-console:
-  port: 8351
+#socket:
+#  port: 8350
+#console:
+#  port: 8351
 layerg_core:
   url: "https://agg-dev.layerg.xyz"
   api_key: "syip1g6wd29f4tn8p78yc"
