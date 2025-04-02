@@ -1151,7 +1151,6 @@ type LayerGCoreConfig struct {
 	UAPublicApiKey      string `yaml:"ua_public_api_key" json:"ua_public_api_key" usage:"ua public api key for core server"`
 	UAPrivateApiKey     string `yaml:"ua_private_api_key" json:"ua_private_api_key" usage:"ua private api key for core server"`
 	UADomain            string `yaml:"ua_domain" json:"ua_domain" usage:"ua domain for core server"`
-	LayerGPortalUrl     string `yaml:"layer_g_portal_url" json:"layer_g_portal_url" usage:"layer g portal url"`
 }
 
 type RedisConfig struct {
