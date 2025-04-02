@@ -779,6 +779,8 @@ export interface ApiUser {
   location?:string
   // Additional information stored as a JSON object.
   metadata?:string
+  // Wallet address
+  onchain_id?:string
   // Indicates whether the user is currently online.
   online?:boolean
   // The Steam id in the user's account.
@@ -1158,6 +1160,17 @@ export class ConsoleService {
       params = params.set('cursor', cursor);
     }
     return this.httpClient.get<ApiChannelMessageList>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  }
+
+  /** Add new NFT collection */
+  addNFTCollection(auth_token: string, collection_address: string, type: string, initial_block: string, chain_id: integer): Observable<any> {
+    collection_address = encodeURIComponent(String(collection_address))
+    type = encodeURIComponent(String(type))
+    initial_block = encodeURIComponent(String(initial_block))
+    chain_id = encodeURIComponent(String(chain_id))
+    const urlPath = `/v2/console/collection/${collection_address}/type/${type}/block/${initial_block}/chain/${chain_id}`;
+    let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+    return this.httpClient.post(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
 
   /** Get server config and configuration warnings. */

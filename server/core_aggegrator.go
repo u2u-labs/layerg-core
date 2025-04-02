@@ -42,7 +42,7 @@ func LoginAndCacheToken(ctx context.Context, logger *zap.Logger, config Config, 
 	defaultUuid := uuid.FromStringOrNil("00000000-0000-0000-0000-000000000000")
 	apiKey := config.GetLayerGCoreConfig().ApiKey
 	apiKeyID := config.GetLayerGCoreConfig().ApiKeyID
-	loginURL := config.GetLayerGCoreConfig().URL
+	loginURL := config.GetLayerGCoreConfig().PortalURL
 	reqBody, err := json.Marshal(LoginRequest{ApiKey: apiKey, ApiKeyID: apiKeyID})
 	if err != nil {
 		return err

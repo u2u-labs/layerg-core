@@ -43,6 +43,7 @@ const (
 	Console_DeleteLeaderboard_FullMethodName         = "/layerg.console.Console/DeleteLeaderboard"
 	Console_DeleteLeaderboardRecord_FullMethodName   = "/layerg.console.Console/DeleteLeaderboardRecord"
 	Console_DeleteUser_FullMethodName                = "/layerg.console.Console/DeleteUser"
+	Console_AddNFTCollection_FullMethodName          = "/layerg.console.Console/AddNFTCollection"
 	Console_DeleteWalletLedger_FullMethodName        = "/layerg.console.Console/DeleteWalletLedger"
 	Console_DemoteGroupMember_FullMethodName         = "/layerg.console.Console/DemoteGroupMember"
 	Console_ExportAccount_FullMethodName             = "/layerg.console.Console/ExportAccount"
@@ -134,6 +135,8 @@ type ConsoleClient interface {
 	DeleteLeaderboardRecord(ctx context.Context, in *DeleteLeaderboardRecordRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Delete console user.
 	DeleteUser(ctx context.Context, in *Username, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Add new NFT collection
+	AddNFTCollection(ctx context.Context, in *AddNFTCollectionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Delete a wallet ledger item.
 	DeleteWalletLedger(ctx context.Context, in *DeleteWalletLedgerRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Demote a user from a group.
@@ -416,6 +419,16 @@ func (c *consoleClient) DeleteUser(ctx context.Context, in *Username, opts ...gr
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Console_DeleteUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consoleClient) AddNFTCollection(ctx context.Context, in *AddNFTCollectionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Console_AddNFTCollection_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -907,6 +920,8 @@ type ConsoleServer interface {
 	DeleteLeaderboardRecord(context.Context, *DeleteLeaderboardRecordRequest) (*emptypb.Empty, error)
 	// Delete console user.
 	DeleteUser(context.Context, *Username) (*emptypb.Empty, error)
+	// Add new NFT collection
+	AddNFTCollection(context.Context, *AddNFTCollectionRequest) (*emptypb.Empty, error)
 	// Delete a wallet ledger item.
 	DeleteWalletLedger(context.Context, *DeleteWalletLedgerRequest) (*emptypb.Empty, error)
 	// Demote a user from a group.
@@ -1061,6 +1076,9 @@ func (UnimplementedConsoleServer) DeleteLeaderboardRecord(context.Context, *Dele
 }
 func (UnimplementedConsoleServer) DeleteUser(context.Context, *Username) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
+}
+func (UnimplementedConsoleServer) AddNFTCollection(context.Context, *AddNFTCollectionRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddNFTCollection not implemented")
 }
 func (UnimplementedConsoleServer) DeleteWalletLedger(context.Context, *DeleteWalletLedgerRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteWalletLedger not implemented")
@@ -1553,6 +1571,24 @@ func _Console_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ConsoleServer).DeleteUser(ctx, req.(*Username))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Console_AddNFTCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddNFTCollectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsoleServer).AddNFTCollection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Console_AddNFTCollection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsoleServer).AddNFTCollection(ctx, req.(*AddNFTCollectionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2431,6 +2467,10 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteUser",
 			Handler:    _Console_DeleteUser_Handler,
+		},
+		{
+			MethodName: "AddNFTCollection",
+			Handler:    _Console_AddNFTCollection_Handler,
 		},
 		{
 			MethodName: "DeleteWalletLedger",

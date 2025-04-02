@@ -5,17 +5,13 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto"
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math"
-	"math/big"
 	"net"
 	"net/http"
 	"strings"
@@ -82,9 +78,10 @@ type ApiServer struct {
 	grpcGatewayServer    *http.Server
 	activeTokenCacheUser ActiveTokenCache
 	protojsonMarshaler   *protojson.MarshalOptions
+	tokenPairCache       *TokenPairCache
 }
 
-func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, version string, socialClient *social.Client, storageIndex StorageIndex, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, matchmaker Matchmaker, tracker Tracker, router MessageRouter, streamManager StreamManager, metrics Metrics, pipeline *Pipeline, runtime *Runtime, activeCache ActiveTokenCache) *ApiServer {
+func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, version string, socialClient *social.Client, storageIndex StorageIndex, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, matchmaker Matchmaker, tracker Tracker, router MessageRouter, streamManager StreamManager, metrics Metrics, pipeline *Pipeline, runtime *Runtime, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache) *ApiServer {
 	var gatewayContextTimeoutMs string
 	if config.GetSocket().IdleTimeoutMs > 500 {
 		// Ensure the GRPC Gateway timeout is just under the idle timeout (if possible) to ensure it has priority.
@@ -140,6 +137,7 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 		grpcServer:           grpcServer,
 		activeTokenCacheUser: activeCache,
 		protojsonMarshaler:   protojsonMarshaler,
+		tokenPairCache:       tokenPairCache,
 	}
 
 	// Register and start GRPC server.
@@ -223,6 +221,13 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 	// Special case routes. Do NOT enable compression on WebSocket route, it results in "http: response.Write on hijacked connection" errors.
 	grpcGatewayRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) }).Methods("GET")
 	grpcGatewayRouter.HandleFunc("/ws", NewSocketWsAcceptor(logger, config, sessionRegistry, sessionCache, statusRegistry, matchmaker, tracker, metrics, runtime, protojsonMarshaler, protojsonUnmarshaler, pipeline)).Methods("GET")
+	grpcGatewayRouter.HandleFunc("/ua-headers", GetUAHeadersHandler(config)).Methods("GET")
+
+	// Add webhook routes before wrapping the router
+	webhookRegistry := runtime.GetWebhookRegistry()
+	if webhookRegistry != nil {
+		webhookRegistry.HandleWebhook(grpcGatewayRouter)
+	}
 
 	// Another nested router to hijack RPC requests bound for GRPC Gateway.
 	grpcGatewayMux := mux.NewRouter()
@@ -367,6 +372,8 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 		fallthrough
 	case "/layerg.api.LayerG/AuthenticateUA":
 		fallthrough
+	case "/layerg.api.LayerG/SendTelegramAuthOTP":
+		break
 	case "/layerg.api.LayerG/AuthenticateSteam":
 		// Session refresh and authentication functions only require server key.
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -425,39 +432,17 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 		}
 		if len(auth) != 1 {
 			// Value of "authorization" or "grpc-authorization" was empty or repeated.
-			return nil, status.Error(codes.Unauthenticated, "Auth token invalid 1")
+			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
 		}
-		userID1, username1, vars1, exp1, tokenId1, ok1 := parseBearerAuth1(config.GetConsole().PublicKey, auth[0])
-		if !ok1 {
-			userID, username, vars, exp, tokenId, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
-			logger.Info("", zap.String("userID: ", userID.String()))
-			logger.Info("", zap.String("username: ", username))
-			logger.Info("", zap.Int("exp: ", int(exp)))
-			logger.Info("", zap.String("tokenID: ", tokenId))
-			logger.Info("", zap.Bool("ok: ", ok))
-			if !ok {
-				// Value of "authorization" or "grpc-authorization" was malformed or expired.
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 2")
-			}
-			if !sessionCache.IsValidSession(userID, exp, tokenId) {
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 3")
-			}
-			ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
-		} else {
-			logger.Info("", zap.String("userID: ", userID1.String()))
-			logger.Info("", zap.String("username: ", username1))
-			logger.Info("", zap.Int("exp: ", int(exp1)))
-			logger.Info("", zap.String("tokenID: ", tokenId1))
-			logger.Info("", zap.Bool("ok: ", ok1))
-			if !ok {
-				// Value of "authorization" or "grpc-authorization" was malformed or expired.
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 4")
-			}
-			if !sessionCache.IsValidSession(userID1, exp1, tokenId1) {
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 5")
-			}
-			ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID1), ctxUsernameKey{}, username1), ctxVarsKey{}, vars1), ctxExpiryKey{}, exp1)
+		userID, username, vars, exp, tokenId, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
+		if !ok {
+			// Value of "authorization" or "grpc-authorization" was malformed or expired.
+			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
 		}
+		if !sessionCache.IsValidSession(userID, exp, tokenId) {
+			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+		}
+		ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
 	default:
 		// Unless explicitly defined above, handlers require full user authentication.
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -475,36 +460,17 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 		}
 		if len(auth) != 1 {
 			// Value of "authorization" or "grpc-authorization" was empty or repeated.
-			return nil, status.Error(codes.Unauthenticated, "Auth token invalid 6")
+			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
 		}
-
-		userID1, username1, vars1, exp1, tokenId1, ok1 := parseBearerAuth1(config.GetConsole().PublicKey, auth[0])
-		if !ok1 {
-
-			userID, username, vars, exp, tokenId, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
-			if !ok {
-				// Value of "authorization" or "grpc-authorization" was malformed or expired.
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 7")
-			}
-			if !sessionCache.IsValidSession(userID, exp, tokenId) {
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 8")
-			}
-			ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
-		} else {
-			logger.Info("", zap.String("userID: ", userID1.String()))
-			logger.Info("", zap.String("username: ", username1))
-			logger.Info("", zap.Int("exp: ", int(exp1)))
-			logger.Info("", zap.String("tokenID: ", tokenId1))
-			logger.Info("", zap.Bool("ok: ", ok1))
-			if !ok {
-				// Value of "authorization" or "grpc-authorization" was malformed or expired.
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 4")
-			}
-			if !sessionCache.IsValidSession(userID1, exp1, tokenId1) {
-				return nil, status.Error(codes.Unauthenticated, "Auth token invalid 5")
-			}
-			ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID1), ctxUsernameKey{}, username1), ctxVarsKey{}, vars1), ctxExpiryKey{}, exp1)
+		userID, username, vars, exp, tokenId, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
+		if !ok {
+			// Value of "authorization" or "grpc-authorization" was malformed or expired.
+			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
 		}
+		if !sessionCache.IsValidSession(userID, exp, tokenId) {
+			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
+		}
+		ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
 	}
 	return context.WithValue(ctx, ctxFullMethodKey{}, info.FullMethod), nil
 }
@@ -539,102 +505,91 @@ func parseBearerAuth(hmacSecretByte []byte, auth string) (userID uuid.UUID, user
 	}
 	return parseToken(hmacSecretByte, auth[len(prefix):])
 }
-func parseBearerAuth1(publicKey, auth string) (userID uuid.UUID, username string, vars map[string]string, exp int64, tokenId string, ok bool) {
-	if auth == "" {
-		return
-	}
-	const prefix = "Bearer "
-	if !strings.HasPrefix(auth, prefix) {
-		return
-	}
-	userID, wallet, exp, tokenID, valid := validateJWT(publicKey, auth[len(prefix):])
-	return userID, wallet, make(map[string]string), exp, tokenID, valid
-}
 
-type JWTClaims struct {
-	UserId    string `json:"user_id"`
-	Wallet    string `json:"wallet"`
-	Exp       int64  `json:"exp"`
-	Iat       int64  `json:"iat"`
-	TokenID   string `json:"token_id"`
-	Signature struct {
-		R   string `json:"r"`
-		S   string `json:"s"`
-		Msg string `json:"msg"`
-	} `json:"signature"`
-}
+// type JWTClaims struct {
+// 	UserId    string `json:"user_id"`
+// 	Wallet    string `json:"wallet"`
+// 	Exp       int64  `json:"exp"`
+// 	Iat       int64  `json:"iat"`
+// 	TokenID   string `json:"token_id"`
+// 	Signature struct {
+// 		R   string `json:"r"`
+// 		S   string `json:"s"`
+// 		Msg string `json:"msg"`
+// 	} `json:"signature"`
+// }
 
-func validateJWT(publicKeyHex, tokenString string) (userID uuid.UUID, wallet string, exp int64, tokenID string, valid bool) {
-	// Decode base64 JWT (example assumes payload in JWT's middle part is base64 encoded JSON)
+// func validateJWT(publicKeyHex, tokenString string) (userID uuid.UUID, wallet string, exp int64, tokenID string, valid bool) {
+// 	// Decode base64 JWT (example assumes payload in JWT's middle part is base64 encoded JSON)
 
-	// Predefined public key from the service entity (in PEM format)
-	// publicKeyHex := config.GetConsole().PublicKey
+// 	// Predefined public key from the service entity (in PEM format)
+// 	// publicKeyHex := config.GetConsole().PublicKey
 
-	parts := strings.Split(tokenString, ".")
-	if len(parts) != 3 {
-		fmt.Println("Invalid JWT format")
-		return
-	}
+// 	parts := strings.Split(tokenString, ".")
+// 	if len(parts) != 3 {
+// 		fmt.Println("Invalid JWT format")
+// 		return
+// 	}
 
-	// Decode the payload (the second part) from base64
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		fmt.Println("Failed to decode JWT payload:", err)
-		return
-	}
+// 	// Decode the payload (the second part) from base64
+// 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+// 	if err != nil {
+// 		fmt.Println("Failed to decode JWT payload:", err)
+// 		return
+// 	}
 
-	// Unmarshal the JSON payload into the JWTClaims struct
-	var claims JWTClaims
-	err = json.Unmarshal(payload, &claims)
-	if err != nil {
-		fmt.Println("Failed to parse JWT claims:", err)
-		return
-	}
+// 	// Unmarshal the JSON payload into the JWTClaims struct
+// 	var claims JWTClaims
+// 	err = json.Unmarshal(payload, &claims)
+// 	if err != nil {
+// 		fmt.Println("Failed to parse JWT claims:", err)
+// 		return
+// 	}
 
-	// Decode the public key hex into X and Y coordinates
-	pubKeyBytes, err := hex.DecodeString(publicKeyHex)
-	if err != nil {
-		fmt.Println("Failed to decode public key hex:", err)
-		return
-	}
+// 	// Decode the public key hex into X and Y coordinates
+// 	pubKeyBytes, err := hex.DecodeString(publicKeyHex)
+// 	if err != nil {
+// 		fmt.Println("Failed to decode public key hex:", err)
+// 		return
+// 	}
 
-	x := new(big.Int).SetBytes(pubKeyBytes[1:33]) // X coordinate
-	y := new(big.Int).SetBytes(pubKeyBytes[33:])  // Y coordinate
-	ecdsaPubKey := &ecdsa.PublicKey{Curve: elliptic.P256(), X: x, Y: y}
+// 	x := new(big.Int).SetBytes(pubKeyBytes[1:33]) // X coordinate
+// 	y := new(big.Int).SetBytes(pubKeyBytes[33:])  // Y coordinate
+// 	ecdsaPubKey := &ecdsa.PublicKey{Curve: elliptic.P256(), X: x, Y: y}
 
-	// Convert r and s from strings to big.Int (try base 10, fallback to base 16)
-	r := new(big.Int)
-	s := new(big.Int)
-	if _, ok := r.SetString(claims.Signature.R, 10); !ok {
-		if _, ok = r.SetString(claims.Signature.R, 16); !ok {
-			fmt.Println("Failed to parse r value")
-			return
-		}
-	}
-	if _, ok := s.SetString(claims.Signature.S, 10); !ok {
-		if _, ok = s.SetString(claims.Signature.S, 16); !ok {
-			fmt.Println("Failed to parse s value")
-			return
-		}
-	}
+// 	// Convert r and s from strings to big.Int (try base 10, fallback to base 16)
+// 	r := new(big.Int)
+// 	s := new(big.Int)
+// 	if _, ok := r.SetString(claims.Signature.R, 10); !ok {
+// 		if _, ok = r.SetString(claims.Signature.R, 16); !ok {
+// 			fmt.Println("Failed to parse r value")
+// 			return
+// 		}
+// 	}
+// 	if _, ok := s.SetString(claims.Signature.S, 10); !ok {
+// 		if _, ok = s.SetString(claims.Signature.S, 16); !ok {
+// 			fmt.Println("Failed to parse s value")
+// 			return
+// 		}
+// 	}
 
-	// Verify the signature with ECDSA
-	msgHash := []byte(claims.Signature.Msg) // Hash this if it was hashed in the original signing process
-	isValid := ecdsa.Verify(ecdsaPubKey, msgHash, r, s)
-	if !isValid {
-		fmt.Println("Signature verification failed")
-		return
-	}
+// 	// Verify the signature with ECDSA
+// 	msgHash := []byte(claims.Signature.Msg) // Hash this if it was hashed in the original signing process
+// 	isValid := ecdsa.Verify(ecdsaPubKey, msgHash, r, s)
+// 	if !isValid {
+// 		fmt.Println("Signature verification failed")
+// 		return
+// 	}
 
-	// Return user info if verification succeeded
-	userID, err = uuid.FromString(claims.UserId)
-	if err != nil {
-		fmt.Println("Invalid UUID format:", err)
-		return
-	}
-	return userID, claims.Wallet, claims.Exp, claims.TokenID, true
+// 	// Return user info if verification succeeded
+// 	userID, err = uuid.FromString(claims.UserId)
+// 	if err != nil {
+// 		fmt.Println("Invalid UUID format:", err)
+// 		return
+// 	}
+// 	return userID, claims.Wallet, claims.Exp, claims.TokenID, true
 
-}
+// }
 
 func parseToken(hmacSecretByte []byte, tokenString string) (userID uuid.UUID, username string, vars map[string]string, exp int64, tokenId string, ok bool) {
 	jwtToken, err := jwt.ParseWithClaims(tokenString, &SessionTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -769,4 +724,25 @@ func handleRoutingError(ctx context.Context, mux *grpcgw.ServeMux, marshaler grp
 
 	// Set empty ServerMetadata to prevent logging error on nil metadata.
 	grpcgw.DefaultHTTPErrorHandler(grpcgw.NewServerMetadataContext(ctx, grpcgw.ServerMetadata{}), mux, marshaler, w, r, sterr)
+}
+
+func GetUAHeadersHandler(config Config) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		headers, err := GetUAAuthHeaders(config)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		headersBytes, err := json.Marshal(headers)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(200)
+		w.Write(headersBytes)
+	}
 }

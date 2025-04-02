@@ -52,9 +52,11 @@ type RuntimeGoLayerGModule struct {
 	fleetManager         runtime.FleetManager
 	storageIndex         StorageIndex
 	activeTokenCacheUser ActiveTokenCache
+	tokenPairCache       *TokenPairCache
+	webhookRegistry      *WebhookRegistry
 }
 
-func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache) *RuntimeGoLayerGModule {
+func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache, webhookRegistry *WebhookRegistry) *RuntimeGoLayerGModule {
 	return &RuntimeGoLayerGModule{
 		logger:               logger,
 		db:                   db,
@@ -74,6 +76,8 @@ func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler
 		router:               router,
 		storageIndex:         storageIndex,
 		activeTokenCacheUser: activeCache,
+		tokenPairCache:       tokenPairCache,
+		webhookRegistry:      webhookRegistry,
 
 		node: config.GetName(),
 
@@ -333,11 +337,14 @@ func (n *RuntimeGoLayerGModule) AuthenticateGameCenter(ctx context.Context, play
 // @param token(type=string) Google OAuth access token.
 // @param username(type=string) The user's username. If left empty, one is generated.
 // @param create(type=bool) Create user if one didn't exist previously.
+// @param code(type=string) The code returned from the Google OAuth flow.
+// @param state(type=string) The state returned from the Google OAuth flow.
+// @param errStr(type=string) The error string returned from the Google OAuth flow.
 // @return userID(string) The user ID of the authenticated user.
 // @return username(string) The username of the authenticated user.
 // @return create(bool) Value indicating if this account was just created or already existed.
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, username string, create bool) (string, string, bool, error) {
+func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, username string, create bool, code, state, errStr string) (string, string, bool, error) {
 	if token == "" {
 		return "", "", false, errors.New("expects ID token string")
 	}
@@ -350,23 +357,82 @@ func (n *RuntimeGoLayerGModule) AuthenticateGoogle(ctx context.Context, token, u
 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
 	}
 
-	return AuthenticateGoogle(ctx, n.logger, n.db, n.socialClient, token, username, create)
+	uaInfo := NewUALoginCallBackRequest(code, errStr, state)
+	dbUserID, token, _, created, err := AuthenticateGoogle(ctx, n.logger, n.db, n.socialClient, n.config, token, username, create, uaInfo)
+	return dbUserID, token, created, err
+}
+
+// @group authenticate
+// @summary Authenticate user and create a session token by delegating UA code.
+// @param ctx(type=context.Context) The context object represents information about the server and requester.
+// @param username(type=string) The user's username. If left empty, one is generated.
+// @param create(type=bool) Create user if one didn't exist previously.
+// @param code(type=string) The code returned from the Google OAuth flow.
+// @param state(type=string) The state returned from the Google OAuth flow.
+// @param errStr(type=string) The error string returned from the Google OAuth flow.
+// @return userID(string) The user ID of the authenticated user.
+// @return username(string) The username of the authenticated user.
+// @return create(bool) Value indicating if this account was just created or already existed.
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) AuthenticateTwitter(ctx context.Context, username string, code, state, errStr string, create bool) (string, string, bool, error) {
+	if username == "" {
+		username = generateUsername()
+	} else if invalidUsernameRegex.MatchString(username) {
+		return "", "", false, errors.New("expects username to be valid, no spaces or control characters allowed")
+	} else if len(username) > 128 {
+		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
+	}
+
+	uaInfo := NewUALoginCallBackRequest(code, errStr, state)
+	dbUserID, token, _, created, err := AuthenticateTwitter(ctx, n.logger, n.db, n.socialClient, n.config, username, create, uaInfo)
+	return dbUserID, token, created, err
+}
+
+// @group metadata
+// @summary required headers for UA requests
+// @return map[string]string headers
+func (n *RuntimeGoLayerGModule) GetRequiredHeadersUA() (map[string]string, error) {
+	return GetUAAuthHeaders(n.config)
+}
+
+// @group contract
+// @summary Build a contract call request from separate base type parameters.
+// @param sender(type=string) The sender's address.
+// @param contractAddress(type=string) The target contract's address.
+// @param abi(type=string) The ABI of the contract.
+// @param method(type=string) The contract method to call.
+// @param value(type=int64) The amount to send (in smallest unit) which is converted to string.
+// @param params(type=...interface{}) Additional parameters for the contract method.
+// @return txRequest(*TransactionRequest) The built transaction request.
+// @return error(error) An optional error if building the transaction fails.
+func (n *RuntimeGoLayerGModule) BuildContractCallRequest(ctx context.Context, params runtime.ContractCallParams) (*runtime.TransactionRequest, error) {
+
+	return BuildContractCallRequest(params)
+}
+
+func (n *RuntimeGoLayerGModule) SendUAOnchainTX(ctx context.Context, userID string, params runtime.UATransactionRequest) (*runtime.ReceiptResponse, error) {
+	uaToken, _ := n.tokenPairCache.Get(userID)
+	request := params
+
+	return SendUAOnchainTX(ctx, uaToken.AccessToken, request, n.config)
 }
 
 // @group authenticate
 // @summary Authenticate user and create a session token using a Telegram ID.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
 // @param telegramId(type=string) Tegegram ID.
-// @param telegramAppData(type=string) The user's telegram App Data
 // @param username(type=string) The user's username. If left empty, one is generated.
 // @param create(type=bool) Create user if one didn't exist previously.
 // @return userID(string) The user ID of the authenticated user.
 // @return username(string) The username of the authenticated user.
 // @return create(bool) Value indicating if this account was just created or already existed.
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) AuthenticateTelegram(ctx context.Context, telegramId, telegramAppData, username string, create bool) (string, string, bool, error) {
+func (n *RuntimeGoLayerGModule) AuthenticateTelegram(ctx context.Context, telegramId string, chainId int, username, firstname, lastname, avatarUrl, otp string, create bool) (string, string, bool, error) {
 	if telegramId == "" {
 		return "", "", false, errors.New("expects Telegram ID string")
+	}
+	if otp == "" {
+		return "", "", false, errors.New("expects OTP string")
 	}
 
 	if username == "" {
@@ -377,7 +443,12 @@ func (n *RuntimeGoLayerGModule) AuthenticateTelegram(ctx context.Context, telegr
 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
 	}
 
-	return AuthenticateTelegram(ctx, n.logger, n.db, telegramId, username, telegramAppData, create)
+	dbUserID, _, token, _, _, _, created, err := AuthenticateTelegram(ctx, n.logger, n.db, n.config, telegramId, chainId, username, firstname, lastname, avatarUrl, otp, create)
+	return dbUserID, token, created, err
+}
+
+func (n *RuntimeGoLayerGModule) SendTelegramAuthOTP(ctx context.Context, telegramId string) error {
+	return SendTelegramAuthOTP(ctx, n.logger, n.config, telegramId)
 }
 
 // @group authenticate
@@ -407,7 +478,8 @@ func (n *RuntimeGoLayerGModule) AuthenticateEvm(ctx context.Context, evmAddress,
 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
 	}
 
-	return AuthenticateEvm(ctx, n.logger, n.db, evmAddress, signature, username, create)
+	dbUserID, token, _, created, err := AuthenticateEvm(ctx, n.logger, n.db, evmAddress, signature, username, create, n.config)
+	return dbUserID, token, created, err
 }
 
 // @group authenticate
@@ -2351,7 +2423,7 @@ func (n *RuntimeGoLayerGModule) MultiUpdate(ctx context.Context, accountUpdates 
 // @param leaderboardID(type=string) The unique identifier for the new leaderboard. This is used by clients to submit scores.
 // @param authoritative(type=bool, default=false) Mark the leaderboard as authoritative which ensures updates can only be made via the Go runtime. No client can submit a score directly.
 // @param sortOrder(type=string, default="desc") The sort order for records in the leaderboard. Possible values are "asc" or "desc".
-// @param operator(type=string, default="best") The operator that determines how scores behave when submitted. Possible values are "best", "set", or "incr".
+// @param operator(type=string, default="best") The operator that determines how scores behave when submitted. Possible values are "best", "set", "incr", or "decr".
 // @param resetSchedule(type=string) The cron format used to define the reset schedule for the leaderboard. This controls when a leaderboard is reset and can be used to power daily/weekly/monthly leaderboards.
 // @param metadata(type=map[string]interface{}) The metadata you want associated to the leaderboard. Some good examples are weather conditions for a racing game.
 // @return error(error) An optional error value if an error occurred.
@@ -4367,4 +4439,8 @@ func (n *RuntimeGoLayerGModule) GetSatori() runtime.Satori {
 
 func (n *RuntimeGoLayerGModule) GetFleetManager() runtime.FleetManager {
 	return n.fleetManager
+}
+
+func (n *RuntimeGoLayerGModule) RegisterWebhook(ctx context.Context, config runtime.WebhookConfig, handler runtime.WebhookHandler) error {
+	return n.webhookRegistry.RegisterWebhook(ctx, config, handler)
 }
