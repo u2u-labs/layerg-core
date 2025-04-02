@@ -185,6 +185,11 @@ service Console {
     option (google.api.http).delete = "/v2/console/user";
   }
 
+  // Add new NFT collection
+  rpc AddNFTCollection (AddNFTCollectionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http).post = "/v2/console/collection/{collection_address}/type/{type}/block/{initial_block}/chain/{chain_id}";
+  }
+
   // Delete a wallet ledger item.
   rpc DeleteWalletLedger (DeleteWalletLedgerRequest) returns (google.protobuf.Empty) {
     option (google.api.http).delete = "/v2/console/account/{id}/wallet/{wallet_id}";
@@ -630,6 +635,14 @@ message UpdateGroupUserStateRequest {
   string id = 1;
   // ID of the group.
   string group_id = 2;
+}
+
+// Add NFT collection
+message AddNFTCollectionRequest {
+  string collection_address = 1;
+  string type = 2;
+  uint64 initial_block = 3;
+  uint32 chain_id = 4;
 }
 
 // Remove a leaderboard record

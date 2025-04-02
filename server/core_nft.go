@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/u2u-labs/go-layerg-common/runtime"
+	"github.com/u2u-labs/layerg-core/server/http"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -137,7 +138,7 @@ func GetNFTs(ctx context.Context, params runtime.NFTQueryParams, config Config) 
 
 	// Execute GET request and unmarshal response
 	var response runtime.NFTResponse
-	err = GET(ctx, endpoint, "", queryParams, &response)
+	err = http.GET(ctx, endpoint, "", queryParams, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get NFT details: %w", err)
 	}
@@ -155,11 +156,11 @@ func GetCollectionAsset(ctx context.Context, params runtime.CollectionAssetQuery
 		return nil, err
 	}
 	baseUrl := config.GetLayerGCoreConfig().URL
-	endpoint := baseUrl + "/api/asset-nft"
+	endpoint := baseUrl + "/api/assets"
 
 	// Execute GET request and unmarshal response
 	var response runtime.CollectionAssetResponse
-	err = GET(ctx, endpoint, token, queryParams, &response)
+	err = http.GET(ctx, endpoint, token, queryParams, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get NFT details: %w", err)
 	}
@@ -190,7 +191,7 @@ func CreateAssetNFT(ctx context.Context, token string, request CreateAssetNFTReq
 	endpoint := baseUrl + "/api/asset-nft/create"
 
 	var response CreateAssetNFTResponse
-	err := POST(ctx, endpoint, token, request, &response)
+	err := http.POST(ctx, endpoint, token, "", nil, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
 	}
@@ -223,7 +224,7 @@ func TransferNFT(ctx context.Context, token string, request TransferNFTRequest, 
 
 	endpoint := baseUrl + "/api/transaction/transfer-nft"
 
-	err := POST(ctx, endpoint, token, request, nil)
+	err := http.POST(ctx, endpoint, token, "", nil, request, nil)
 	if err != nil {
 		return fmt.Errorf("failed to transfer NFT: %w", err)
 	}
@@ -235,7 +236,7 @@ func MintNFT(ctx context.Context, token string, request MintNFTRequest, config C
 	baseUrl := config.GetLayerGCoreConfig().URL
 	endpoint := baseUrl + "/api/transaction/mint-nft"
 
-	err := POST(ctx, endpoint, token, request, nil)
+	err := http.POST(ctx, endpoint, token, "", nil, request, nil)
 	if err != nil {
 		return fmt.Errorf("failed to mint NFT: %w", err)
 	}

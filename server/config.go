@@ -43,7 +43,7 @@ type Config interface {
 	GetLimit() int
 	GetCluster() *PeerConfig
 	GetLayerGCoreConfig() *LayerGCoreConfig
-
+	GetRedisDbConfig() *RedisConfig
 	Clone() (Config, error)
 }
 
@@ -471,6 +471,7 @@ type config struct {
 	Limit            int                `json:"-"` // Only used for migrate command.
 	Cluster          *PeerConfig        `yaml:"cluster" json:"cluster" usage:"Cluster settings."`
 	LayerGCore       *LayerGCoreConfig  `yaml:"layerg_core" json:"layerg_core" usage:"LayerG core server config."`
+	RedisDb          *RedisConfig       `yaml:"redis_db" json:"redis_db" usage:"RedisDB server config."`
 }
 
 func randomString(n int) string {
@@ -513,6 +514,7 @@ func NewConfig(logger *zap.Logger) *config {
 		Limit:            -1,
 		Cluster:          NewPeerConfig(),
 		LayerGCore:       NewLayerGCore(),
+		RedisDb:          NewRedisDb(),
 	}
 }
 
@@ -674,6 +676,10 @@ func (c *config) GetCluster() *PeerConfig {
 
 func (c *config) GetLayerGCoreConfig() *LayerGCoreConfig {
 	return c.LayerGCore
+}
+
+func (c *config) GetRedisDbConfig() *RedisConfig {
+	return c.RedisDb
 }
 
 // LoggerConfig is configuration relevant to logging levels and output.
@@ -1139,6 +1145,19 @@ type LayerGCoreConfig struct {
 	ApiKeyID            string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
 	URL                 string `yaml:"url" json:"url" usage:"url of core server"`
 	UniversalAccountURL string `yaml:"ua_url" json:"ua_url" usage:"ua_url of core server"`
+	MasterDB            string `yaml:"masterdb_url" json:"masterdb_url" usage:"masterdb_url of core server"`
+	MasterPvk           string `yaml:"master_pvk" json:"master_pvk" usage:"master wallet private key for admin onchain operaton"`
+	UAApiKey            string `yaml:"ua_api_key" json:"ua_api_key" usage:"ua api key for core server"`
+	UAPublicApiKey      string `yaml:"ua_public_api_key" json:"ua_public_api_key" usage:"ua public api key for core server"`
+	UAPrivateApiKey     string `yaml:"ua_private_api_key" json:"ua_private_api_key" usage:"ua private api key for core server"`
+	UADomain            string `yaml:"ua_domain" json:"ua_domain" usage:"ua domain for core server"`
+}
+
+type RedisConfig struct {
+	Url      string `yaml:"url" json:"url" usage:"url redis server"`
+	Db       int    `yaml:"db" json:"db" usage:"db of redis server"`
+	Ttl      int    `yaml:"ttl" json:"ttl" usage:"time-to-live in second"`
+	Password string `yaml:"password" json:"password" usage:"password of redis server"`
 }
 
 func NewGoogleAuthConfig() *GoogleAuthConfig {
@@ -1173,6 +1192,20 @@ func NewLayerGCore() *LayerGCoreConfig {
 		ApiKey:              "v13lx3ykszi3gi7j000oa2",
 		ApiKeyID:            "d3e94d1b-3959-498b-9971-b5df93adfd28",
 		URL:                 "http://localhost:3000",
-		UniversalAccountURL: "https://ua-api-dev.layerg.xyz",
+		UniversalAccountURL: "https://bundler-dev.layerg.xyz",
+		MasterDB:            "https://crawler-db-dev.layerg.xyz",
+		MasterPvk:           "27f13e9f9e69f7cfa365e2316b272a943e162c769ae57826ebe373f73d0323d9",
+		UAApiKey:            "sys-dev-api-key",
+		UAPublicApiKey:      "7c581609293E503dE149d93f34767DFF33d32C16",
+		UAPrivateApiKey:     "c194c2a77814de98c486836da3ae6747769ed6e6064186f2943b33f25dba284c",
+		UADomain:            "http://localhost:7350",
+	}
+}
+func NewRedisDb() *RedisConfig {
+	return &RedisConfig{
+		Url:      "localhost:6379",
+		Db:       0,
+		Password: "",
+		Ttl:      1,
 	}
 }

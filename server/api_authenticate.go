@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -17,6 +18,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var (
@@ -42,6 +44,61 @@ func (stc *SessionTokenClaims) Valid() error {
 		return vErr
 	}
 	return nil
+}
+
+type TokenPairCache struct {
+	nativeToUA map[string]UATokenPair
+	mu         sync.RWMutex
+}
+
+type UATokenPair struct {
+	AccessToken  string
+	RefreshToken string
+	AccessExp    int64
+	RefreshExp   int64
+}
+
+func NewTokenPairCache() *TokenPairCache {
+	return &TokenPairCache{
+		nativeToUA: make(map[string]UATokenPair),
+	}
+}
+
+func (c *TokenPairCache) Add(nativeToken string, uaAccess, uaRefresh string, accessExp, refreshExp int64) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.nativeToUA[nativeToken] = UATokenPair{
+		AccessToken:  uaAccess,
+		RefreshToken: uaRefresh,
+		AccessExp:    accessExp,
+		RefreshExp:   refreshExp,
+	}
+}
+
+func (c *TokenPairCache) Update(nativeToken string, uaAccess, uaRefresh string, accessExp, refreshExp int64) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, exists := c.nativeToUA[nativeToken]; exists {
+		c.nativeToUA[nativeToken] = UATokenPair{
+			AccessToken:  uaAccess,
+			RefreshToken: uaRefresh,
+			AccessExp:    accessExp,
+			RefreshExp:   refreshExp,
+		}
+	}
+}
+
+func (c *TokenPairCache) Get(nativeToken string) (UATokenPair, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	pair, exists := c.nativeToUA[nativeToken]
+	return pair, exists
+}
+
+func (c *TokenPairCache) Remove(nativeToken string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.nativeToUA, nativeToken)
 }
 
 // func forwardToGlobalAuthenticator(ctx context.Context, url string, in interface{}) (*api.Session, error) {
@@ -173,6 +230,8 @@ func (stc *SessionTokenClaims) Valid() error {
 // 	}
 // }
 
+const UALoginMessage = "logmein"
+
 func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest) (*api.Session, error) {
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateEvm(); fn != nil {
@@ -199,7 +258,7 @@ func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvm
 	}
 
 	// Validate the signature
-	valid, err := verifySignature("sample", in.Account.EvmAddress, in.Account.EvmSignature)
+	valid, err := verifySignature(UALoginMessage, in.Account.EvmAddress, in.Account.EvmSignature)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid signature.")
 	}
@@ -218,7 +277,7 @@ func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvm
 
 	create := in.Create == nil || in.Create.Value
 
-	dbUserID, dbUsername, created, err := AuthenticateEvm(ctx, s.logger, s.db, in.Account.EvmAddress, in.Account.EvmAddress, username, create)
+	dbUserID, dbUsername, uaTokens, created, err := AuthenticateEvm(ctx, s.logger, s.db, in.Account.EvmAddress, in.Account.EvmSignature, username, create, s.config)
 	if err != nil {
 		return nil, err
 	}
@@ -231,6 +290,7 @@ func (s *ApiServer) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvm
 	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
 	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
+	s.tokenPairCache.Add(dbUserID, uaTokens.Data.AccessToken, uaTokens.Data.RefreshToken, uaTokens.Data.AccessTokenExpire, uaTokens.Data.RefreshTokenExpire)
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
 	// After hook.
@@ -908,7 +968,7 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 		}
 	}
 
-	if in.Account == nil || in.Account.Token == "" {
+	if in.Account == nil || (in.Account.Token == "" && in.Code == "") {
 		return nil, status.Error(codes.InvalidArgument, "Google access token is required.")
 	}
 
@@ -923,7 +983,8 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 
 	create := in.Create == nil || in.Create.Value
 
-	dbUserID, dbUsername, created, err := AuthenticateGoogle(ctx, s.logger, s.db, s.socialClient, in.Account.Token, username, create)
+	uaInfo := NewUALoginCallBackRequest(in.Code, in.Error, in.State)
+	dbUserID, dbUsername, uaTokens, created, err := AuthenticateGoogle(ctx, s.logger, s.db, s.socialClient, s.config, in.Account.Token, username, create, uaInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -932,11 +993,13 @@ func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.Authenticate
 		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
 	}
 
+	// Store both native and UA tokens in the caches
 	tokenID := uuid.Must(uuid.NewV4()).String()
 	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
 	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	s.tokenPairCache.Add(dbUserID, uaTokens.Data.AccessToken, uaTokens.Data.RefreshToken, uaTokens.Data.AccessTokenExpire, uaTokens.Data.RefreshTokenExpire)
 
 	// After hook.
 	if fn := s.runtime.AfterAuthenticateGoogle(); fn != nil {
@@ -1041,6 +1104,83 @@ func (s *ApiServer) AuthenticateSteam(ctx context.Context, in *api.AuthenticateS
 	return session, nil
 }
 
+func (s *ApiServer) AuthenticateTwitter(ctx context.Context, in *api.AuthenticateTwitterRequest) (*api.Session, error) {
+	// Before hook.
+	if fn := s.runtime.BeforeAuthenticateTwitter(); fn != nil {
+		beforeFn := func(clientIP, clientPort string) error {
+			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+			if err != nil {
+				return status.Error(code, err.Error())
+			}
+			if result == nil {
+				// If result is nil, requested resource is disabled.
+				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+				return status.Error(codes.NotFound, "Requested resource was not found.")
+			}
+			in = result
+			return nil
+		}
+
+		// Execute the before function lambda wrapped in a trace for stats measurement.
+		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if in.Code == "" {
+		return nil, status.Error(codes.InvalidArgument, "Twitter UA code is required.")
+	}
+
+	username := in.Username
+	if username == "" {
+		username = generateUsername()
+	} else if invalidUsernameRegex.MatchString(username) {
+		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	} else if len(username) > 128 {
+		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	}
+
+	create := in.Create == nil || in.Create.Value
+
+	uaInfo := NewUALoginCallBackRequest(in.Code, in.Error, in.State)
+	dbUserID, dbUsername, uaTokens, created, err := AuthenticateTwitter(ctx, s.logger, s.db, s.socialClient, s.config, username, create, uaInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.config.GetSession().SingleSession {
+		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
+	}
+
+	// Store both native and UA tokens in the caches
+	tokenID := uuid.Must(uuid.NewV4()).String()
+	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
+	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	s.tokenPairCache.Add(dbUserID, uaTokens.Data.AccessToken, uaTokens.Data.RefreshToken, uaTokens.Data.AccessTokenExpire, uaTokens.Data.RefreshTokenExpire)
+
+	// After hook.
+	if fn := s.runtime.AfterAuthenticateTwitter(); fn != nil {
+		afterFn := func(clientIP, clientPort string) error {
+			return fn(ctx, s.logger, dbUserID, dbUsername, nil, exp, clientIP, clientPort, session, in)
+		}
+
+		// Execute the after function lambda wrapped in a trace for stats measurement.
+		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	}
+	// global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
+	// }
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if in.AuthGlobal.Value == true {
+	// 	return global, nil
+	// }
+	return session, nil
+}
+
 func generateToken(config Config, tokenID, userID, username string, vars map[string]string) (string, int64) {
 	exp := time.Now().UTC().Add(time.Duration(config.GetSession().TokenExpirySec) * time.Second).Unix()
 	return generateTokenWithExpiry(config.GetSession().EncryptionKey, tokenID, userID, username, vars, exp)
@@ -1072,6 +1212,18 @@ func generateUsername() string {
 	return string(b)
 }
 
+func (s *ApiServer) SendTelegramAuthOTP(ctx context.Context, in *api.SendTelegramOTPRequest) (*emptypb.Empty, error) {
+	if in.TelegramId == "" {
+		return nil, status.Error(codes.InvalidArgument, "Telegram ID is required.")
+	}
+	err := SendTelegramAuthOTP(ctx, s.logger, s.config, in.TelegramId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
 func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.AuthenticateTelegramRequest) (*api.Session, error) {
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateTelegram(); fn != nil {
@@ -1096,9 +1248,12 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 		}
 	}
 
-	telegramId := in.Account.TelegramId
-	if telegramId == "" {
+	if in.Account.TelegramId == "" {
 		return nil, status.Error(codes.InvalidArgument, "Telegram ID is required.")
+	}
+
+	if in.Account.Otp == "" {
+		return nil, status.Error(codes.InvalidArgument, "OTP is required.")
 	}
 
 	username := in.Account.Username
@@ -1111,7 +1266,8 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 	}
 
 	create := in.Create == nil || in.Create.Value
-	dbUserID, dbUsername, created, err := AuthenticateTelegram(ctx, s.logger, s.db, telegramId, username, in.Account.TelegramAppData, create)
+
+	dbUserID, dbUsername, uaAccessToken, uaRefreshToken, uaAccessExp, uaRefreshExp, created, err := AuthenticateTelegram(ctx, s.logger, s.db, s.config, in.Account.TelegramId, int(in.Account.ChainId), username, in.Account.Firstname, in.Account.Lastname, in.Account.AvatarUrl, in.Account.Otp, create)
 	if err != nil {
 		return nil, err
 	}
@@ -1121,9 +1277,13 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 	}
 
 	tokenID := uuid.Must(uuid.NewV4()).String()
-	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+	token, exp := generateToken(s.config, tokenID, dbUserID, username, in.Account.Vars)
+	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, username, in.Account.Vars)
+
+	// Store both native and UA tokens in the caches
 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
+	s.tokenPairCache.Add(dbUserID, uaAccessToken, uaRefreshToken, uaAccessExp, uaRefreshExp)
+
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
 	// After hook.
@@ -1131,21 +1291,15 @@ func (s *ApiServer) AuthenticateTelegram(ctx context.Context, in *api.Authentica
 		afterFn := func(clientIP, clientPort string) error {
 			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
 		}
+
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
-	// global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
-	// }
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if in.AuthGlobal.Value == true {
-	// 	return global, nil
-	// }
 
 	return session, nil
 }
-func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.AuthenticateUA) (*api.Session, error) {
+
+func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.UASocialLoginRequest) (*api.Session, error) {
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateUA(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -1154,7 +1308,6 @@ func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.AuthenticateUA) 
 				return status.Error(code, err.Error())
 			}
 			if result == nil {
-				// If result is nil, requested resource is disabled.
 				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
 				return status.Error(codes.NotFound, "Requested resource was not found.")
 			}
@@ -1162,20 +1315,19 @@ func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.AuthenticateUA) 
 			return nil
 		}
 
-		// Execute the before function lambda wrapped in a trace for stats measurement.
 		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	_, _, exp, _, valid := validateJWT(s.config.GetConsole().PublicKey, in.Jwt)
-	if !valid {
-		return nil, status.Error(codes.Canceled, "Requested resource was not found.")
-
+	// Call UA service to get login data
+	uaLoginData, err := SocialLoginUA(ctx, "", in, s.config)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Error authenticating with UA service")
 	}
-	create := in.Create == nil || in.Create.Value
-	dbUserID, dbUsername, created, err := AuthenticateUA(ctx, s.logger, s.db, s.config, in.Jwt, create)
+
+	dbUserID, dbUsername, created, err := AuthenticateUA(ctx, s.logger, s.db, uaLoginData.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -1184,32 +1336,25 @@ func (s *ApiServer) AuthenticateUA(ctx context.Context, in *api.AuthenticateUA) 
 		s.sessionCache.RemoveAll(uuid.Must(uuid.FromString(dbUserID)))
 	}
 
-	// s.sessionCache.Add(userID, exp, in.Jwt, exp+603900000, tokenId)
-	// session := &api.Session{Created: created, Token: in.Jwt, RefreshToken: in.RefreshJwt}
-
+	// Generate native tokens
 	tokenID := uuid.Must(uuid.NewV4()).String()
-	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Vars)
+	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, nil)
+	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, nil)
+
+	// Store both native and UA tokens in the caches
 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
-	s.activeTokenCacheUser.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken, 0, "", 0, "")
+	s.tokenPairCache.Add(dbUserID, uaLoginData.Data.AccessToken, uaLoginData.Data.RefreshToken,
+		uaLoginData.Data.AccessTokenExpire, uaLoginData.Data.RefreshTokenExpire)
+
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
 	// After hook.
 	if fn := s.runtime.AfterAuthenticateUA(); fn != nil {
 		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, dbUsername, in.Vars, exp, clientIP, clientPort, session, in)
+			return fn(ctx, s.logger, dbUserID, dbUsername, nil, exp, clientIP, clientPort, session, in)
 		}
-		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
-	// global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
-	// }
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if in.AuthGlobal.Value == true {
-	// 	return global, nil
-	// }
 
 	return session, nil
 }

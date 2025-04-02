@@ -110,9 +110,10 @@ var restrictedMethods = map[string]console.UserRole{
 	"/layerg.console.Console/UnlinkSteam":               console.UserRole_USER_ROLE_MAINTAINER,
 
 	// User
-	"/layerg.console.Console/AddUser":    console.UserRole_USER_ROLE_ADMIN,
-	"/layerg.console.Console/DeleteUser": console.UserRole_USER_ROLE_ADMIN,
-	"/layerg.console.Console/ListUsers":  console.UserRole_USER_ROLE_ADMIN,
+	"/layerg.console.Console/AddUser":          console.UserRole_USER_ROLE_ADMIN,
+	"/layerg.console.Console/DeleteUser":       console.UserRole_USER_ROLE_ADMIN,
+	"/layerg.console.Console/ListUsers":        console.UserRole_USER_ROLE_ADMIN,
+	"/layerg.console.Console/AddNFTCollection": console.UserRole_USER_ROLE_ADMIN,
 }
 
 type ctxConsoleUsernameKey struct{}

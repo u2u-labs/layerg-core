@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -167,6 +168,7 @@ func (n *runtimeJavascriptLayerGModule) mappings(r *goja.Runtime) map[string]fun
 		"authenticateGoogle":                   n.authenticateGoogle(r),
 		"authenticateTelegram":                 n.authenticateTelegram(r),
 		"authenticateSteam":                    n.authenticateSteam(r),
+		"authenticateTwitter":                  n.authenticateTwitter(r),
 		"authenticateTokenGenerate":            n.authenticateTokenGenerate(r),
 		"accountGetId":                         n.accountGetId(r),
 		"accountsGetId":                        n.accountsGetId(r),
@@ -291,6 +293,7 @@ func (n *runtimeJavascriptLayerGModule) mappings(r *goja.Runtime) map[string]fun
 		"binaryToString":                       n.binaryToString(r),
 		"stringToBinary":                       n.stringToBinary(r),
 		"storageIndexList":                     n.storageIndexList(r),
+		"getRequiredHeadersUA":                 n.getRequiredHeadersUA(r),
 	}
 }
 
@@ -412,6 +415,17 @@ func (n *runtimeJavascriptLayerGModule) storageIndexList(r *goja.Runtime) func(g
 		}
 
 		return r.ToValue(objects)
+	}
+}
+
+func (n *runtimeJavascriptLayerGModule) getRequiredHeadersUA(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		headers, err := GetUAAuthHeaders(n.config)
+		if err != nil {
+			panic(r.NewGoError(fmt.Errorf("failed to get required headers: %s", err.Error())))
+		}
+
+		return r.ToValue(headers)
 	}
 }
 
@@ -1704,9 +1718,6 @@ func (n *runtimeJavascriptLayerGModule) authenticateGameCenter(r *goja.Runtime) 
 func (n *runtimeJavascriptLayerGModule) authenticateGoogle(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return func(f goja.FunctionCall) goja.Value {
 		token := getJsString(r, f.Argument(0))
-		if token == "" {
-			panic(r.NewTypeError("expects ID token string"))
-		}
 
 		username := ""
 		if f.Argument(1) != goja.Undefined() {
@@ -1725,8 +1736,26 @@ func (n *runtimeJavascriptLayerGModule) authenticateGoogle(r *goja.Runtime) func
 		if f.Argument(2) != goja.Undefined() {
 			create = getJsBool(r, f.Argument(2))
 		}
+		code := ""
+		if f.Argument(3) != goja.Undefined() {
+			code = getJsString(r, f.Argument(3))
+		}
+		if token == "" && code == "" {
+			panic(r.NewTypeError("expects ID token string"))
+		}
 
-		dbUserID, dbUsername, created, err := AuthenticateGoogle(n.ctx, n.logger, n.db, n.socialClient, token, username, create)
+		errStr := ""
+		if f.Argument(4) != goja.Undefined() {
+			errStr = getJsString(r, f.Argument(4))
+		}
+
+		state := ""
+		if f.Argument(5) != goja.Undefined() {
+			state = getJsString(r, f.Argument(5))
+		}
+		uaInfo := NewUALoginCallBackRequest(code, errStr, state)
+
+		dbUserID, dbUsername, _, created, err := AuthenticateGoogle(n.ctx, n.logger, n.db, n.socialClient, n.config, token, username, create, uaInfo)
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}
@@ -1756,9 +1785,16 @@ func (n *runtimeJavascriptLayerGModule) authenticateTelegram(r *goja.Runtime) fu
 			panic(r.NewTypeError("expects ID token string"))
 		}
 
+		otp := getJsString(r, f.Argument(1))
+		if otp == "" {
+			panic(r.NewTypeError("expects OTP string"))
+		}
+		chainId := getJsString(r, f.Argument(2))
+		chainIdInt, err := strconv.Atoi(chainId)
+
 		username := ""
 		if f.Argument(1) != goja.Undefined() {
-			username = getJsString(r, f.Argument(1))
+			username = getJsString(r, f.Argument(3))
 		}
 
 		if username == "" {
@@ -1769,22 +1805,44 @@ func (n *runtimeJavascriptLayerGModule) authenticateTelegram(r *goja.Runtime) fu
 			panic(r.NewTypeError("expects id to be valid, must be 1-128 bytes"))
 		}
 
-		telegramAppData := getJsString(r, f.Argument(0))
+		firstname := getJsString(r, f.Argument(4))
+		lastname := getJsString(r, f.Argument(5))
+		avatarUrl := getJsString(r, f.Argument(6))
 		create := true
 		if f.Argument(2) != goja.Undefined() {
-			create = getJsBool(r, f.Argument(2))
+			create = getJsBool(r, f.Argument(7))
 		}
 
-		dbUserID, dbUsername, created, err := AuthenticateTelegram(n.ctx, n.logger, n.db, telegramId, username, telegramAppData, create)
+		if err != nil {
+			panic(r.NewTypeError("expects chainId to be a valid integer"))
+		}
+
+		dbUserID, _, token, _, _, _, created, err := AuthenticateTelegram(n.ctx, n.logger, n.db, n.config, telegramId, chainIdInt, username, firstname, lastname, avatarUrl, otp, create)
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}
 
 		return r.ToValue(map[string]interface{}{
-			"userId":   dbUserID,
-			"username": dbUsername,
-			"created":  created,
+			"userId":      dbUserID,
+			"accessToken": token,
+			"created":     created,
 		})
+	}
+}
+
+func (n *runtimeJavascriptLayerGModule) sendTelegramAuthOTP(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		telegramId := getJsString(r, f.Argument(0))
+		if telegramId == "" {
+			panic(r.NewTypeError("expects ID token string"))
+		}
+
+		err := SendTelegramAuthOTP(n.ctx, n.logger, n.config, telegramId)
+		if err != nil {
+			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
+		}
+
+		return r.ToValue(map[string]interface{}{})
 	}
 }
 
@@ -1841,6 +1899,65 @@ func (n *runtimeJavascriptLayerGModule) authenticateSteam(r *goja.Runtime) func(
 		if importFriends {
 			// Errors are logged before this point and failure here does not invalidate the whole operation.
 			_ = importSteamFriends(n.ctx, n.logger, n.db, n.tracker, n.router, n.socialClient, uuid.FromStringOrNil(dbUserID), dbUsername, n.config.GetSocial().Steam.PublisherKey, steamID, false)
+		}
+
+		return r.ToValue(map[string]interface{}{
+			"userId":   dbUserID,
+			"username": dbUsername,
+			"created":  created,
+		})
+	}
+}
+
+// @group authenticate
+// @summary Authenticate user and create a session token using a UA code.
+// @param username(type=string, optional=true) The user's username. If left empty, one is generated.
+// @param create(type=bool, optional=true, default=true) Create user if one didn't exist previously.
+// @return userID(string) The user ID of the authenticated user.
+// @return username(string) The username of the authenticated user.
+// @return create(bool) Value indicating if this account was just created or already existed.
+// @return error(error) An optional error value if an error occurred.
+func (n *runtimeJavascriptLayerGModule) authenticateTwitter(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		username := ""
+		if f.Argument(1) != goja.Undefined() {
+			username = getJsString(r, f.Argument(0))
+		}
+
+		if username == "" {
+			username = generateUsername()
+		} else if invalidUsernameRegex.MatchString(username) {
+			panic(r.NewTypeError("expects username to be valid, no spaces or control characters allowed"))
+		} else if len(username) > 128 {
+			panic(r.NewTypeError("expects id to be valid, must be 1-128 bytes"))
+		}
+
+		create := true
+		if f.Argument(1) != goja.Undefined() {
+			create = getJsBool(r, f.Argument(1))
+		}
+		code := ""
+		if f.Argument(2) != goja.Undefined() {
+			code = getJsString(r, f.Argument(2))
+		}
+		if code == "" {
+			panic(r.NewTypeError("expects ID token string"))
+		}
+
+		state := ""
+		if f.Argument(3) != goja.Undefined() {
+			state = getJsString(r, f.Argument(3))
+		}
+
+		errStr := ""
+		if f.Argument(4) != goja.Undefined() {
+			errStr = getJsString(r, f.Argument(4))
+		}
+		uaInfo := NewUALoginCallBackRequest(code, errStr, state)
+
+		dbUserID, dbUsername, _, created, err := AuthenticateTwitter(n.ctx, n.logger, n.db, n.socialClient, n.config, username, create, uaInfo)
+		if err != nil {
+			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}
 
 		return r.ToValue(map[string]interface{}{
