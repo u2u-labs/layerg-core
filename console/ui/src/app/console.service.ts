@@ -1163,15 +1163,15 @@ export class ConsoleService {
   }
 
   /** Add new NFT collection */
-  addNFTCollection(auth_token: string, collection_address: string, type: string, initial_block: string, chain_id: integer): Observable<any> {
-    collection_address = encodeURIComponent(String(collection_address))
-    type = encodeURIComponent(String(type))
-    initial_block = encodeURIComponent(String(initial_block))
-    chain_id = encodeURIComponent(String(chain_id))
-    const urlPath = `/v2/console/collection/${collection_address}/type/${type}/block/${initial_block}/chain/${chain_id}`;
-    let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
-    return this.httpClient.post(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
-  }
+  // addNFTCollection(auth_token: string, collection_address: string, type: string, initial_block: string, chain_id: number): Observable<any> {
+  //   collection_address = encodeURIComponent(String(collection_address))
+  //   type = encodeURIComponent(String(type))
+  //   initial_block = encodeURIComponent(String(initial_block))
+  //   chain_id = encodeURIComponent(String(chain_id))
+  //   const urlPath = `/v2/console/collection/${collection_address}/type/${type}/block/${initial_block}/chain/${chain_id}`;
+  //   let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+  //   return this.httpClient.post(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  // }
 
   /** Get server config and configuration warnings. */
   getConfig(auth_token: string): Observable<Config> {

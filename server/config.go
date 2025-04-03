@@ -1143,7 +1143,7 @@ type GoogleAuthConfig struct {
 type LayerGCoreConfig struct {
 	ApiKey              string `yaml:"api_key" json:"api_key" usage:"api key to communicate with core server"`
 	ApiKeyID            string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
-	PortalURL           string `yaml:"portal_url" json:"url" usage:"url of core server"`
+	PortalURL           string `yaml:"portal_url" json:"portal_url" usage:"url of core server"`
 	UniversalAccountURL string `yaml:"ua_url" json:"ua_url" usage:"ua_url of core server"`
 	MasterDB            string `yaml:"masterdb_url" json:"masterdb_url" usage:"masterdb_url of core server"`
 	MasterPvk           string `yaml:"master_pvk" json:"master_pvk" usage:"master wallet private key for admin onchain operaton"`
