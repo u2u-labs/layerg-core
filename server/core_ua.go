@@ -37,7 +37,7 @@ func SendTelegramOTP(ctx context.Context, request TelegramOTPRequest, config Con
 	var response TelegramOTPResponse
 	err = http.POST(ctx, endpoint, "", "", headers, request, &response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
+		return nil, fmt.Errorf("failed to send telegram OTP: %w", err)
 	}
 
 	return &response, nil
@@ -89,7 +89,7 @@ func TelegramLogin(ctx context.Context, token string, request TelegramLoginReque
 	var response TelegramLoginResponse
 	err = http.POST(ctx, endpoint, token, "", headers, request, &response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
+		return nil, fmt.Errorf("failed to login with telegram: %w", err)
 	}
 
 	return &response, nil
@@ -109,7 +109,7 @@ type OnchainTransactionPayload struct {
 	TransactionReq *OnchainTransactionRequest `json:"transactionReq"`
 }
 
-func SendUAOnchainTX(ctx context.Context, token string, request runtime.UATransactionRequest, config Config) (*runtime.ReceiptResponse, error) {
+func SendUAOnchainTX(ctx context.Context, token string, waitForReceipt bool, request runtime.UATransactionRequest, config Config) (*runtime.ReceiptResponse, error) {
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/onchain/send"
 	headers, err := GetUAAuthHeaders(config)
@@ -119,35 +119,39 @@ func SendUAOnchainTX(ctx context.Context, token string, request runtime.UATransa
 	var response runtime.UATransactionResponse
 	err = http.POST(ctx, endpoint, token, "", headers, request, &response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create asset NFT: %w", err)
+		return nil, fmt.Errorf("failed to send onchain transaction: %w", err)
 	}
 
 	endpoint = baseUrl + "/onchain/user-op-receipt/" + strconv.Itoa(request.ChainID) + "/" + response.Data.UserOpHash
 	fmt.Println("endpoint", endpoint)
 
 	// Implement polling with timeout
-	maxAttempts := 10 // Try up to 10 times
-	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		time.Sleep(2 * time.Second) // Wait 2 seconds between attempts
+	if waitForReceipt {
+		maxAttempts := 10 // Try up to 10 times
+		for attempt := 1; attempt <= maxAttempts; attempt++ {
+			time.Sleep(2 * time.Second) // Wait 2 seconds between attempts
 
-		var receiptResponse runtime.ReceiptResponse
-		err = http.GET(ctx, endpoint, token, nil, &receiptResponse)
-		if err != nil {
-			fmt.Printf("Error getting receipt (attempt %d/%d): %v\n", attempt, maxAttempts, err)
-			continue
+			var receiptResponse runtime.ReceiptResponse
+			err = http.GET(ctx, endpoint, token, nil, &receiptResponse)
+			if err != nil {
+				fmt.Printf("Error getting receipt (attempt %d/%d): %v\n", attempt, maxAttempts, err)
+				continue
+			}
+
+			fmt.Printf("Receipt Response (attempt %d/%d): %+v\n", attempt, maxAttempts, receiptResponse)
+
+			// Check if we have actual transaction data
+			if receiptResponse.Data.Success && receiptResponse.Data.UserOpHash != "" {
+				return &receiptResponse, nil
+			}
+
+			fmt.Printf("Transaction not ready yet (attempt %d/%d), waiting...\n", attempt, maxAttempts)
 		}
 
-		fmt.Printf("Receipt Response (attempt %d/%d): %+v\n", attempt, maxAttempts, receiptResponse)
-
-		// Check if we have actual transaction data
-		if receiptResponse.Data.Success && receiptResponse.Data.UserOpHash != "" {
-			return &receiptResponse, nil
-		}
-
-		fmt.Printf("Transaction not ready yet (attempt %d/%d), waiting...\n", attempt, maxAttempts)
+		return nil, fmt.Errorf("transaction receipt not available after %d attempts", maxAttempts)
 	}
 
-	return nil, fmt.Errorf("transaction receipt not available after %d attempts", maxAttempts)
+	return nil, nil
 }
 
 func RefreshUAToken(ctx context.Context, token string, config Config) (*runtime.UARefreshTokenResponse, error) {

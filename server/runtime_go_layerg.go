@@ -410,11 +410,20 @@ func (n *RuntimeGoLayerGModule) BuildContractCallRequest(ctx context.Context, pa
 	return BuildContractCallRequest(params)
 }
 
-func (n *RuntimeGoLayerGModule) SendUAOnchainTX(ctx context.Context, userID string, params runtime.UATransactionRequest) (*runtime.ReceiptResponse, error) {
+func (n *RuntimeGoLayerGModule) SendUAOnchainTX(ctx context.Context, userID string, params runtime.UATransactionRequest, waitForReceipt bool) (*runtime.ReceiptResponse, error) {
 	uaToken, _ := n.tokenPairCache.Get(userID)
 	request := params
+	if uaToken.AccessExp >= time.Now().Unix() {
+		uaToken, err := RefreshUAToken(ctx, uaToken.RefreshToken, n.config)
+		if err != nil {
+			return nil, err
+		}
 
-	return SendUAOnchainTX(ctx, uaToken.AccessToken, request, n.config)
+		n.tokenPairCache.Update(userID, uaToken.Data.AccessToken, uaToken.Data.RefreshToken, uaToken.Data.AccessTokenExpire, uaToken.Data.RefreshTokenExpire)
+		return SendUAOnchainTX(ctx, uaToken.Data.AccessToken, waitForReceipt, request, n.config)
+	}
+
+	return SendUAOnchainTX(ctx, uaToken.AccessToken, waitForReceipt, request, n.config)
 }
 
 // @group authenticate
