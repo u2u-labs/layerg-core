@@ -133,7 +133,7 @@ func GetNFTs(ctx context.Context, params runtime.NFTQueryParams, config Config) 
 	if err != nil {
 		return nil, err
 	}
-	baseUrl := config.GetLayerGCoreConfig().URL
+	baseUrl := config.GetLayerGCoreConfig().PortalURL
 	endpoint := baseUrl + "/api/nft"
 
 	// Execute GET request and unmarshal response
@@ -155,7 +155,7 @@ func GetCollectionAsset(ctx context.Context, params runtime.CollectionAssetQuery
 	if err != nil {
 		return nil, err
 	}
-	baseUrl := config.GetLayerGCoreConfig().URL
+	baseUrl := config.GetLayerGCoreConfig().PortalURL
 	endpoint := baseUrl + "/api/assets"
 
 	// Execute GET request and unmarshal response
@@ -187,7 +187,7 @@ type CreateAssetNFTRequest struct {
 }
 
 func CreateAssetNFT(ctx context.Context, token string, request CreateAssetNFTRequest, config Config) (*CreateAssetNFTResponse, error) {
-	baseUrl := config.GetLayerGCoreConfig().URL
+	baseUrl := config.GetLayerGCoreConfig().PortalURL
 	endpoint := baseUrl + "/api/asset-nft/create"
 
 	var response CreateAssetNFTResponse
@@ -220,7 +220,7 @@ type MintNFTRequest struct {
 }
 
 func TransferNFT(ctx context.Context, token string, request TransferNFTRequest, config Config) error {
-	baseUrl := config.GetLayerGCoreConfig().URL
+	baseUrl := config.GetLayerGCoreConfig().PortalURL
 
 	endpoint := baseUrl + "/api/transaction/transfer-nft"
 
@@ -233,7 +233,7 @@ func TransferNFT(ctx context.Context, token string, request TransferNFTRequest, 
 }
 
 func MintNFT(ctx context.Context, token string, request MintNFTRequest, config Config) error {
-	baseUrl := config.GetLayerGCoreConfig().URL
+	baseUrl := config.GetLayerGCoreConfig().PortalURL
 	endpoint := baseUrl + "/api/transaction/mint-nft"
 
 	err := http.POST(ctx, endpoint, token, "", nil, request, nil)

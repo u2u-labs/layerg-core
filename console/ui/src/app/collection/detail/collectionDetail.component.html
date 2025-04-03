@@ -1,0 +1,116 @@
+<h2 class="pb-1">Detail Collection / {{collection?.id}}</h2>
+
+<ngb-alert [dismissible]="false" type="danger" class="mb-3" *ngIf="error">
+  <img src="/static/svg/red-triangle.svg" alt="" width="16" height="" class="mr-2">
+  <h6 class="mr-2 d-inline font-weight-bold">Error when querying create collection: {{error}}</h6>
+</ngb-alert>
+<ngb-alert [dismissible]="false" type="success" class="mb-3" *ngIf="success">
+  <img src="/static/svg/green-tick.svg" alt="" width="16" height="" class="mr-2">
+  <h6 class="mr-2 d-inline font-weight-bold">{{success}}</h6>
+</ngb-alert>
+
+<div class="d-flex align-items-center justify-content-end mb-3">
+  <button *ngIf="!collection?.isPublic" type="submit" class="btn btn-primary mr-2" (click)="createCollection()" [disabled]="false">Update</button>
+  <button type="button" class="btn btn-secondary" (click)="handleBack()">Back</button>
+</div>
+<form [formGroup]="collectionForm" (ngSubmit)="createCollection()" class="">
+  <div class="row">
+    <div class="col-md-6 d-flex justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline" for="name">Name</label>
+      </div>
+      <input type="text" id="name" [value]="collection?.name" class="form-control form-control-sm my-2" placeholder="Name" required formControlName="name" [ngClass]="{'is-invalid': f.name.dirty && f.name.errors}">
+      <div class="invalid-tooltip" [hidden]="f.name.disabled || f.name.valid || f.name.pristine">Name is required</div>
+    </div>
+  </div>
+
+  <div class="row align-items-center">
+    <div class="col-md-6 d-flex justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline" for="avatarUrl">Upload Avatar</label>
+      </div>
+      <input type="file" id="avatarUrl" class="form-control form-control-sm my-2" (change)="onFileSelected($event)" accept="image/*" />
+    </div>
+    <div *ngIf="imagePreview" class="col-md-6 d-flex justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline">Preview</label>
+      </div>
+      <!-- Image Preview -->
+      <div class="mb-3">
+        <img [src]="imagePreview" class="img-thumbnail" alt="Preview" width="70" />
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-6 d-flex justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline" for="description">Description</label>
+      </div>
+      <textarea id="description" class="form-control form-control-sm my-2" placeholder="Description" formControlName="description" [ngClass]="{'is-invalid': f.description.dirty && f.description.errors}"></textarea>
+      <div class="invalid-tooltip" [hidden]="f.description.disabled || f.description.valid || f.description.pristine">Description max 255</div>
+    </div>
+  </div>
+  <div class="d-flex align-items-center">
+    <button type="button" class="btn btn-success mr-2" [disabled]="false" (click)="openLinkContractModal(collection)">Link Contract</button>
+    <button *ngIf="!collection?.isPublic" type="button" class="btn btn-info" [disabled]="false" (click)="publicCollection(collection?.id)">Public Collection</button>
+  </div>
+  <hr />
+
+  <div class="w-100 mb-2">
+    <div class="d-flex align-items-center">
+      <button type="button" class="btn btn-primary mr-2" [disabled]="false" (click)="openModal(collection)">Add Collectible</button>
+    </div>
+  </div>
+  <div class="row border-0 no-gutters mb-2 align-items-center">
+    <div class="col d-flex justify-content-between no-gutters">
+      <div class="col-md-9">
+        <form [formGroup]="searchForm" (ngSubmit)="getListCollectible()">
+          <div class="input-group">
+            <input type="text" class="form-control border-right-0" formControlName="search" placeholder="Filter by name"/>
+
+            <div class="input-group-append">
+              <div class="btn-group">
+                <button type="button" class="btn btn-primary dropdown-radius" (click)="getListCollectible()">Search</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="d-flex flex-column align-items-center gap-2">
+        <select class="form-select p-2" (change)="changeLimit($event)">
+          <option value="5">5</option>
+          <option selected value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <ngb-pagination
+    class="justify-content-end d-flex"
+    (pageChange)="onPageChange($event)"
+    [(page)]="page"
+    [pageSize]="limit"
+    [collectionSize]="collectibleCount || 1">
+  </ngb-pagination>
+  <div *ngIf="collectibles.length" class="colectibles w-100">
+    <div class="row border-0">
+      <div *ngFor="let item of collectibles; index as i;" class="col-md-3">
+        <div class="card-collectible" (click)="viewDetailNft(item, collection)">
+          <img class="card-collectible-image" src="{{item?.media?.IPFSUrl || item?.media?.S3Url}}" alt="Card image cap">
+          <div class="card-collectible-body">
+            <h5 class="card-collectible-body-title">{{item?.name || ''}}</h5>
+            <p class="card-collectible-body-text">#{{item?.tokenId}}</p>
+            <p class="card-collectible-body-text-1">{{item?.description}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="!collectibles.length" class="row border-0 justify-content-center align-items-center" style="height: 250px">
+    <div class="col-md-12 text-center">
+      <p class="text-muted">No collectibles found</p>
+    </div>
+  </div>
+</form>

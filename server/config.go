@@ -536,7 +536,7 @@ func (c *config) Clone() (Config, error) {
 	configStorage := *(c.Storage)
 	configLayerGCore := *(c.LayerGCore)
 	configGoogleAuth := *(c.GoogleAuth)
-	configRedisDb := *(c.RedisDb)
+	// 	configRedisDb := *(c.RedisDb)
 	nc := &config{
 		Name:             c.Name,
 		Datadir:          c.Datadir,
@@ -558,8 +558,8 @@ func (c *config) Clone() (Config, error) {
 		GoogleAuth:       &configGoogleAuth,
 		Storage:          &configStorage,
 		LayerGCore:       &configLayerGCore,
-		RedisDb:          &configRedisDb,
-		Cluster:          c.Cluster.Clone(),
+		// 		RedisDb:          &configRedisDb,
+		Cluster: c.Cluster.Clone(),
 	}
 	nc.Socket.CertPEMBlock = make([]byte, len(c.Socket.CertPEMBlock))
 	copy(nc.Socket.CertPEMBlock, c.Socket.CertPEMBlock)
@@ -1143,7 +1143,7 @@ type GoogleAuthConfig struct {
 type LayerGCoreConfig struct {
 	ApiKey              string `yaml:"api_key" json:"api_key" usage:"api key to communicate with core server"`
 	ApiKeyID            string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
-	URL                 string `yaml:"url" json:"url" usage:"url of core server"`
+	PortalURL           string `yaml:"portal_url" json:"portal_url" usage:"url of core server"`
 	UniversalAccountURL string `yaml:"ua_url" json:"ua_url" usage:"ua_url of core server"`
 	MasterDB            string `yaml:"masterdb_url" json:"masterdb_url" usage:"masterdb_url of core server"`
 	MasterPvk           string `yaml:"master_pvk" json:"master_pvk" usage:"master wallet private key for admin onchain operaton"`
@@ -1191,7 +1191,7 @@ func NewLayerGCore() *LayerGCoreConfig {
 	return &LayerGCoreConfig{
 		ApiKey:              "v13lx3ykszi3gi7j000oa2",
 		ApiKeyID:            "d3e94d1b-3959-498b-9971-b5df93adfd28",
-		URL:                 "http://localhost:3000",
+		PortalURL:           "http://localhost:3000",
 		UniversalAccountURL: "https://bundler-dev.layerg.xyz",
 		MasterDB:            "https://crawler-db-dev.layerg.xyz",
 		MasterPvk:           "27f13e9f9e69f7cfa365e2316b272a943e162c769ae57826ebe373f73d0323d9",

@@ -31,6 +31,11 @@ import {ChatListComponent, ChatSearchResolver} from './channels/chat-list.compon
 import {SubscriptionsComponent, SubscriptionsResolver} from './account/subscriptions/subscriptions.component';
 import {PurchasesListComponent} from './purchases/purchases-list.component';
 import {SubscriptionsListComponent} from './subscriptions/subscriptions-list.component';
+import {CollectionsComponent, CollectionsResolver} from './collections/collections.component';
+import {CreateCollectionComponent, CreateCollectionResolver} from './collections/create/createCollection.component';
+import {CollectionDetailComponent} from './collections/detail/collectionDetail.component';
+import {CollectionComponent, CollectionResolver} from './collection/collection.component';
+import {CollectionDetail1Component} from './collection/detail/collectionDetail.component';
 
 const routes: Routes = [
   {
@@ -44,6 +49,14 @@ const routes: Routes = [
       {path: 'config', component: ConfigComponent, resolve: [ConfigResolver]},
       {path: 'users', component: UsersComponent, resolve: [UsersResolver]},
       {path: 'modules', component: RuntimeComponent, resolve: [RuntimeResolver]},
+      {path: 'collections', component: CollectionsComponent, resolve: [CollectionsResolver],},
+      {path: 'collections/create', component: CreateCollectionComponent, resolve: [CreateCollectionResolver]},
+      {path: 'collections/:id', component: CollectionComponent, resolve: [CollectionResolver],
+        children: [
+          {path: '', redirectTo: 'details', pathMatch: 'full'},
+          {path: 'details', component: CollectionDetail1Component, resolve: []},
+        ]
+      },
       {path: 'storage', component: StorageListComponent, resolve: [StorageCollectionResolver, StorageSearchResolver], pathMatch: 'full'},
       {path: 'storage/:collection/:key/:user_id', component: StorageObjectComponent, resolve: [StorageObjectResolver], pathMatch: 'full'},
       {path: 'leaderboards', component: LeaderboardsComponent, resolve: [LeaderboardListResolver]},
