@@ -54,9 +54,10 @@ type RuntimeGoLayerGModule struct {
 	activeTokenCacheUser ActiveTokenCache
 	tokenPairCache       *TokenPairCache
 	webhookRegistry      *WebhookRegistry
+	mqttRegistry         *MQTTRegistry
 }
 
-func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache, webhookRegistry *WebhookRegistry) *RuntimeGoLayerGModule {
+func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache, webhookRegistry *WebhookRegistry, mqttRegistry *MQTTRegistry) *RuntimeGoLayerGModule {
 	return &RuntimeGoLayerGModule{
 		logger:               logger,
 		db:                   db,
@@ -78,6 +79,7 @@ func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler
 		activeTokenCacheUser: activeCache,
 		tokenPairCache:       tokenPairCache,
 		webhookRegistry:      webhookRegistry,
+		mqttRegistry:         mqttRegistry,
 
 		node: config.GetName(),
 
@@ -4452,4 +4454,12 @@ func (n *RuntimeGoLayerGModule) GetFleetManager() runtime.FleetManager {
 
 func (n *RuntimeGoLayerGModule) RegisterWebhook(ctx context.Context, config runtime.WebhookConfig, handler runtime.WebhookHandler) error {
 	return n.webhookRegistry.RegisterWebhook(ctx, config, handler)
+}
+
+func (n *RuntimeGoLayerGModule) RegisterMQTTSubscription(ctx context.Context, config runtime.MQTTConfig, handler runtime.MQTTHandler) error {
+	return n.mqttRegistry.RegisterMQTTSubscription(ctx, config, handler)
+}
+
+func (n *RuntimeGoLayerGModule) UnregisterMQTTSubscription(ctx context.Context, event string) error {
+	return n.mqttRegistry.UnregisterSubscription(ctx, event)
 }
