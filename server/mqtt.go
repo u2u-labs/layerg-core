@@ -11,32 +11,11 @@ import (
 	"go.uber.org/zap"
 )
 
-// MQTTConfig represents the configuration for an MQTT topic subscription
-// type MQTTConfig struct {
-// 	Topic       string                 `json:"topic"`
-// 	QoS         byte                   `json:"qos"`
-// 	Description string                 `json:"description"`
-// 	Params      map[string]interface{} `json:"params"`
-// 	BrokerURL   string                 `json:"broker_url"`
-// 	ClientID    string                 `json:"client_id"`
-// }
-
-// MQTTMessage represents a message received from MQTT
-type MQTTMessage struct {
-	Topic   string
-	Payload []byte
-}
-
-// MQTTHandler is a function that handles MQTT messages
-// type MQTTHandler func(ctx context.Context, message MQTTMessage) error
-
-// MQTTSubscription represents an MQTT topic subscription with its handler
 type MQTTSubscription struct {
 	Config  runtime.MQTTConfig
 	Handler runtime.MQTTHandler
 }
 
-// MQTTRegistry manages MQTT subscriptions and their handlers
 type MQTTRegistry struct {
 	sync.RWMutex
 	logger        *zap.Logger
@@ -91,9 +70,8 @@ func (m *MQTTRegistry) RegisterMQTTSubscription(ctx context.Context, config runt
 			return fmt.Errorf("failed to connect to MQTT broker: %v", token.Error())
 		}
 
-		// Start background process to maintain connection
 		go func() {
-			ticker := time.NewTicker(5 * time.Second) // Match Node.js reconnectPeriod
+			ticker := time.NewTicker(1 * time.Second)
 			defer ticker.Stop()
 
 			for {
