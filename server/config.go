@@ -44,6 +44,7 @@ type Config interface {
 	GetCluster() *PeerConfig
 	GetLayerGCoreConfig() *LayerGCoreConfig
 	GetRedisDbConfig() *RedisConfig
+	GetMqtt() *MQTTConfig
 	Clone() (Config, error)
 }
 
@@ -472,6 +473,7 @@ type config struct {
 	Cluster          *PeerConfig        `yaml:"cluster" json:"cluster" usage:"Cluster settings."`
 	LayerGCore       *LayerGCoreConfig  `yaml:"layerg_core" json:"layerg_core" usage:"LayerG core server config."`
 	RedisDb          *RedisConfig       `yaml:"redis_db" json:"redis_db" usage:"RedisDB server config."`
+	Mqtt             *MQTTConfig        `yaml:"mqtt" json:"mqtt" usage:"MQTT configuration."`
 }
 
 func randomString(n int) string {
@@ -515,6 +517,7 @@ func NewConfig(logger *zap.Logger) *config {
 		Cluster:          NewPeerConfig(),
 		LayerGCore:       NewLayerGCore(),
 		RedisDb:          NewRedisDb(),
+		Mqtt:             NewMqttConfig(),
 	}
 }
 
@@ -536,6 +539,7 @@ func (c *config) Clone() (Config, error) {
 	configStorage := *(c.Storage)
 	configLayerGCore := *(c.LayerGCore)
 	configGoogleAuth := *(c.GoogleAuth)
+	configMqtt := *(c.Mqtt)
 	// 	configRedisDb := *(c.RedisDb)
 	nc := &config{
 		Name:             c.Name,
@@ -560,6 +564,7 @@ func (c *config) Clone() (Config, error) {
 		LayerGCore:       &configLayerGCore,
 		// 		RedisDb:          &configRedisDb,
 		Cluster: c.Cluster.Clone(),
+		Mqtt:    &configMqtt,
 	}
 	nc.Socket.CertPEMBlock = make([]byte, len(c.Socket.CertPEMBlock))
 	copy(nc.Socket.CertPEMBlock, c.Socket.CertPEMBlock)
@@ -680,6 +685,13 @@ func (c *config) GetLayerGCoreConfig() *LayerGCoreConfig {
 
 func (c *config) GetRedisDbConfig() *RedisConfig {
 	return c.RedisDb
+}
+
+func (c *config) GetMqtt() *MQTTConfig {
+	if c.Mqtt == nil {
+		c.Mqtt = NewMqttConfig()
+	}
+	return c.Mqtt
 }
 
 // LoggerConfig is configuration relevant to logging levels and output.
@@ -1207,5 +1219,30 @@ func NewRedisDb() *RedisConfig {
 		Db:       0,
 		Password: "",
 		Ttl:      1,
+	}
+}
+
+type MQTTConfig struct {
+	QoS       byte   `yaml:"qos" json:"qos" usage:"MQTT QoS."`
+	BrokerURL string `yaml:"broker_url" json:"broker_url" usage:"MQTT broker URL."`
+	ClientID  string `yaml:"client_id" json:"client_id" usage:"MQTT client ID."`
+	APIurl    string `yaml:"api_url" json:"api_url" usage:"API url."`
+}
+
+func NewMqttConfig() *MQTTConfig {
+	return &MQTTConfig{
+		BrokerURL: "mqtt://event-mqtt-stg.layerg.xyz",
+		ClientID:  "layerg-subs-" + randomString(6),
+		QoS:       1,
+		APIurl:    "https://event-stg.layerg.xyz",
+	}
+}
+
+func (c *MQTTConfig) Clone() *MQTTConfig {
+	return &MQTTConfig{
+		BrokerURL: c.BrokerURL,
+		ClientID:  c.ClientID,
+		QoS:       c.QoS,
+		APIurl:    c.APIurl,
 	}
 }

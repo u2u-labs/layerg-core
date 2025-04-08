@@ -4463,3 +4463,13 @@ func (n *RuntimeGoLayerGModule) RegisterMQTTSubscription(ctx context.Context, co
 func (n *RuntimeGoLayerGModule) UnregisterMQTTSubscription(ctx context.Context, event string) error {
 	return n.mqttRegistry.UnregisterSubscription(ctx, event)
 }
+
+func (n *RuntimeGoLayerGModule) EventSubscribe(ctx context.Context, subscription runtime.EventSubscription, eventHandler runtime.EventHandler) error {
+	config := n.config
+	return n.mqttRegistry.SubscribeToEvent(subscription, eventHandler, config)
+}
+
+func (n *RuntimeGoLayerGModule) EventQuery(ctx context.Context, query runtime.EventQuery) (*runtime.EventResponse, error) {
+	config := n.config
+	return n.mqttRegistry.GetEventByTxHash(query.ChainId, query.ContractAddress, query.TxHash, config)
+}
