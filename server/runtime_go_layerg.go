@@ -54,9 +54,10 @@ type RuntimeGoLayerGModule struct {
 	activeTokenCacheUser ActiveTokenCache
 	tokenPairCache       *TokenPairCache
 	webhookRegistry      *WebhookRegistry
+	mqttRegistry         *MQTTRegistry
 }
 
-func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache, webhookRegistry *WebhookRegistry) *RuntimeGoLayerGModule {
+func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, streamManager StreamManager, router MessageRouter, storageIndex StorageIndex, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache, webhookRegistry *WebhookRegistry, mqttRegistry *MQTTRegistry) *RuntimeGoLayerGModule {
 	return &RuntimeGoLayerGModule{
 		logger:               logger,
 		db:                   db,
@@ -78,6 +79,7 @@ func NewRuntimeGoLayerGModule(logger *zap.Logger, db *sql.DB, protojsonMarshaler
 		activeTokenCacheUser: activeCache,
 		tokenPairCache:       tokenPairCache,
 		webhookRegistry:      webhookRegistry,
+		mqttRegistry:         mqttRegistry,
 
 		node: config.GetName(),
 
@@ -410,11 +412,20 @@ func (n *RuntimeGoLayerGModule) BuildContractCallRequest(ctx context.Context, pa
 	return BuildContractCallRequest(params)
 }
 
-func (n *RuntimeGoLayerGModule) SendUAOnchainTX(ctx context.Context, userID string, params runtime.UATransactionRequest) (*runtime.ReceiptResponse, error) {
+func (n *RuntimeGoLayerGModule) SendUAOnchainTX(ctx context.Context, userID string, params runtime.UATransactionRequest, waitForReceipt bool) (*runtime.ReceiptResponse, error) {
 	uaToken, _ := n.tokenPairCache.Get(userID)
 	request := params
+	if uaToken.AccessExp >= time.Now().Unix() {
+		uaToken, err := RefreshUAToken(ctx, uaToken.RefreshToken, n.config)
+		if err != nil {
+			return nil, err
+		}
 
-	return SendUAOnchainTX(ctx, uaToken.AccessToken, request, n.config)
+		n.tokenPairCache.Update(userID, uaToken.Data.AccessToken, uaToken.Data.RefreshToken, uaToken.Data.AccessTokenExpire, uaToken.Data.RefreshTokenExpire)
+		return SendUAOnchainTX(ctx, uaToken.Data.AccessToken, waitForReceipt, request, n.config)
+	}
+
+	return SendUAOnchainTX(ctx, uaToken.AccessToken, waitForReceipt, request, n.config)
 }
 
 // @group authenticate
@@ -4443,4 +4454,22 @@ func (n *RuntimeGoLayerGModule) GetFleetManager() runtime.FleetManager {
 
 func (n *RuntimeGoLayerGModule) RegisterWebhook(ctx context.Context, config runtime.WebhookConfig, handler runtime.WebhookHandler) error {
 	return n.webhookRegistry.RegisterWebhook(ctx, config, handler)
+}
+
+func (n *RuntimeGoLayerGModule) RegisterMQTTSubscription(ctx context.Context, config runtime.MQTTConfig, handler runtime.MQTTHandler) error {
+	return n.mqttRegistry.RegisterMQTTSubscription(ctx, config, handler)
+}
+
+func (n *RuntimeGoLayerGModule) UnregisterMQTTSubscription(ctx context.Context, event string) error {
+	return n.mqttRegistry.UnregisterSubscription(ctx, event)
+}
+
+func (n *RuntimeGoLayerGModule) EventSubscribe(ctx context.Context, subscription runtime.EventSubscription, eventHandler runtime.EventHandler) error {
+	config := n.config
+	return n.mqttRegistry.SubscribeToEvent(subscription, eventHandler, config)
+}
+
+func (n *RuntimeGoLayerGModule) EventQuery(ctx context.Context, query runtime.EventQuery) (*runtime.EventResponse, error) {
+	config := n.config
+	return n.mqttRegistry.GetEventByTxHash(query.ChainId, query.ContractAddress, query.TxHash, config)
 }

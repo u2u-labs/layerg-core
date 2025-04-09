@@ -192,7 +192,14 @@ func main() {
 	// Initialize webhook registry
 	webhookRegistry := server.NewWebhookRegistry(logger)
 
-	runtime, runtimeInfo, err := server.NewRuntime(ctx, logger, startupLogger, db, jsonpbMarshaler, jsonpbUnmarshaler, config, version, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, storageIndex, fmCallbackHandler, activeSessionCache, tokenPairCache, webhookRegistry)
+	// Initialize MQTT registry
+	mqttRegistry, err := server.NewMQTTRegistry(logger)
+	if err != nil {
+		logger.Fatal("Failed to initialize MQTT registry", zap.Error(err))
+	}
+	defer mqttRegistry.Stop()
+
+	runtime, runtimeInfo, err := server.NewRuntime(ctx, logger, startupLogger, db, jsonpbMarshaler, jsonpbUnmarshaler, config, version, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, storageIndex, fmCallbackHandler, activeSessionCache, tokenPairCache, webhookRegistry, mqttRegistry)
 	if err != nil {
 		startupLogger.Fatal("Failed initializing runtime modules", zap.Error(err))
 	}

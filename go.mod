@@ -9,6 +9,7 @@ require (
 	github.com/blugelabs/bluge_segment_api v0.2.0
 	github.com/blugelabs/query_string v0.3.0
 	github.com/dop251/goja v0.0.0-20240707163329-b1681fb2a2f5
+	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/gofrs/uuid/v5 v5.2.0
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/uuid v1.6.0
@@ -21,7 +22,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/u2u-labs/go-layerg-common v0.0.0-20250317103350-6f7590134689
+	github.com/u2u-labs/go-layerg-common v0.0.0-20250408112739-0308bb5a5a06
 	github.com/u2u-labs/layerg-kit v0.0.0-20241023235723-b6a14baaaa29
 	github.com/uber-go/tally/v4 v4.1.16
 	github.com/unicornultrafoundation/go-u2u v1.1.4
