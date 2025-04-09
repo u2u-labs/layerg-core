@@ -82,23 +82,55 @@ func (ec *MQTTRegistry) GetEventByTxHash(chainId int, contractAddress string, tx
 		Timeout: 10 * time.Second,
 	}
 
-	// Make the HTTP request
-	resp, err := client.Get(apiURL + "?" + params.Encode())
-	if err != nil {
-		return nil, fmt.Errorf("failed to make API request: %w", err)
-	}
-	defer resp.Body.Close()
+	// Implement polling with max 5 attempts and 0.5 second delay
+	maxAttempts := 5
+	delay := 500 * time.Millisecond
 
-	// Check response status
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API request failed with status: %d", resp.StatusCode)
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		// Make the HTTP request
+		resp, err := client.Get(apiURL + "?" + params.Encode())
+		if err != nil {
+			resp.Body.Close()
+			return nil, fmt.Errorf("failed to make API request: %w", err)
+		}
+
+		// Check response status
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return nil, fmt.Errorf("API request failed with status: %d", resp.StatusCode)
+		}
+
+		// Parse the response
+		var eventResponse runtime.EventResponse
+		if err := json.NewDecoder(resp.Body).Decode(&eventResponse); err != nil {
+			resp.Body.Close()
+			return nil, fmt.Errorf("failed to decode API response: %w", err)
+		}
+
+		resp.Body.Close()
+
+		// Check if we need to retry based on empty data and txHash parameter
+		if txHash != "" && len(eventResponse.Data) == 0 {
+			ec.logger.Info("Empty event data received, retrying",
+				zap.Int("attempt", attempt),
+				zap.Int("maxAttempts", maxAttempts),
+				zap.String("txHash", txHash))
+
+			if attempt < maxAttempts {
+				time.Sleep(delay)
+				continue
+			}
+		}
+
+		// Success - return the event response
+		ec.logger.Info("Successfully retrieved event data",
+			zap.Int("attempt", attempt),
+			zap.String("txHash", txHash),
+			zap.Int("dataLength", len(eventResponse.Data)))
+
+		return &eventResponse, nil
 	}
 
-	// Parse the response
-	var eventResponse runtime.EventResponse
-	if err := json.NewDecoder(resp.Body).Decode(&eventResponse); err != nil {
-		return nil, fmt.Errorf("failed to decode API response: %w", err)
-	}
-
-	return &eventResponse, nil
+	// This should never be reached, but included for completeness
+	return nil, fmt.Errorf("failed to retrieve event data after %d attempts", maxAttempts)
 }
