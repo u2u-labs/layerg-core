@@ -1,10 +1,10 @@
-import {AfterViewInit, Component, ElementRef, Injectable, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {Observable, Subject, forkJoin} from 'rxjs';
-import {Config, ConsoleService} from '../../console.service';
+import {AfterViewInit, Component, ElementRef, Injectable, OnInit, ViewChild} from '@angular/core';
+import {Observable, forkJoin} from 'rxjs';
+import {ConsoleService} from '../../console.service';
 import {ActivatedRoute, ActivatedRouteSnapshot, Resolve, Router, RouterStateSnapshot} from '@angular/router';
 import {ICreateCollection, LayergPortalService} from '../../layergPortal.service';
 import {AuthenticationService} from '../../authentication.service';
-import {ReactiveFormsModule, UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {JSONEditor, Mode, toTextContent} from 'vanilla-jsoneditor';
 
 @Component({

@@ -181,7 +181,7 @@ export class LayergPortalConfig {
 }
 @Injectable({providedIn: 'root'})
 export class LayergPortalService {
-  private readonly layerg;
+  public layerg;
 
   constructor(private httpClient: HttpClient, @Optional() config: LayergPortalConfig) {
     const defaultConfig: LayergPortalConfig = {

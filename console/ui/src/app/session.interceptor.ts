@@ -35,10 +35,10 @@ export class SessionInterceptor implements HttpInterceptor {
 
   constructor(
     private readonly authenticationService: AuthenticationService,
-    @Inject(LAYERG_CONFIG) private layergConfig: any
+    // @Inject(LAYERG_CONFIG) private layergConfig: any
   ) {
-    this.hubApiUrl = this.layergConfig?.layerg_core?.portal_url || '';
-    console.log('hubApiUrl', this.hubApiUrl);
+    // this.hubApiUrl = this.layergConfig?.layerg_core?.portal_url || '';
+    // console.log('hubApiUrl', this.hubApiUrl);
   }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
