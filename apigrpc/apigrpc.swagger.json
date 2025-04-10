@@ -127,6 +127,40 @@
         ]
       }
     },
+    "/v2/account/authenticate-ua/email-otp": {
+      "post": {
+        "summary": "Request Email OTP for authentication.",
+        "operationId": "LayerG_SendEmailAuthOTP",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiSendEmailOTPRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LayerG"
+        ]
+      }
+    },
     "/v2/account/authenticate-ua/telegram-otp": {
       "post": {
         "summary": "Request Telegram OTP for authentication.",
@@ -356,7 +390,7 @@
             "type": "boolean"
           },
           {
-            "name": "username",
+            "name": "otp",
             "description": "Set the username on the account at register. Must be unique.",
             "in": "query",
             "required": false,
@@ -3991,10 +4025,11 @@
       "enum": [
         "telegram",
         "google",
-        "twitter"
+        "twitter",
+        "facebook"
       ],
       "default": "telegram",
-      "title": "- telegram: Telegram\n - google: Google\n - twitter: Huawei App Gallery"
+      "title": "- telegram: Telegram\n - google: Google\n - twitter: X\n - facebook: Facebook"
     },
     "UserGroupListUserGroup": {
       "type": "object",
@@ -4156,10 +4191,6 @@
         "email": {
           "type": "string",
           "description": "A valid RFC-5322 email address."
-        },
-        "password": {
-          "type": "string",
-          "description": "A password for the user account.\n\nIgnored with unlink operations."
         },
         "vars": {
           "type": "object",
@@ -4973,6 +5004,14 @@
         }
       },
       "description": "Execute an Lua function on the server."
+    },
+    "apiSendEmailOTPRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        }
+      }
     },
     "apiSendTelegramOTPRequest": {
       "type": "object",

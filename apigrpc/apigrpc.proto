@@ -269,6 +269,14 @@ service LayerG {
       };
   }
 
+  // Request Email OTP for authentication.
+  rpc SendEmailAuthOTP (api.SendEmailOTPRequest) returns (google.protobuf.Empty) {
+      option (google.api.http) = {
+        post: "/v2/account/authenticate-ua/email-otp",
+        body: "*"
+      };
+  }
+
   rpc AuthenticateUA (api.UASocialLoginRequest) returns (api.Session) {
       option (google.api.http) = {
         post: "/v2/account/authenticate/ua",

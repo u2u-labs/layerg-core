@@ -1454,77 +1454,37 @@ func (n *runtimeJavascriptLayerGModule) authenticateDevice(r *goja.Runtime) func
 // @group authenticate
 // @summary Authenticate user and create a session token using an email address and password.
 // @param email(type=string) Email address to use to authenticate the user. Must be between 10-255 characters.
-// @param password(type=string) Password to set. Must be longer than 8 characters.
-// @param username(type=string, optional=true) The user's username. If left empty, one is generated.
 // @param create(type=bool, optional=true, default=true) Create user if one didn't exist previously.
 // @return userID(string) The user ID of the authenticated user.
-// @return username(string) The username of the authenticated user.
+// @return email(string) The username of the authenticated user.
 // @return create(bool) Value indicating if this account was just created or already existed.
 // @return error(error) An optional error value if an error occurred.
 func (n *runtimeJavascriptLayerGModule) authenticateEmail(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return func(f goja.FunctionCall) goja.Value {
-		var attemptUsernameLogin bool
-		// Parse email.
 		email := getJsString(r, f.Argument(0))
 		if email == "" {
-			attemptUsernameLogin = true
-		} else if invalidCharsRegex.MatchString(email) {
-			panic(r.NewTypeError("expects email to be valid, no spaces or control characters allowed"))
-		} else if !emailRegex.MatchString(email) {
-			panic(r.NewTypeError("expects email to be valid, invalid email address format"))
-		} else if len(email) < 10 || len(email) > 255 {
-			panic(r.NewTypeError("expects email to be valid, must be 10-255 bytes"))
+			panic(r.NewTypeError("expects email string"))
 		}
 
-		// Parse password.
-		password := getJsString(r, f.Argument(1))
-		if password == "" {
-			panic(r.NewTypeError("expects password string"))
-		} else if len(password) < 8 {
-			panic(r.NewTypeError("expects password to be valid, must be longer than 8 characters"))
-		}
-
-		username := ""
-		if f.Argument(2) != goja.Undefined() {
-			username = getJsString(r, f.Argument(2))
-		}
-
-		if username == "" {
-			if attemptUsernameLogin {
-				panic(r.NewTypeError("expects username string when email is not supplied"))
-			}
-
-			username = generateUsername()
-		} else if invalidUsernameRegex.MatchString(username) {
-			panic(r.NewTypeError("expects username to be valid, no spaces or control characters allowed"))
-		} else if len(username) > 128 {
-			panic(r.NewTypeError("expects id to be valid, must be 1-128 bytes"))
+		otp := getJsString(r, f.Argument(1))
+		if otp == "" {
+			panic(r.NewTypeError("expects OTP string"))
 		}
 
 		create := true
-		if f.Argument(3) != goja.Undefined() {
-			create = getJsBool(r, f.Argument(3))
+		if f.Argument(2) != goja.Undefined() {
+			create = getJsBool(r, f.Argument(2))
 		}
 
-		var dbUserID string
-		var created bool
-		var err error
-
-		if attemptUsernameLogin {
-			dbUserID, err = AuthenticateUsername(n.ctx, n.logger, n.db, username, password)
-		} else {
-			cleanEmail := strings.ToLower(email)
-
-			dbUserID, username, created, err = AuthenticateEmail(n.ctx, n.logger, n.db, cleanEmail, password, username, create)
-		}
+		dbUserID, _, token, _, _, _, created, err := AuthenticateEmail(n.ctx, n.logger, n.db, n.config, email, otp, create)
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error authenticating: %v", err.Error())))
 		}
 
 		return r.ToValue(map[string]interface{}{
-			"userId":   dbUserID,
-			"username": username,
-			"created":  created,
+			"userId":      dbUserID,
+			"accessToken": token,
+			"created":     created,
 		})
 	}
 }
