@@ -188,7 +188,7 @@ func (n *RuntimeGoLayerGModule) AuthenticateDevice(ctx context.Context, id, user
 // @return username(string) The username of the authenticated user.
 // @return create(bool) Value indicating if this account was just created or already existed.
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) AuthenticateEmail(ctx context.Context, email, password, username string, create bool) (string, string, bool, error) {
+func (n *RuntimeGoLayerGModule) AuthenticateEmail(ctx context.Context, email, otp string, create bool) (string, string, bool, error) {
 	var attemptUsernameLogin bool
 	if email == "" {
 		attemptUsernameLogin = true
@@ -200,32 +200,15 @@ func (n *RuntimeGoLayerGModule) AuthenticateEmail(ctx context.Context, email, pa
 		return "", "", false, errors.New("expects email to be valid, must be 10-255 bytes")
 	}
 
-	if password == "" {
-		return "", "", false, errors.New("expects password string")
-	} else if len(password) < 8 {
-		return "", "", false, errors.New("expects password to be valid, must be longer than 8 characters")
-	}
-
-	if username == "" {
-		if attemptUsernameLogin {
-			return "", "", false, errors.New("expects username string when email is not supplied")
-		}
-
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		return "", "", false, errors.New("expects username to be valid, no spaces or control characters allowed")
-	} else if len(username) > 128 {
-		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
-	}
-
 	if attemptUsernameLogin {
-		dbUserID, err := AuthenticateUsername(ctx, n.logger, n.db, username, password)
-		return dbUserID, username, false, err
+		dbUserID, err := AuthenticateUsername(ctx, n.logger, n.db, email, otp)
+		return dbUserID, email, false, err
 	}
 
 	cleanEmail := strings.ToLower(email)
 
-	return AuthenticateEmail(ctx, n.logger, n.db, cleanEmail, password, username, create)
+	dbUserId, _, token, _, _, _, created, err := AuthenticateEmail(ctx, n.logger, n.db, n.config, cleanEmail, otp, create)
+	return dbUserId, token, created, err
 }
 
 // @group authenticate

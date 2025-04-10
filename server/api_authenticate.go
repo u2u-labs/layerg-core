@@ -613,56 +613,23 @@ func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateE
 		}
 	}
 
-	email := in.Account
-	if email == nil {
-		return nil, status.Error(codes.InvalidArgument, "Email address and password is required.")
+	email := in.Account.Email
+	if email == "" {
+		return nil, status.Error(codes.InvalidArgument, "Email address is required.")
 	}
 
-	var attemptUsernameLogin bool
-	if email.Email == "" {
-		// Password was supplied, but no email. Perhaps the user is attempting to login with username/password.
-		attemptUsernameLogin = true
-	} else if invalidCharsRegex.MatchString(email.Email) {
-		return nil, status.Error(codes.InvalidArgument, "Invalid email address, no spaces or control characters allowed.")
-	} else if !emailRegex.MatchString(email.Email) {
-		return nil, status.Error(codes.InvalidArgument, "Invalid email address format.")
-	} else if len(email.Email) < 10 || len(email.Email) > 255 {
-		return nil, status.Error(codes.InvalidArgument, "Invalid email address, must be 10-255 bytes.")
-	}
-
-	if len(email.Password) < 8 {
-		return nil, status.Error(codes.InvalidArgument, "Password must be at least 8 characters long.")
-	}
-
-	username := in.Username
-	if username == "" {
-		// If no username was supplied and the email was missing.
-		if attemptUsernameLogin {
-			return nil, status.Error(codes.InvalidArgument, "Username is required when email address is not supplied.")
-		}
-
-		// Email address was supplied, we are allowed to generate a username.
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
-	} else if len(username) > 128 {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	otp := in.Otp
+	if otp == "" {
+		return nil, status.Error(codes.InvalidArgument, "OTP is required.")
 	}
 
 	var dbUserID string
 	var created bool
 	var err error
 
-	if attemptUsernameLogin {
-		// Attempting to log in with username/password. Create flag is ignored, creation is not possible here.
-		dbUserID, err = AuthenticateUsername(ctx, s.logger, s.db, username, email.Password)
-	} else {
-		// Attempting email authentication, may or may not create.
-		cleanEmail := strings.ToLower(email.Email)
-		create := in.Create == nil || in.Create.Value
+	create := in.Create == nil || in.Create.Value
 
-		dbUserID, username, created, err = AuthenticateEmail(ctx, s.logger, s.db, cleanEmail, email.Password, username, create)
-	}
+	dbUserID, dbUsername, uaAccessToken, uaRefreshToken, uaAccessExp, uaRefreshExp, created, err := AuthenticateEmail(ctx, s.logger, s.db, s.config, email, otp, create)
 	if err != nil {
 		return nil, err
 	}
@@ -672,32 +639,23 @@ func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateE
 	}
 
 	tokenID := uuid.Must(uuid.NewV4()).String()
-	token, exp := generateToken(s.config, tokenID, dbUserID, username, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, username, in.Account.Vars)
+	token, exp := generateToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+	refreshToken, refreshExp := generateRefreshToken(s.config, tokenID, dbUserID, dbUsername, in.Account.Vars)
+
 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, tokenID, refreshExp, tokenID)
 	s.activeTokenCacheUser.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken, 0, "", 0, "")
+	s.tokenPairCache.Add(dbUserID, uaAccessToken, uaRefreshToken, uaAccessExp, uaRefreshExp)
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
 	// After hook.
 	if fn := s.runtime.AfterAuthenticateEmail(); fn != nil {
 		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, username, in.Account.Vars, exp, clientIP, clientPort, session, in)
+			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
-	// global, err := forwardToGlobalAuthenticator(ctx, "localhost:8349", in)
-	// // }
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// s.activeTokenCacheUser.Add(uuid.FromStringOrNil(dbUserID), 0, "", 0, "", 60, global.Token, 3600, global.RefreshToken)
-
-	// if in.AuthGlobal.Value == true {
-	// 	return global, nil
-	// }
-
 	return session, nil
 }
 
@@ -1217,6 +1175,18 @@ func (s *ApiServer) SendTelegramAuthOTP(ctx context.Context, in *api.SendTelegra
 		return nil, status.Error(codes.InvalidArgument, "Telegram ID is required.")
 	}
 	err := SendTelegramAuthOTP(ctx, s.logger, s.config, in.TelegramId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s *ApiServer) SendEmailAuthOTP(ctx context.Context, in *api.SendEmailOTPRequest) (*emptypb.Empty, error) {
+	if in.Email == "" {
+		return nil, status.Error(codes.InvalidArgument, "Email is required.")
+	}
+	err := EmailUASendOTP(ctx, in.Email, s.config)
 	if err != nil {
 		return nil, err
 	}

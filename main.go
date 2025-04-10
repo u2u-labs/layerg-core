@@ -142,7 +142,7 @@ func main() {
 
 	db := server.DbConnect(ctx, startupLogger, config, false)
 	// go startPeriodicSync(ctx, db, logger)
-	go startCrawlerProcess(ctx, logger, db, config)
+	// go startCrawlerProcess(ctx, logger, db, config)
 
 	// Check migration status and fail fast if the schema has diverged.
 	conn, err := db.Conn(context.Background())

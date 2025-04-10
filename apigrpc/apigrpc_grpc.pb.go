@@ -52,6 +52,7 @@ const (
 	LayerG_AuthenticateGoogle_FullMethodName                = "/layerg.api.LayerG/AuthenticateGoogle"
 	LayerG_AuthenticateTelegram_FullMethodName              = "/layerg.api.LayerG/AuthenticateTelegram"
 	LayerG_SendTelegramAuthOTP_FullMethodName               = "/layerg.api.LayerG/SendTelegramAuthOTP"
+	LayerG_SendEmailAuthOTP_FullMethodName                  = "/layerg.api.LayerG/SendEmailAuthOTP"
 	LayerG_AuthenticateUA_FullMethodName                    = "/layerg.api.LayerG/AuthenticateUA"
 	LayerG_AuthenticateEvm_FullMethodName                   = "/layerg.api.LayerG/AuthenticateEvm"
 	LayerG_AuthenticateSteam_FullMethodName                 = "/layerg.api.LayerG/AuthenticateSteam"
@@ -164,6 +165,8 @@ type LayerGClient interface {
 	AuthenticateTelegram(ctx context.Context, in *api.AuthenticateTelegramRequest, opts ...grpc.CallOption) (*api.Session, error)
 	// Request Telegram OTP for authentication.
 	SendTelegramAuthOTP(ctx context.Context, in *api.SendTelegramOTPRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Request Email OTP for authentication.
+	SendEmailAuthOTP(ctx context.Context, in *api.SendEmailOTPRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	AuthenticateUA(ctx context.Context, in *api.UASocialLoginRequest, opts ...grpc.CallOption) (*api.Session, error)
 	// Authenticate a user with Evm against the server.
 	AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest, opts ...grpc.CallOption) (*api.Session, error)
@@ -457,6 +460,16 @@ func (c *layerGClient) SendTelegramAuthOTP(ctx context.Context, in *api.SendTele
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, LayerG_SendTelegramAuthOTP_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *layerGClient) SendEmailAuthOTP(ctx context.Context, in *api.SendEmailOTPRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, LayerG_SendEmailAuthOTP_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1248,6 +1261,8 @@ type LayerGServer interface {
 	AuthenticateTelegram(context.Context, *api.AuthenticateTelegramRequest) (*api.Session, error)
 	// Request Telegram OTP for authentication.
 	SendTelegramAuthOTP(context.Context, *api.SendTelegramOTPRequest) (*emptypb.Empty, error)
+	// Request Email OTP for authentication.
+	SendEmailAuthOTP(context.Context, *api.SendEmailOTPRequest) (*emptypb.Empty, error)
 	AuthenticateUA(context.Context, *api.UASocialLoginRequest) (*api.Session, error)
 	// Authenticate a user with Evm against the server.
 	AuthenticateEvm(context.Context, *api.AuthenticateEvmRequest) (*api.Session, error)
@@ -1448,6 +1463,9 @@ func (UnimplementedLayerGServer) AuthenticateTelegram(context.Context, *api.Auth
 }
 func (UnimplementedLayerGServer) SendTelegramAuthOTP(context.Context, *api.SendTelegramOTPRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendTelegramAuthOTP not implemented")
+}
+func (UnimplementedLayerGServer) SendEmailAuthOTP(context.Context, *api.SendEmailOTPRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendEmailAuthOTP not implemented")
 }
 func (UnimplementedLayerGServer) AuthenticateUA(context.Context, *api.UASocialLoginRequest) (*api.Session, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateUA not implemented")
@@ -1943,6 +1961,24 @@ func _LayerG_SendTelegramAuthOTP_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LayerGServer).SendTelegramAuthOTP(ctx, req.(*api.SendTelegramOTPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LayerG_SendEmailAuthOTP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(api.SendEmailOTPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LayerGServer).SendEmailAuthOTP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LayerG_SendEmailAuthOTP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LayerGServer).SendEmailAuthOTP(ctx, req.(*api.SendEmailOTPRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3359,6 +3395,10 @@ var LayerG_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendTelegramAuthOTP",
 			Handler:    _LayerG_SendTelegramAuthOTP_Handler,
+		},
+		{
+			MethodName: "SendEmailAuthOTP",
+			Handler:    _LayerG_SendEmailAuthOTP_Handler,
 		},
 		{
 			MethodName: "AuthenticateUA",

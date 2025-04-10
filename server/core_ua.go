@@ -43,7 +43,7 @@ func SendTelegramOTP(ctx context.Context, request TelegramOTPRequest, config Con
 	return &response, nil
 }
 
-type TelegramLoginResponse struct {
+type UAOtpLoginResponse struct {
 	Success bool `json:"success"`
 	Data    struct {
 		Rs struct {
@@ -78,7 +78,7 @@ type TelegramLoginRequest struct {
 	OTP        string `json:"otp"`
 }
 
-func TelegramLogin(ctx context.Context, token string, request TelegramLoginRequest, config Config) (*TelegramLoginResponse, error) {
+func TelegramLogin(ctx context.Context, token string, request TelegramLoginRequest, config Config) (*UAOtpLoginResponse, error) {
 	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
 	endpoint := baseUrl + "/auth/telegram-login"
 
@@ -86,7 +86,7 @@ func TelegramLogin(ctx context.Context, token string, request TelegramLoginReque
 	if err != nil {
 		return nil, err
 	}
-	var response TelegramLoginResponse
+	var response UAOtpLoginResponse
 	err = http.POST(ctx, endpoint, token, "", headers, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to login with telegram: %w", err)
@@ -193,6 +193,15 @@ type UALoginCallBackRequest struct {
 	Code  string `json:"code"`
 	Error string `json:"error,omitempty"`
 	State string `json:"state"`
+}
+
+type EmailOTPVerifyRequest struct {
+	Email string `json:"email"`
+	OTP   string `json:"otp"`
+}
+
+type EmailSendOTPRequest struct {
+	Email string `json:"email"`
 }
 
 type UALoginCallbackResponse struct {
@@ -348,4 +357,44 @@ func SocialLoginUA(ctx context.Context, token string, param *api.UASocialLoginRe
 	fmt.Println("response: ", response)
 
 	return &response, nil
+}
+
+func EmailLoginUA(ctx context.Context, request EmailOTPVerifyRequest, config Config) (*UAOtpLoginResponse, error) {
+	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
+	endpoint := baseUrl + "/auth/email-otp-verify"
+
+	headers, err := GetUAAuthHeaders(config)
+	if err != nil {
+		return nil, err
+	}
+
+	var response UAOtpLoginResponse
+	err = http.POST(ctx, endpoint, "", "", headers, request, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send email login callback: %w", err)
+	}
+
+	return &response, nil
+}
+
+func EmailUASendOTP(ctx context.Context, email string, config Config) error {
+	baseUrl := config.GetLayerGCoreConfig().UniversalAccountURL
+	endpoint := baseUrl + "/auth/email-otp-request"
+
+	headers, err := GetUAAuthHeaders(config)
+	if err != nil {
+		return err
+	}
+
+	request := EmailSendOTPRequest{
+		Email: email,
+	}
+
+	var response UALoginCallbackResponse
+	err = http.POST(ctx, endpoint, "", "", headers, request, &response)
+	if err != nil {
+		return fmt.Errorf("failed to send email otp: %w", err)
+	}
+
+	return nil
 }

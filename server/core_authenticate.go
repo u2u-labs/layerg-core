@@ -268,78 +268,94 @@ WHERE NOT EXISTS
 	return userID, username, true, nil
 }
 
-func AuthenticateEmail(ctx context.Context, logger *zap.Logger, db *sql.DB, email, password, username string, create bool) (string, string, bool, error) {
+func AuthenticateEmail(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, email, otp string, create bool) (string, string, string, string, int64, int64, bool, error) {
 	found := true
 
 	// Look for an existing account.
-	query := "SELECT id, username, password, disable_time FROM users WHERE email = $1"
+	query := "SELECT id, username, email, disable_time FROM users WHERE email = $1"
 	var dbUserID string
 	var dbUsername string
-	var dbPassword []byte
+	var dbEmail string
 	var dbDisableTime pgtype.Timestamptz
-	err := db.QueryRowContext(ctx, query, email).Scan(&dbUserID, &dbUsername, &dbPassword, &dbDisableTime)
+	err := db.QueryRowContext(ctx, query, email).Scan(&dbUserID, &dbUsername, &dbEmail, &dbDisableTime)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			found = false
 		} else {
-			logger.Error("Error looking up user by email.", zap.Error(err), zap.String("email", email), zap.String("username", username), zap.Bool("create", create))
-			return "", "", false, status.Error(codes.Internal, "Error finding user account.")
+			logger.Error("Error looking up user by email.", zap.Error(err), zap.String("email", email), zap.Bool("create", create))
+			return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding user account.")
 		}
 	}
+
+	if !create {
+		// No user account found, and creation is not allowed.
+		return "", "", "", "", 0, 0, false, status.Error(codes.NotFound, "User account not found.")
+	}
+
+	var loginRequest EmailOTPVerifyRequest
+	if found {
+		loginRequest = EmailOTPVerifyRequest{
+			Email: dbEmail,
+			OTP:   otp,
+		}
+	} else {
+		loginRequest = EmailOTPVerifyRequest{
+			Email: email,
+			OTP:   otp,
+		}
+	}
+
+	loginResponse, err := EmailLoginUA(ctx, loginRequest, config)
+	if err != nil {
+		return "", "", "", "", 0, 0, false, err
+	}
+
+	logger.Info("Login response", zap.Any("loginResponse", loginResponse))
 
 	// Existing account found.
 	if found {
 		// Check if it's disabled.
 		if dbDisableTime.Valid && dbDisableTime.Time.Unix() != 0 {
-			logger.Info("User account is disabled.", zap.String("email", email), zap.String("username", username), zap.Bool("create", create))
-			return "", "", false, status.Error(codes.PermissionDenied, "User account banned.")
+			logger.Info("User account is disabled.", zap.String("email", email), zap.Bool("create", create))
+			return "", "", "", "", 0, 0, false, status.Error(codes.PermissionDenied, "User account banned.")
 		}
 
-		// Check if password matches.
-		err = bcrypt.CompareHashAndPassword(dbPassword, []byte(password))
-		if err != nil {
-			return "", "", false, status.Error(codes.Unauthenticated, "Invalid credentials.")
+		if loginResponse.Data.AAWallet.AAAddress != "" {
+			_, err = db.ExecContext(ctx, "UPDATE users SET onchain_id = $1 WHERE id = $2", loginResponse.Data.AAWallet.AAAddress, dbUserID)
+			if err != nil {
+				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("email", email))
+			}
 		}
 
-		return dbUserID, dbUsername, false, nil
-	}
-
-	if !create {
-		// No user account found, and creation is not allowed.
-		return "", "", false, status.Error(codes.NotFound, "User account not found.")
+		return dbUserID, dbUsername, "", "", 0, 0, false, nil
 	}
 
 	// Create a new account.
 	userID := uuid.Must(uuid.NewV4()).String()
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		logger.Error("Error hashing password.", zap.Error(err), zap.String("email", email), zap.String("username", username), zap.Bool("create", create))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
-	}
-	query = "INSERT INTO users (id, username, email, password, create_time, update_time) VALUES ($1, $2, $3, $4, now(), now())"
-	result, err := db.ExecContext(ctx, query, userID, username, email, hashedPassword)
+	query = "INSERT INTO users (id, username, email, create_time, update_time) VALUES ($1, $2, $3, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, email, email)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
 			if strings.Contains(pgErr.Message, "users_username_key") {
 				// Username is already in use by a different account.
-				return "", "", false, status.Error(codes.AlreadyExists, "Username is already in use.")
+				return "", "", "", "", 0, 0, false, status.Error(codes.AlreadyExists, "Username is already in use.")
 			} else if strings.Contains(pgErr.Message, "users_email_key") {
 				// A concurrent write has inserted this email.
-				logger.Info("Did not insert new user as email already exists.", zap.Error(err), zap.String("email", email), zap.String("username", username), zap.Bool("create", create))
-				return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+				logger.Info("Did not insert new user as email already exists.", zap.Error(err), zap.String("email", email), zap.Bool("create", create))
+				return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 			}
 		}
-		logger.Error("Cannot find or create user with email.", zap.Error(err), zap.String("email", email), zap.String("username", username), zap.Bool("create", create))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		logger.Error("Cannot find or create user with email.", zap.Error(err), zap.String("email", email), zap.Bool("create", create))
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
 	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
 		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
-	return userID, username, true, nil
+	return dbUserID, dbUsername, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, true, nil
 }
 
 func AuthenticateUsername(ctx context.Context, logger *zap.Logger, db *sql.DB, username, password string) (string, error) {
