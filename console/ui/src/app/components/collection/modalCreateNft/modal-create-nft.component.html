@@ -1,0 +1,86 @@
+<div class="modal-header">
+  <h4 class="modal-title">Create Collectible</h4>
+  <button type="button" class="close" aria-describedby="Close" aria-label="Close" (click)="activeModal.dismiss()">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+<div class="modal-body">
+  <ngb-alert [dismissible]="false" type="danger" class="mb-3" *ngIf="error">
+    <img src="/static/svg/red-triangle.svg" alt="" width="16" height="" class="mr-2">
+    <h6 class="mr-2 d-inline font-weight-bold">Error when querying create collection: {{error}}</h6>
+  </ngb-alert>
+  <div class="d-flex flex-column justify-content-center">
+      <p><strong>Collection ID:</strong> {{ collectionData?.id }}</p>
+    <form [formGroup]="collectibleForm" (ngSubmit)="createCollectible()" autocomplete="off">
+      <!-- Image Upload -->
+      <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div class="">
+          <label class="form-label">Upload Avatar <span class="text-danger">*</span></label>
+          <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*" />
+        </div>
+
+        <!-- Image Preview -->
+        <div *ngIf="imagePreview" class="">
+          <img [src]="imagePreview" class="img-thumbnail" alt="Preview" width="100" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 d-flex justify-content-start align-items-baseline">
+          <div class="col-3 pl-0">
+            <label class="d-inline" for="name">Name <span class="text-danger">*</span></label>
+          </div>
+          <input type="text" id="name" class="form-control form-control-sm my-2" placeholder="Name" required formControlName="name" [ngClass]="{'is-invalid': f.name.dirty && f.name.errors}">
+          <div class="invalid-tooltip" [hidden]="f.name.disabled || f.name.valid || f.name.pristine">Name is required</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 d-flex justify-content-start align-items-baseline">
+          <div class="col-3 pl-0">
+            <label class="d-inline" for="tokenId">Token ID</label>
+          </div>
+          <input type="number" id="tokenId" class="form-control form-control-sm my-2" placeholder="Token ID" formControlName="tokenId" [ngClass]="{'is-invalid': f.tokenId.dirty && f.tokenId.errors}">
+          <div class="invalid-tooltip" [hidden]="f.tokenId.disabled || f.tokenId.valid || f.tokenId.pristine">TokenId is required</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 d-flex justify-content-start align-items-baseline">
+          <div class="col-3 pl-0">
+            <label class="d-inline" for="quantity">Quantity <span class="text-danger">*</span></label>
+          </div>
+          <input type="number" id="quantity" class="form-control form-control-sm my-2" placeholder="Quantity" required formControlName="quantity" [ngClass]="{'is-invalid': f.quantity.dirty && f.quantity.errors}">
+          <div class="invalid-tooltip" [hidden]="f.quantity.disabled || f.quantity.valid || f.quantity.pristine">Quantity is required</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 d-flex justify-content-start align-items-baseline">
+          <div class="col-3 pl-0">
+            <label class="d-inline" for="description">Description</label>
+          </div>
+          <textarea id="description" class="form-control form-control-sm my-2" placeholder="Description" formControlName="description" [ngClass]="{'is-invalid': f.description.dirty && f.description.errors}"></textarea>
+          <div class="invalid-tooltip" [hidden]="f.description.disabled || f.description.valid || f.description.pristine">Description max 255</div>
+        </div>
+      </div>
+      <!-- Attributes -->
+      <div>
+        <button type="button" class="btn btn-sm btn-info mb-2" (click)="addAttribute()">Add Attribute</button>
+        <div *ngIf="attributes.controls.length" class="attributes" formArrayName="attributes">
+          <div *ngFor="let attribute of attributes.controls; let i = index" [formGroupName]="i" class="row mb-2 align-items-center">
+            <div class="col-md-5">
+              <input type="text" class="form-control form-control-sm" placeholder="Trait Type" formControlName="trait_type">
+            </div>
+            <div class="col-md-5">
+              <input type="text" class="form-control form-control-sm" placeholder="Value" formControlName="value">
+            </div>
+            <div class="col-md-2">
+              <button type="button" class="btn btn-danger" (click)="removeAttribute(i)">-</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="submit" class="btn btn-primary mr-2" [disabled]="false" (click)="createCollectible()">Create</button>
+  <button type="button" class="btn btn-secondary" (click)="activeModal.dismiss()">Back</button>
+</div>

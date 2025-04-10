@@ -342,8 +342,22 @@ export enum StatusHealth {
 export interface StatusList {
   // List of nodes and their stats.
   nodes?:Array<StatusListStatus>
+  services?:Array<StatusListServiceStatus>
   // Timestamp
   timestamp?:string
+}
+
+export interface StatusListServiceStatus {
+  allow_stream?:boolean
+  balancer?:number
+  ip?:string
+  // Node name.
+  name?:string
+  port?:number
+  role?:string
+  status?:number
+  vars?:Map<string, string>
+  weight?:number
 }
 
 /** The status of a LayerG node. */
@@ -765,6 +779,8 @@ export interface ApiUser {
   location?:string
   // Additional information stored as a JSON object.
   metadata?:string
+  // Wallet address
+  onchain_id?:string
   // Indicates whether the user is currently online.
   online?:boolean
   // The Steam id in the user's account.
@@ -1145,6 +1161,17 @@ export class ConsoleService {
     }
     return this.httpClient.get<ApiChannelMessageList>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
+
+  /** Add new NFT collection */
+  // addNFTCollection(auth_token: string, collection_address: string, type: string, initial_block: string, chain_id: number): Observable<any> {
+  //   collection_address = encodeURIComponent(String(collection_address))
+  //   type = encodeURIComponent(String(type))
+  //   initial_block = encodeURIComponent(String(initial_block))
+  //   chain_id = encodeURIComponent(String(chain_id))
+  //   const urlPath = `/v2/console/collection/${collection_address}/type/${type}/block/${initial_block}/chain/${chain_id}`;
+  //   let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+  //   return this.httpClient.post(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  // }
 
   /** Get server config and configuration warnings. */
   getConfig(auth_token: string): Observable<Config> {

@@ -105,3 +105,6 @@ $brand-dark-blue: #151515;
     }
   }
 }
+::ng-deep ngb-modal-window {
+  z-index: 999999 !important;
+}

@@ -109,7 +109,7 @@ func (s *ConsoleServer) CallApiEndpoint(ctx context.Context, in *console.CallApi
 
 func (s *ConsoleServer) extractApiCallContext(ctx context.Context, in *console.CallApiEndpointRequest, userIdOptional bool) (context.Context, error) {
 	var callCtx context.Context
-	if strings.HasPrefix(in.Method, "Authenticate") {
+	if strings.HasPrefix(in.Method, "Authenticate") || in.Method == "SendTelegramAuthOTP" || in.Method == "SendEmailAuthOTP" {
 		callCtx = context.WithValue(ctx, ctxFullMethodKey{}, "/layerg.api.LayerG/"+in.Method)
 	} else if in.UserId == "" {
 		if !userIdOptional {

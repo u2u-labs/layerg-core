@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net"
@@ -75,9 +76,12 @@ type ApiServer struct {
 	runtime              *Runtime
 	grpcServer           *grpc.Server
 	grpcGatewayServer    *http.Server
+	activeTokenCacheUser ActiveTokenCache
+	protojsonMarshaler   *protojson.MarshalOptions
+	tokenPairCache       *TokenPairCache
 }
 
-func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, version string, socialClient *social.Client, storageIndex StorageIndex, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, matchmaker Matchmaker, tracker Tracker, router MessageRouter, streamManager StreamManager, metrics Metrics, pipeline *Pipeline, runtime *Runtime) *ApiServer {
+func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, version string, socialClient *social.Client, storageIndex StorageIndex, leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry StatusRegistry, matchRegistry MatchRegistry, matchmaker Matchmaker, tracker Tracker, router MessageRouter, streamManager StreamManager, metrics Metrics, pipeline *Pipeline, runtime *Runtime, activeCache ActiveTokenCache, tokenPairCache *TokenPairCache) *ApiServer {
 	var gatewayContextTimeoutMs string
 	if config.GetSocket().IdleTimeoutMs > 500 {
 		// Ensure the GRPC Gateway timeout is just under the idle timeout (if possible) to ensure it has priority.
@@ -131,6 +135,9 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 		matchmaker:           matchmaker,
 		runtime:              runtime,
 		grpcServer:           grpcServer,
+		activeTokenCacheUser: activeCache,
+		protojsonMarshaler:   protojsonMarshaler,
+		tokenPairCache:       tokenPairCache,
 	}
 
 	// Register and start GRPC server.
@@ -214,6 +221,13 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 	// Special case routes. Do NOT enable compression on WebSocket route, it results in "http: response.Write on hijacked connection" errors.
 	grpcGatewayRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) }).Methods("GET")
 	grpcGatewayRouter.HandleFunc("/ws", NewSocketWsAcceptor(logger, config, sessionRegistry, sessionCache, statusRegistry, matchmaker, tracker, metrics, runtime, protojsonMarshaler, protojsonUnmarshaler, pipeline)).Methods("GET")
+	grpcGatewayRouter.HandleFunc("/ua-headers", GetUAHeadersHandler(config)).Methods("GET")
+
+	// Add webhook routes before wrapping the router
+	webhookRegistry := runtime.GetWebhookRegistry()
+	if webhookRegistry != nil {
+		webhookRegistry.HandleWebhook(grpcGatewayRouter)
+	}
 
 	// Another nested router to hijack RPC requests bound for GRPC Gateway.
 	grpcGatewayMux := mux.NewRouter()
@@ -305,6 +319,14 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 		}
 	}()
 
+	// go func() {
+	// 	ctx := context.Background()
+	// 	err := LoginAndCacheToken(ctx, logger, config, activeCache)
+	// 	if err != nil {
+	// 		logger.Error("Error initializing token cache", zap.Error(err))
+	// 	}
+	// }()
+
 	return s
 }
 
@@ -348,6 +370,12 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 		fallthrough
 	case "/layerg.api.LayerG/AuthenticateEvm":
 		fallthrough
+	case "/layerg.api.LayerG/AuthenticateUA":
+		fallthrough
+	case "/layerg.api.LayerG/SendTelegramAuthOTP":
+		break
+	case "/layerg.api.LayerG/SendEmailAuthOTP":
+		break
 	case "/layerg.api.LayerG/AuthenticateSteam":
 		// Session refresh and authentication functions only require server key.
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -479,6 +507,91 @@ func parseBearerAuth(hmacSecretByte []byte, auth string) (userID uuid.UUID, user
 	}
 	return parseToken(hmacSecretByte, auth[len(prefix):])
 }
+
+// type JWTClaims struct {
+// 	UserId    string `json:"user_id"`
+// 	Wallet    string `json:"wallet"`
+// 	Exp       int64  `json:"exp"`
+// 	Iat       int64  `json:"iat"`
+// 	TokenID   string `json:"token_id"`
+// 	Signature struct {
+// 		R   string `json:"r"`
+// 		S   string `json:"s"`
+// 		Msg string `json:"msg"`
+// 	} `json:"signature"`
+// }
+
+// func validateJWT(publicKeyHex, tokenString string) (userID uuid.UUID, wallet string, exp int64, tokenID string, valid bool) {
+// 	// Decode base64 JWT (example assumes payload in JWT's middle part is base64 encoded JSON)
+
+// 	// Predefined public key from the service entity (in PEM format)
+// 	// publicKeyHex := config.GetConsole().PublicKey
+
+// 	parts := strings.Split(tokenString, ".")
+// 	if len(parts) != 3 {
+// 		fmt.Println("Invalid JWT format")
+// 		return
+// 	}
+
+// 	// Decode the payload (the second part) from base64
+// 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+// 	if err != nil {
+// 		fmt.Println("Failed to decode JWT payload:", err)
+// 		return
+// 	}
+
+// 	// Unmarshal the JSON payload into the JWTClaims struct
+// 	var claims JWTClaims
+// 	err = json.Unmarshal(payload, &claims)
+// 	if err != nil {
+// 		fmt.Println("Failed to parse JWT claims:", err)
+// 		return
+// 	}
+
+// 	// Decode the public key hex into X and Y coordinates
+// 	pubKeyBytes, err := hex.DecodeString(publicKeyHex)
+// 	if err != nil {
+// 		fmt.Println("Failed to decode public key hex:", err)
+// 		return
+// 	}
+
+// 	x := new(big.Int).SetBytes(pubKeyBytes[1:33]) // X coordinate
+// 	y := new(big.Int).SetBytes(pubKeyBytes[33:])  // Y coordinate
+// 	ecdsaPubKey := &ecdsa.PublicKey{Curve: elliptic.P256(), X: x, Y: y}
+
+// 	// Convert r and s from strings to big.Int (try base 10, fallback to base 16)
+// 	r := new(big.Int)
+// 	s := new(big.Int)
+// 	if _, ok := r.SetString(claims.Signature.R, 10); !ok {
+// 		if _, ok = r.SetString(claims.Signature.R, 16); !ok {
+// 			fmt.Println("Failed to parse r value")
+// 			return
+// 		}
+// 	}
+// 	if _, ok := s.SetString(claims.Signature.S, 10); !ok {
+// 		if _, ok = s.SetString(claims.Signature.S, 16); !ok {
+// 			fmt.Println("Failed to parse s value")
+// 			return
+// 		}
+// 	}
+
+// 	// Verify the signature with ECDSA
+// 	msgHash := []byte(claims.Signature.Msg) // Hash this if it was hashed in the original signing process
+// 	isValid := ecdsa.Verify(ecdsaPubKey, msgHash, r, s)
+// 	if !isValid {
+// 		fmt.Println("Signature verification failed")
+// 		return
+// 	}
+
+// 	// Return user info if verification succeeded
+// 	userID, err = uuid.FromString(claims.UserId)
+// 	if err != nil {
+// 		fmt.Println("Invalid UUID format:", err)
+// 		return
+// 	}
+// 	return userID, claims.Wallet, claims.Exp, claims.TokenID, true
+
+// }
 
 func parseToken(hmacSecretByte []byte, tokenString string) (userID uuid.UUID, username string, vars map[string]string, exp int64, tokenId string, ok bool) {
 	jwtToken, err := jwt.ParseWithClaims(tokenString, &SessionTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -613,4 +726,25 @@ func handleRoutingError(ctx context.Context, mux *grpcgw.ServeMux, marshaler grp
 
 	// Set empty ServerMetadata to prevent logging error on nil metadata.
 	grpcgw.DefaultHTTPErrorHandler(grpcgw.NewServerMetadataContext(ctx, grpcgw.ServerMetadata{}), mux, marshaler, w, r, sterr)
+}
+
+func GetUAHeadersHandler(config Config) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		headers, err := GetUAAuthHeaders(config)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		headersBytes, err := json.Marshal(headers)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(200)
+		w.Write(headersBytes)
+	}
 }

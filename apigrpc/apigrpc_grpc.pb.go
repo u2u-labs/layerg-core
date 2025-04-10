@@ -51,8 +51,12 @@ const (
 	LayerG_AuthenticateGameCenter_FullMethodName            = "/layerg.api.LayerG/AuthenticateGameCenter"
 	LayerG_AuthenticateGoogle_FullMethodName                = "/layerg.api.LayerG/AuthenticateGoogle"
 	LayerG_AuthenticateTelegram_FullMethodName              = "/layerg.api.LayerG/AuthenticateTelegram"
+	LayerG_SendTelegramAuthOTP_FullMethodName               = "/layerg.api.LayerG/SendTelegramAuthOTP"
+	LayerG_SendEmailAuthOTP_FullMethodName                  = "/layerg.api.LayerG/SendEmailAuthOTP"
+	LayerG_AuthenticateUA_FullMethodName                    = "/layerg.api.LayerG/AuthenticateUA"
 	LayerG_AuthenticateEvm_FullMethodName                   = "/layerg.api.LayerG/AuthenticateEvm"
 	LayerG_AuthenticateSteam_FullMethodName                 = "/layerg.api.LayerG/AuthenticateSteam"
+	LayerG_AuthenticateTwitter_FullMethodName               = "/layerg.api.LayerG/AuthenticateTwitter"
 	LayerG_BanGroupUsers_FullMethodName                     = "/layerg.api.LayerG/BanGroupUsers"
 	LayerG_BlockFriends_FullMethodName                      = "/layerg.api.LayerG/BlockFriends"
 	LayerG_CreateGroup_FullMethodName                       = "/layerg.api.LayerG/CreateGroup"
@@ -157,12 +161,19 @@ type LayerGClient interface {
 	AuthenticateGameCenter(ctx context.Context, in *api.AuthenticateGameCenterRequest, opts ...grpc.CallOption) (*api.Session, error)
 	// Authenticate a user with Google against the server.
 	AuthenticateGoogle(ctx context.Context, in *api.AuthenticateGoogleRequest, opts ...grpc.CallOption) (*api.Session, error)
-	// Authenticate a user with Google against the server.
+	// Authenticate a user with Telegram.
 	AuthenticateTelegram(ctx context.Context, in *api.AuthenticateTelegramRequest, opts ...grpc.CallOption) (*api.Session, error)
+	// Request Telegram OTP for authentication.
+	SendTelegramAuthOTP(ctx context.Context, in *api.SendTelegramOTPRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Request Email OTP for authentication.
+	SendEmailAuthOTP(ctx context.Context, in *api.SendEmailOTPRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	AuthenticateUA(ctx context.Context, in *api.UASocialLoginRequest, opts ...grpc.CallOption) (*api.Session, error)
 	// Authenticate a user with Evm against the server.
 	AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest, opts ...grpc.CallOption) (*api.Session, error)
 	// Authenticate a user with Steam against the server.
 	AuthenticateSteam(ctx context.Context, in *api.AuthenticateSteamRequest, opts ...grpc.CallOption) (*api.Session, error)
+	// Authenticate a user with Twitter against the server.
+	AuthenticateTwitter(ctx context.Context, in *api.AuthenticateTwitterRequest, opts ...grpc.CallOption) (*api.Session, error)
 	// Ban a set of users from a group.
 	BanGroupUsers(ctx context.Context, in *api.BanGroupUsersRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Block one or more users by ID or username.
@@ -445,6 +456,36 @@ func (c *layerGClient) AuthenticateTelegram(ctx context.Context, in *api.Authent
 	return out, nil
 }
 
+func (c *layerGClient) SendTelegramAuthOTP(ctx context.Context, in *api.SendTelegramOTPRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, LayerG_SendTelegramAuthOTP_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *layerGClient) SendEmailAuthOTP(ctx context.Context, in *api.SendEmailOTPRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, LayerG_SendEmailAuthOTP_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *layerGClient) AuthenticateUA(ctx context.Context, in *api.UASocialLoginRequest, opts ...grpc.CallOption) (*api.Session, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(api.Session)
+	err := c.cc.Invoke(ctx, LayerG_AuthenticateUA_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *layerGClient) AuthenticateEvm(ctx context.Context, in *api.AuthenticateEvmRequest, opts ...grpc.CallOption) (*api.Session, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(api.Session)
@@ -459,6 +500,16 @@ func (c *layerGClient) AuthenticateSteam(ctx context.Context, in *api.Authentica
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(api.Session)
 	err := c.cc.Invoke(ctx, LayerG_AuthenticateSteam_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *layerGClient) AuthenticateTwitter(ctx context.Context, in *api.AuthenticateTwitterRequest, opts ...grpc.CallOption) (*api.Session, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(api.Session)
+	err := c.cc.Invoke(ctx, LayerG_AuthenticateTwitter_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1206,12 +1257,19 @@ type LayerGServer interface {
 	AuthenticateGameCenter(context.Context, *api.AuthenticateGameCenterRequest) (*api.Session, error)
 	// Authenticate a user with Google against the server.
 	AuthenticateGoogle(context.Context, *api.AuthenticateGoogleRequest) (*api.Session, error)
-	// Authenticate a user with Google against the server.
+	// Authenticate a user with Telegram.
 	AuthenticateTelegram(context.Context, *api.AuthenticateTelegramRequest) (*api.Session, error)
+	// Request Telegram OTP for authentication.
+	SendTelegramAuthOTP(context.Context, *api.SendTelegramOTPRequest) (*emptypb.Empty, error)
+	// Request Email OTP for authentication.
+	SendEmailAuthOTP(context.Context, *api.SendEmailOTPRequest) (*emptypb.Empty, error)
+	AuthenticateUA(context.Context, *api.UASocialLoginRequest) (*api.Session, error)
 	// Authenticate a user with Evm against the server.
 	AuthenticateEvm(context.Context, *api.AuthenticateEvmRequest) (*api.Session, error)
 	// Authenticate a user with Steam against the server.
 	AuthenticateSteam(context.Context, *api.AuthenticateSteamRequest) (*api.Session, error)
+	// Authenticate a user with Twitter against the server.
+	AuthenticateTwitter(context.Context, *api.AuthenticateTwitterRequest) (*api.Session, error)
 	// Ban a set of users from a group.
 	BanGroupUsers(context.Context, *api.BanGroupUsersRequest) (*emptypb.Empty, error)
 	// Block one or more users by ID or username.
@@ -1403,11 +1461,23 @@ func (UnimplementedLayerGServer) AuthenticateGoogle(context.Context, *api.Authen
 func (UnimplementedLayerGServer) AuthenticateTelegram(context.Context, *api.AuthenticateTelegramRequest) (*api.Session, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateTelegram not implemented")
 }
+func (UnimplementedLayerGServer) SendTelegramAuthOTP(context.Context, *api.SendTelegramOTPRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendTelegramAuthOTP not implemented")
+}
+func (UnimplementedLayerGServer) SendEmailAuthOTP(context.Context, *api.SendEmailOTPRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendEmailAuthOTP not implemented")
+}
+func (UnimplementedLayerGServer) AuthenticateUA(context.Context, *api.UASocialLoginRequest) (*api.Session, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateUA not implemented")
+}
 func (UnimplementedLayerGServer) AuthenticateEvm(context.Context, *api.AuthenticateEvmRequest) (*api.Session, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateEvm not implemented")
 }
 func (UnimplementedLayerGServer) AuthenticateSteam(context.Context, *api.AuthenticateSteamRequest) (*api.Session, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateSteam not implemented")
+}
+func (UnimplementedLayerGServer) AuthenticateTwitter(context.Context, *api.AuthenticateTwitterRequest) (*api.Session, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateTwitter not implemented")
 }
 func (UnimplementedLayerGServer) BanGroupUsers(context.Context, *api.BanGroupUsersRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BanGroupUsers not implemented")
@@ -1877,6 +1947,60 @@ func _LayerG_AuthenticateTelegram_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LayerG_SendTelegramAuthOTP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(api.SendTelegramOTPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LayerGServer).SendTelegramAuthOTP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LayerG_SendTelegramAuthOTP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LayerGServer).SendTelegramAuthOTP(ctx, req.(*api.SendTelegramOTPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LayerG_SendEmailAuthOTP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(api.SendEmailOTPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LayerGServer).SendEmailAuthOTP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LayerG_SendEmailAuthOTP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LayerGServer).SendEmailAuthOTP(ctx, req.(*api.SendEmailOTPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LayerG_AuthenticateUA_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(api.UASocialLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LayerGServer).AuthenticateUA(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LayerG_AuthenticateUA_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LayerGServer).AuthenticateUA(ctx, req.(*api.UASocialLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LayerG_AuthenticateEvm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(api.AuthenticateEvmRequest)
 	if err := dec(in); err != nil {
@@ -1909,6 +2033,24 @@ func _LayerG_AuthenticateSteam_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LayerGServer).AuthenticateSteam(ctx, req.(*api.AuthenticateSteamRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LayerG_AuthenticateTwitter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(api.AuthenticateTwitterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LayerGServer).AuthenticateTwitter(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LayerG_AuthenticateTwitter_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LayerGServer).AuthenticateTwitter(ctx, req.(*api.AuthenticateTwitterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3251,12 +3393,28 @@ var LayerG_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _LayerG_AuthenticateTelegram_Handler,
 		},
 		{
+			MethodName: "SendTelegramAuthOTP",
+			Handler:    _LayerG_SendTelegramAuthOTP_Handler,
+		},
+		{
+			MethodName: "SendEmailAuthOTP",
+			Handler:    _LayerG_SendEmailAuthOTP_Handler,
+		},
+		{
+			MethodName: "AuthenticateUA",
+			Handler:    _LayerG_AuthenticateUA_Handler,
+		},
+		{
 			MethodName: "AuthenticateEvm",
 			Handler:    _LayerG_AuthenticateEvm_Handler,
 		},
 		{
 			MethodName: "AuthenticateSteam",
 			Handler:    _LayerG_AuthenticateSteam_Handler,
+		},
+		{
+			MethodName: "AuthenticateTwitter",
+			Handler:    _LayerG_AuthenticateTwitter_Handler,
 		},
 		{
 			MethodName: "BanGroupUsers",

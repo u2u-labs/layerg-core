@@ -121,6 +121,7 @@ func (im *RuntimeJavascriptInitModule) mappings(r *goja.Runtime) map[string]func
 		"registerAfterAuthenticateGameCenter":             im.registerAfterAuthenticateGameCenter(r),
 		"registerBeforeAuthenticateGoogle":                im.registerBeforeAuthenticateGoogle(r),
 		"registerBeforeAuthenticateTelegram":              im.registerBeforeAuthenticateTelegram(r),
+		"registerBeforeAuthenticateUA":                    im.registerBeforeAuthenticateUA(r),
 		"registerAfterAuthenticateGoogle":                 im.registerAfterAuthenticateGoogle(r),
 		"registerAfterAuthenticateTelegram":               im.registerAfterAuthenticateTelegram(r),
 		"registerBeforeAuthenticateSteam":                 im.registerBeforeAuthenticateSteam(r),
@@ -476,6 +477,9 @@ func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateGoogle(r *goja.
 
 func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateTelegram(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return im.registerHook(r, RuntimeExecutionModeBefore, "registerBeforeAuthenticateTelegram", "authenticatetelegram")
+}
+func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateUA(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return im.registerHook(r, RuntimeExecutionModeBefore, "registerBeforeAuthenticateUA", "authenticateua")
 }
 func (im *RuntimeJavascriptInitModule) registerBeforeAuthenticateEvm(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return im.registerHook(r, RuntimeExecutionModeBefore, "registerBeforeAuthenticateEvm", "authenticateevm")

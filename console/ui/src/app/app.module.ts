@@ -1,6 +1,6 @@
 import {BrowserModule} from '@angular/platform-browser';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {NgModule} from '@angular/core';
+import {APP_INITIALIZER, NgModule} from '@angular/core';
 
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
@@ -20,7 +20,7 @@ import {LoginComponent} from './login/login.component';
 import {BaseComponent} from './base/base.component';
 import {SortNumbersPipe, StatusComponent} from './status/status.component';
 import {ConfigComponent} from './config/config.component';
-import {ConfigParams} from './console.service';
+import {Config, ConfigParams, ConsoleService} from './console.service';
 import {UsersComponent} from './users/users.component';
 import {NgxFileDropModule} from 'ngx-file-drop';
 import {RuntimeComponent} from './runtime/runtime.component';
@@ -49,7 +49,35 @@ import {PurchasesComponent} from './account/purchases/purchases.component';
 import {SubscriptionsComponent} from './account/subscriptions/subscriptions.component';
 import {DeleteConfirmDialogComponent} from './shared/delete-confirm-dialog/delete-confirm-dialog.component';
 import {SubscriptionsListComponent} from './subscriptions/subscriptions-list.component';
+import {CollectionsComponent} from './collections/collections.component';
+import {CollectionDetailComponent} from './collections/detail/collectionDetail.component';
+import {CreateCollectionComponent} from './collections/create/createCollection.component';
+import {CollectionComponent} from './collection/collection.component';
+import {CollectionDetail1Component} from './collection/detail/collectionDetail.component';
+import {LayergPortalConfig} from './layergPortal.service';
+import {ModalCreateNftComponent} from './components/collection/modalCreateNft/modal-create-nft.component';
+import {ModalUpdateNftComponent} from './components/collection/modalUpdateNft/modal-update-nft.component';
+import {ModalLinkContractComponent} from './components/collection/modalLinkContract/modal-link-contract.component';
+import {LAYERG_CONFIG} from './config.tokens';
 
+
+export function initApp(consoleService: ConsoleService): () => Promise<void> {
+  // const token = ''; // Replace with actual token logic (e.g., from localStorage or environment)
+  // return () => consoleService.getConfig(token).toPromise().then(configRes => {
+  //   const parsed = JSON.parse(configRes?.config || '{}');
+  //   (consoleService as any)._layergConfig = parsed; // Tạm thời lưu config
+  // });
+
+  return () => new Promise<void>((resolve) => {
+    consoleService.getConfig('').subscribe((configRes: Config) => {
+      const parsed = JSON.parse(configRes?.config || '{}');
+      (consoleService as any)._layergConfig = parsed; // Tạm thời lưu config
+      resolve();
+    }, () => {
+      resolve();
+    });
+  });
+}
 @NgModule({
   declarations: [
     AppComponent,
@@ -84,7 +112,15 @@ import {SubscriptionsListComponent} from './subscriptions/subscriptions-list.com
     ChatListComponent,
     DeleteConfirmDialogComponent,
     PurchasesListComponent,
-    SubscriptionsListComponent
+    SubscriptionsListComponent,
+    CollectionsComponent,
+    CreateCollectionComponent,
+    CollectionComponent,
+    CollectionDetailComponent,
+    CollectionDetail1Component,
+    ModalCreateNftComponent,
+    ModalUpdateNftComponent,
+    ModalLinkContractComponent,
   ],
   imports: [
     NgxFileDropModule,
@@ -104,6 +140,33 @@ import {SubscriptionsListComponent} from './subscriptions/subscriptions-list.com
     WINDOW_PROVIDERS,
     Globals,
     {provide: ConfigParams, useValue: {host: environment.production ? document.location.origin : environment.apiBaseUrl, timeout: 15000}},
+    // {
+    //   provide: APP_INITIALIZER,
+    //   useFactory: initApp,
+    //   deps: [ConsoleService],
+    //   multi: true
+    // },
+    // {
+    //   provide: LAYERG_CONFIG,
+    //   useFactory: (consoleService: ConsoleService) => {
+    //     console.log((consoleService as any)._layergConfig);
+    //     return (consoleService as any)._layergConfig || {};
+    //   },
+    //   deps: [ConsoleService]
+    // },
+    // tslint:disable-next-line:max-line-length
+    // {provide: LayergPortalConfig, useValue: {host: environmentLayerg.production ? document.location.origin : environmentLayerg.apiBaseUrl, timeout: 15000}},
+    // {
+    //   provide: LayergPortalConfig,
+    //   // useFactory: (consoleService: ConsoleService) => {
+    //   //   const config = (consoleService as any)._layergConfig || {};
+    //   //   return {
+    //   //     host: config?.layerg_core?.portal_url || '',
+    //   //     timeout: 15000
+    //   //   };
+    //   // },
+    //   deps: [ConsoleService]
+    // },
     {provide: HTTP_INTERCEPTORS, useClass: SessionInterceptor, multi: true},
     {provide: HTTP_INTERCEPTORS, useClass: AuthenticationErrorInterceptor, multi: true}
   ],

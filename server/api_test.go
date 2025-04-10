@@ -54,6 +54,7 @@ func (d *DummyMessageRouter) SendToPresenceIDs(*zap.Logger, []*PresenceID, *rtap
 }
 func (d *DummyMessageRouter) SendToStream(*zap.Logger, PresenceStream, *rtapi.Envelope, bool) {}
 func (d *DummyMessageRouter) SendToAll(*zap.Logger, *rtapi.Envelope, bool)                    {}
+func (d *DummyMessageRouter) SetPeer(peer Peer)                                               {}
 
 type DummySession struct {
 	messages []*rtapi.Envelope
@@ -210,10 +211,11 @@ func NewAPIServer(t *testing.T, runtime *Runtime) (*ApiServer, *Pipeline) {
 	db := NewDB(t)
 	router := &DummyMessageRouter{}
 	sessionCache := NewLocalSessionCache(3_600, 7_200)
+	activeSessionCache := NewLocalActiveTokenCache(3_600, 7_200)
 	sessionRegistry := NewLocalSessionRegistry(metrics)
 	tracker := &LocalTracker{sessionRegistry: sessionRegistry}
 	pipeline := NewPipeline(logger, cfg, db, protojsonMarshaler, protojsonUnmarshaler, sessionRegistry, nil, nil, nil, nil, tracker, router, runtime)
-	apiServer := StartApiServer(logger, logger, db, protojsonMarshaler, protojsonUnmarshaler, cfg, "3.0.0", nil, storageIdx, nil, nil, sessionRegistry, sessionCache, nil, nil, nil, tracker, router, nil, metrics, pipeline, runtime)
+	apiServer := StartApiServer(logger, logger, db, protojsonMarshaler, protojsonUnmarshaler, cfg, "3.0.0", nil, storageIdx, nil, nil, sessionRegistry, sessionCache, nil, nil, nil, tracker, router, nil, metrics, pipeline, runtime, activeSessionCache, nil)
 
 	WaitForSocket(nil, cfg)
 	return apiServer, pipeline

@@ -10,14 +10,15 @@ import {
   CanActivateChild,
   ActivatedRouteSnapshot, RouterStateSnapshot,
 } from '@angular/router';
-import {bufferTime, distinctUntilChanged} from 'rxjs/operators';
-import {Subscription} from 'rxjs';
+import {bufferTime, distinctUntilChanged, tap} from 'rxjs/operators';
+import {Observable, Subscription} from 'rxjs';
 import {AuthenticationService} from '../authentication.service';
 import {NgbNavChangeEvent} from '@ng-bootstrap/ng-bootstrap';
 import {SegmentService} from 'ngx-segment-analytics';
 import {ConsoleService, UserRole} from '../console.service';
 import {Globals} from '../globals';
-import {environment} from "../../environments/environment";
+import {environment} from '../../environments/environment';
+import {LayergPortalService} from '../layergPortal.service';
 
 @Component({
   templateUrl: './base.component.html',
@@ -33,6 +34,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     {navItem: 'status', routerLink: ['/status'], label: 'Status', minRole: UserRole.USER_ROLE_READONLY, icon: 'status'},
     {navItem: 'users', routerLink: ['/users'], label: 'User Management', minRole: UserRole.USER_ROLE_ADMIN, icon: 'user-management'},
     {navItem: 'config', routerLink: ['/config'], label: 'Configuration', minRole: UserRole.USER_ROLE_DEVELOPER, icon: 'configuration'},
+    {navItem: 'collections', routerLink: ['/collections'], label: 'Collections', minRole: UserRole.USER_ROLE_DEVELOPER, icon: 'runtime-modules'},
     {navItem: 'modules', routerLink: ['/modules'], label: 'Runtime Modules', minRole: UserRole.USER_ROLE_DEVELOPER, separator: true, icon: 'runtime-modules'},
     {navItem: 'accounts', routerLink: ['/accounts'], label: 'Accounts', minRole: UserRole.USER_ROLE_READONLY, icon: 'accounts'},
     {navItem: 'groups', routerLink: ['/groups'], label: 'Groups', minRole: UserRole.USER_ROLE_READONLY, icon: 'groups'},
@@ -50,6 +52,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private segment: SegmentService,
     private readonly consoleService: ConsoleService,
+    private readonly layergPortalService: LayergPortalService,
     private readonly authService: AuthenticationService,
   ) {
     this.loading = false;
@@ -88,7 +91,21 @@ export class BaseComponent implements OnInit, OnDestroy {
     });
   }
 
+  initLaygergPortalService(): void {
+    this.consoleService.getConfig('').pipe(
+      tap((configRes: any) => {
+        const parsed = JSON.parse(configRes?.config || '{}');
+        const host = parsed?.layerg_core?.portal_url;
+        this.layergPortalService.layerg = {
+          host,
+          timeoutMs: 5000,
+        }; // Dynamically update the host
+      })
+    ).subscribe(); // Ensure the observable is subscribed to
+  }
+
   ngOnInit(): void {
+    this.initLaygergPortalService();
     this.route.data.subscribe(data => {
       this.error = data.error ? data.error : '';
     });
@@ -118,9 +135,20 @@ export class BaseComponent implements OnInit, OnDestroy {
 
 @Injectable({providedIn: 'root'})
 export class PageviewGuard implements CanActivate, CanActivateChild {
-  constructor(private readonly authService: AuthenticationService, private readonly router: Router, private readonly globals: Globals) {}
+  constructor(private readonly authService: AuthenticationService, private readonly consoleService: ConsoleService,
+              private readonly layergPortalService: LayergPortalService, private readonly router: Router, private readonly globals: Globals) {}
 
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
+    this.consoleService.getConfig('').pipe(
+      tap((configRes: any) => {
+        const parsed = JSON.parse(configRes?.config || '{}');
+        const host = parsed?.layerg_core?.portal_url;
+        this.layergPortalService.layerg = {
+          host,
+          timeoutMs: 5000,
+        }; // Dynamically update the host
+      })
+    ).subscribe();
     return true;
   }
 
@@ -131,6 +159,16 @@ export class PageviewGuard implements CanActivate, CanActivateChild {
       const _ = this.router.navigate(['/']);
       return false;
     }
+    this.consoleService.getConfig('').pipe(
+      tap((configRes: any) => {
+        const parsed = JSON.parse(configRes?.config || '{}');
+        const host = parsed?.layerg_core?.portal_url;
+        this.layergPortalService.layerg = {
+          host,
+          timeoutMs: 5000,
+        }; // Dynamically update the host
+      })
+    ).subscribe();
 
     return true;
   }

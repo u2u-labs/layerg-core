@@ -185,6 +185,11 @@ service Console {
     option (google.api.http).delete = "/v2/console/user";
   }
 
+  // Add new NFT collection
+  rpc AddNFTCollection (AddNFTCollectionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http).post = "/v2/console/collection/{collection_address}/type/{type}/block/{initial_block}/chain/{chain_id}";
+  }
+
   // Delete a wallet ledger item.
   rpc DeleteWalletLedger (DeleteWalletLedgerRequest) returns (google.protobuf.Empty) {
     option (google.api.http).delete = "/v2/console/account/{id}/wallet/{wallet_id}";
@@ -632,6 +637,14 @@ message UpdateGroupUserStateRequest {
   string group_id = 2;
 }
 
+// Add NFT collection
+message AddNFTCollectionRequest {
+  string collection_address = 1;
+  string type = 2;
+  uint64 initial_block = 3;
+  uint32 chain_id = 4;
+}
+
 // Remove a leaderboard record
 message DeleteLeaderboardRecordRequest {
   // Leaderboard ID.
@@ -978,11 +991,27 @@ message StatusList {
     double avg_output_kbs = 10;
   }
 
+  message ServiceStatus {
+    // Node name.
+    string name = 1;
+    map<string, string> vars = 2;
+    string ip = 3;
+    uint32 port = 4;
+    string role = 5;
+    int32 status = 6;
+    int32 weight = 7;
+    int32 balancer = 8;
+    bool allow_stream = 9;
+  }
+
   // List of nodes and their stats.
   repeated Status nodes = 1;
 
   // Timestamp
   google.protobuf.Timestamp timestamp = 2;
+
+  repeated ServiceStatus services = 3;
+
 }
 
 // Runtime information

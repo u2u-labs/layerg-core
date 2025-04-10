@@ -187,49 +187,49 @@ func (s *ApiServer) LinkDevice(ctx context.Context, in *api.AccountDevice) (*emp
 	return &emptypb.Empty{}, nil
 }
 
-func (s *ApiServer) LinkEmail(ctx context.Context, in *api.AccountEmail) (*emptypb.Empty, error) {
-	userID := ctx.Value(ctxUserIDKey{}).(uuid.UUID)
+// func (s *ApiServer) LinkEmail(ctx context.Context, in *api.AccountEmail) (*emptypb.Empty, error) {
+// 	userID := ctx.Value(ctxUserIDKey{}).(uuid.UUID)
 
-	// Before hook.
-	if fn := s.runtime.BeforeLinkEmail(); fn != nil {
-		beforeFn := func(clientIP, clientPort string) error {
-			result, err, code := fn(ctx, s.logger, userID.String(), ctx.Value(ctxUsernameKey{}).(string), ctx.Value(ctxVarsKey{}).(map[string]string), ctx.Value(ctxExpiryKey{}).(int64), clientIP, clientPort, in)
-			if err != nil {
-				return status.Error(code, err.Error())
-			}
-			if result == nil {
-				// If result is nil, requested resource is disabled.
-				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)), zap.String("uid", userID.String()))
-				return status.Error(codes.NotFound, "Requested resource was not found.")
-			}
-			in = result
-			return nil
-		}
+// 	// Before hook.
+// 	if fn := s.runtime.BeforeLinkEmail(); fn != nil {
+// 		beforeFn := func(clientIP, clientPort string) error {
+// 			result, err, code := fn(ctx, s.logger, userID.String(), ctx.Value(ctxUsernameKey{}).(string), ctx.Value(ctxVarsKey{}).(map[string]string), ctx.Value(ctxExpiryKey{}).(int64), clientIP, clientPort, in)
+// 			if err != nil {
+// 				return status.Error(code, err.Error())
+// 			}
+// 			if result == nil {
+// 				// If result is nil, requested resource is disabled.
+// 				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)), zap.String("uid", userID.String()))
+// 				return status.Error(codes.NotFound, "Requested resource was not found.")
+// 			}
+// 			in = result
+// 			return nil
+// 		}
 
-		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
-		if err != nil {
-			return nil, err
-		}
-	}
+// 		// Execute the before function lambda wrapped in a trace for stats measurement.
+// 		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
 
-	err := LinkEmail(ctx, s.logger, s.db, userID, in.Email, in.Password)
-	if err != nil {
-		return nil, err
-	}
+// 	err := LinkEmail(ctx, s.logger, s.db, userID, in.Email, in.Password)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// After hook.
-	if fn := s.runtime.AfterLinkEmail(); fn != nil {
-		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, userID.String(), ctx.Value(ctxUsernameKey{}).(string), ctx.Value(ctxVarsKey{}).(map[string]string), ctx.Value(ctxExpiryKey{}).(int64), clientIP, clientPort, in)
-		}
+// 	// After hook.
+// 	if fn := s.runtime.AfterLinkEmail(); fn != nil {
+// 		afterFn := func(clientIP, clientPort string) error {
+// 			return fn(ctx, s.logger, userID.String(), ctx.Value(ctxUsernameKey{}).(string), ctx.Value(ctxVarsKey{}).(map[string]string), ctx.Value(ctxExpiryKey{}).(int64), clientIP, clientPort, in)
+// 		}
 
-		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
-	}
+// 		// Execute the after function lambda wrapped in a trace for stats measurement.
+// 		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+// 	}
 
-	return &emptypb.Empty{}, nil
-}
+// 	return &emptypb.Empty{}, nil
+// }
 
 func (s *ApiServer) LinkFacebook(ctx context.Context, in *api.LinkFacebookRequest) (*emptypb.Empty, error) {
 	userID := ctx.Value(ctxUserIDKey{}).(uuid.UUID)

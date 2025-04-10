@@ -1,6 +1,6 @@
 # docker build .. -f Dockerfile.local -t layerg:dev
 
-FROM golang:1.22.5-bookworm AS builder
+FROM golang:1.23-bookworm AS builder
 
 ENV GOOS linux
 ENV CGO_ENABLED 1

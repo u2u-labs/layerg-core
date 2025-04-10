@@ -1,7 +1,7 @@
 # docker build "$PWD" --build-arg commit="$(git rev-parse --short HEAD)" --build-arg version=latest -t dangnp/layerg:latest
 # docker build "$PWD" --build-arg commit="$(git rev-parse --short HEAD)" --build-arg version="$(git rev-parse --short HEAD)" -t layerglabs/layerg:"$(git rev-parse --short HEAD)"
 
-FROM golang:1.22.5-bookworm AS builder
+FROM golang:1.23-bookworm AS builder
 
 ARG commit
 ARG version
@@ -17,6 +17,8 @@ RUN apt-get update && \
     git clone --quiet --no-checkout https://github.com/u2u-labs/layerg-core /go/build/layerg
 
 WORKDIR /go/build/layerg
+COPY . .
+
 RUN git checkout --quiet "$commit" && \
     go mod tidy && \
     go mod vendor && \

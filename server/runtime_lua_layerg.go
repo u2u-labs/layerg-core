@@ -300,6 +300,7 @@ func (n *RuntimeLuaLayerGModule) Loader(l *lua.LState) int {
 		"channel_id_build":                          n.channelIdBuild,
 		"storage_index_list":                        n.storageIndexList,
 		"get_satori":                                n.getSatori,
+		"get_required_headers_ua":                   n.getRequiredHeadersUA,
 	}
 
 	mod := l.SetFuncs(l.CreateTable(0, len(functions)), functions)
@@ -1839,71 +1840,71 @@ func (n *RuntimeLuaLayerGModule) authenticateDevice(l *lua.LState) int {
 // @return created(bool) Value indicating if this account was just created or already existed.
 // @return error(error) An optional error value if an error occurred.
 func (n *RuntimeLuaLayerGModule) authenticateEmail(l *lua.LState) int {
-	var attemptUsernameLogin bool
-	// Parse email.
-	email := l.OptString(1, "")
-	if email == "" {
-		attemptUsernameLogin = true
-	} else if invalidCharsRegex.MatchString(email) {
-		l.ArgError(1, "expects email to be valid, no spaces or control characters allowed")
-		return 0
-	} else if !emailRegex.MatchString(email) {
-		l.ArgError(1, "expects email to be valid, invalid email address format")
-		return 0
-	} else if len(email) < 10 || len(email) > 255 {
-		l.ArgError(1, "expects email to be valid, must be 10-255 bytes")
-		return 0
-	}
+	// var attemptUsernameLogin bool
+	// // Parse email.
+	// email := l.OptString(1, "")
+	// if email == "" {
+	// 	attemptUsernameLogin = true
+	// } else if invalidCharsRegex.MatchString(email) {
+	// 	l.ArgError(1, "expects email to be valid, no spaces or control characters allowed")
+	// 	return 0
+	// } else if !emailRegex.MatchString(email) {
+	// 	l.ArgError(1, "expects email to be valid, invalid email address format")
+	// 	return 0
+	// } else if len(email) < 10 || len(email) > 255 {
+	// 	l.ArgError(1, "expects email to be valid, must be 10-255 bytes")
+	// 	return 0
+	// }
 
-	// Parse password.
-	password := l.CheckString(2)
-	if password == "" {
-		l.ArgError(2, "expects password string")
-		return 0
-	} else if len(password) < 8 {
-		l.ArgError(2, "expects password to be valid, must be longer than 8 characters")
-		return 0
-	}
+	// // Parse password.
+	// password := l.CheckString(2)
+	// if password == "" {
+	// 	l.ArgError(2, "expects password string")
+	// 	return 0
+	// } else if len(password) < 8 {
+	// 	l.ArgError(2, "expects password to be valid, must be longer than 8 characters")
+	// 	return 0
+	// }
 
-	// Parse username, if any.
-	username := l.OptString(3, "")
-	if username == "" {
-		if attemptUsernameLogin {
-			l.ArgError(1, "expects username string when email is not supplied")
-			return 0
-		}
+	// // Parse username, if any.
+	// username := l.OptString(3, "")
+	// if username == "" {
+	// 	if attemptUsernameLogin {
+	// 		l.ArgError(1, "expects username string when email is not supplied")
+	// 		return 0
+	// 	}
 
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		l.ArgError(3, "expects username to be valid, no spaces or control characters allowed")
-		return 0
-	} else if len(username) > 128 {
-		l.ArgError(3, "expects id to be valid, must be 1-128 bytes")
-		return 0
-	}
+	// 	username = generateUsername()
+	// } else if invalidUsernameRegex.MatchString(username) {
+	// 	l.ArgError(3, "expects username to be valid, no spaces or control characters allowed")
+	// 	return 0
+	// } else if len(username) > 128 {
+	// 	l.ArgError(3, "expects id to be valid, must be 1-128 bytes")
+	// 	return 0
+	// }
 
-	// Parse create flag, if any.
-	create := l.OptBool(4, true)
+	// // Parse create flag, if any.
+	// create := l.OptBool(4, true)
 
-	var dbUserID string
-	var created bool
-	var err error
+	// var dbUserID string
+	// var created bool
+	// var err error
 
-	if attemptUsernameLogin {
-		dbUserID, err = AuthenticateUsername(l.Context(), n.logger, n.db, username, password)
-	} else {
-		cleanEmail := strings.ToLower(email)
+	// if attemptUsernameLogin {
+	// 	dbUserID, err = AuthenticateUsername(l.Context(), n.logger, n.db, username, password)
+	// } else {
+	// 	cleanEmail := strings.ToLower(email)
 
-		dbUserID, username, created, err = AuthenticateEmail(l.Context(), n.logger, n.db, cleanEmail, password, username, create)
-	}
-	if err != nil {
-		l.RaiseError("error authenticating: %v", err.Error())
-		return 0
-	}
+	// 	dbUserID, username, created, err = AuthenticateEmail(l.Context(), n.logger, n.db, cleanEmail, password, username, create)
+	// }
+	// if err != nil {
+	// 	l.RaiseError("error authenticating: %v", err.Error())
+	// 	return 0
+	// }
 
-	l.Push(lua.LString(dbUserID))
-	l.Push(lua.LString(username))
-	l.Push(lua.LBool(created))
+	l.Push(lua.LString(""))
+	l.Push(lua.LString(""))
+	l.Push(lua.LBool(false))
 	return 3
 }
 
@@ -2111,7 +2112,7 @@ func (n *RuntimeLuaLayerGModule) authenticateGoogle(l *lua.LState) int {
 	// Parse create flag, if any.
 	create := l.OptBool(3, true)
 
-	dbUserID, dbUsername, created, err := AuthenticateGoogle(l.Context(), n.logger, n.db, n.socialClient, token, username, create)
+	dbUserID, dbUsername, _, created, err := AuthenticateGoogle(l.Context(), n.logger, n.db, n.socialClient, n.config, token, username, create, nil)
 	if err != nil {
 		l.RaiseError("error authenticating: %v", err.Error())
 		return 0
@@ -10791,4 +10792,18 @@ func RuntimeLuaConvertLuaTableString(vars *lua.LTable) (map[string]string, error
 		}
 	}
 	return varsMap, nil
+}
+
+func (n *RuntimeLuaLayerGModule) getRequiredHeadersUA(l *lua.LState) int {
+	headers, err := GetUAAuthHeaders(n.config)
+	if err != nil {
+		l.RaiseError("failed to get required headers: %v", err.Error())
+		return 0
+	}
+	for k, v := range headers {
+		l.Push(lua.LString(k))
+		l.Push(lua.LString(v))
+	}
+
+	return 1
 }

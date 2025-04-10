@@ -4,11 +4,13 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/u2u-labs/layerg-core/flags"
 	"go.uber.org/zap"
@@ -17,7 +19,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config interface is the LayerG core configuration.
 type Config interface {
 	GetName() string
 	GetDataDir() string
@@ -38,8 +39,12 @@ type Config interface {
 	GetGoogleAuth() *GoogleAuthConfig
 	GetSatori() *SatoriConfig
 	GetStorage() *StorageConfig
+	GetMFA() *MFAConfig
 	GetLimit() int
-
+	GetCluster() *PeerConfig
+	GetLayerGCoreConfig() *LayerGCoreConfig
+	GetRedisDbConfig() *RedisConfig
+	GetMqtt() *MQTTConfig
 	Clone() (Config, error)
 }
 
@@ -397,6 +402,11 @@ func ValidateConfig(logger *zap.Logger, c Config) map[string]string {
 	}
 
 	c.GetSatori().Validate(logger)
+	c.GetCluster().Validate(logger)
+
+	if k := c.GetMFA().StorageEncryptionKey; k != "" && len(k) != 32 {
+		logger.Fatal("MFA encryption key has to be 32 bits long")
+	}
 
 	return configWarnings
 }
@@ -458,7 +468,22 @@ type config struct {
 	GoogleAuth       *GoogleAuthConfig  `yaml:"google_auth" json:"google_auth" usage:"Google's auth settings."`
 	Satori           *SatoriConfig      `yaml:"satori" json:"satori" usage:"Satori integration settings."`
 	Storage          *StorageConfig     `yaml:"storage" json:"storage" usage:"Storage settings."`
+	MFA              *MFAConfig         `yaml:"mfa" json:"mfa" usage:"MFA settings."`
 	Limit            int                `json:"-"` // Only used for migrate command.
+	Cluster          *PeerConfig        `yaml:"cluster" json:"cluster" usage:"Cluster settings."`
+	LayerGCore       *LayerGCoreConfig  `yaml:"layerg_core" json:"layerg_core" usage:"LayerG core server config."`
+	RedisDb          *RedisConfig       `yaml:"redis_db" json:"redis_db" usage:"RedisDB server config."`
+	Mqtt             *MQTTConfig        `yaml:"mqtt" json:"mqtt" usage:"MQTT configuration."`
+}
+
+func randomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	rand.Seed(time.Now().UnixNano())
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
 
 // NewConfig constructs a Config struct which represents server settings, and populates it with default values.
@@ -468,7 +493,7 @@ func NewConfig(logger *zap.Logger) *config {
 		logger.Fatal("Error getting current working directory.", zap.Error(err))
 	}
 	return &config{
-		Name:             "layerg",
+		Name:             "layerg-" + randomString(6),
 		Datadir:          filepath.Join(cwd, "data"),
 		ShutdownGraceSec: 0,
 		Logger:           NewLoggerConfig(),
@@ -487,7 +512,12 @@ func NewConfig(logger *zap.Logger) *config {
 		GoogleAuth:       NewGoogleAuthConfig(),
 		Satori:           NewSatoriConfig(),
 		Storage:          NewStorageConfig(),
+		MFA:              NewMFAConfig(),
 		Limit:            -1,
+		Cluster:          NewPeerConfig(),
+		LayerGCore:       NewLayerGCore(),
+		RedisDb:          NewRedisDb(),
+		Mqtt:             NewMqttConfig(),
 	}
 }
 
@@ -507,7 +537,10 @@ func (c *config) Clone() (Config, error) {
 	configIAP := *(c.IAP)
 	configSatori := *(c.Satori)
 	configStorage := *(c.Storage)
+	configLayerGCore := *(c.LayerGCore)
 	configGoogleAuth := *(c.GoogleAuth)
+	configMqtt := *(c.Mqtt)
+	// 	configRedisDb := *(c.RedisDb)
 	nc := &config{
 		Name:             c.Name,
 		Datadir:          c.Datadir,
@@ -528,6 +561,10 @@ func (c *config) Clone() (Config, error) {
 		Satori:           &configSatori,
 		GoogleAuth:       &configGoogleAuth,
 		Storage:          &configStorage,
+		LayerGCore:       &configLayerGCore,
+		// 		RedisDb:          &configRedisDb,
+		Cluster: c.Cluster.Clone(),
+		Mqtt:    &configMqtt,
 	}
 	nc.Socket.CertPEMBlock = make([]byte, len(c.Socket.CertPEMBlock))
 	copy(nc.Socket.CertPEMBlock, c.Socket.CertPEMBlock)
@@ -630,8 +667,31 @@ func (c *config) GetStorage() *StorageConfig {
 	return c.Storage
 }
 
+func (c *config) GetMFA() *MFAConfig {
+	return c.MFA
+}
+
 func (c *config) GetLimit() int {
 	return c.Limit
+}
+
+func (c *config) GetCluster() *PeerConfig {
+	return c.Cluster
+}
+
+func (c *config) GetLayerGCoreConfig() *LayerGCoreConfig {
+	return c.LayerGCore
+}
+
+func (c *config) GetRedisDbConfig() *RedisConfig {
+	return c.RedisDb
+}
+
+func (c *config) GetMqtt() *MQTTConfig {
+	if c.Mqtt == nil {
+		c.Mqtt = NewMqttConfig()
+	}
+	return c.Mqtt
 }
 
 // LoggerConfig is configuration relevant to logging levels and output.
@@ -944,16 +1004,18 @@ func NewTrackerConfig() *TrackerConfig {
 
 // ConsoleConfig is configuration relevant to the embedded console.
 type ConsoleConfig struct {
-	Port                int    `yaml:"port" json:"port" usage:"The port for accepting connections for the embedded console, listening on all interfaces."`
-	Address             string `yaml:"address" json:"address" usage:"The IP address of the interface to listen for console traffic on. Default listen on all available addresses/interfaces."`
-	MaxMessageSizeBytes int64  `yaml:"max_message_size_bytes" json:"max_message_size_bytes" usage:"Maximum amount of data in bytes allowed to be read from the client socket per message."`
-	ReadTimeoutMs       int    `yaml:"read_timeout_ms" json:"read_timeout_ms" usage:"Maximum duration in milliseconds for reading the entire request."`
-	WriteTimeoutMs      int    `yaml:"write_timeout_ms" json:"write_timeout_ms" usage:"Maximum duration in milliseconds before timing out writes of the response."`
-	IdleTimeoutMs       int    `yaml:"idle_timeout_ms" json:"idle_timeout_ms" usage:"Maximum amount of time in milliseconds to wait for the next request when keep-alives are enabled."`
-	Username            string `yaml:"username" json:"username" usage:"Username for the embedded console. Default username is 'admin'."`
-	Password            string `yaml:"password" json:"password" usage:"Password for the embedded console. Default password is 'password'."`
-	TokenExpirySec      int64  `yaml:"token_expiry_sec" json:"token_expiry_sec" usage:"Token expiry in seconds. Default 86400."`
-	SigningKey          string `yaml:"signing_key" json:"signing_key" usage:"Key used to sign console session tokens."`
+	Port                int        `yaml:"port" json:"port" usage:"The port for accepting connections for the embedded console, listening on all interfaces."`
+	Address             string     `yaml:"address" json:"address" usage:"The IP address of the interface to listen for console traffic on. Default listen on all available addresses/interfaces."`
+	MaxMessageSizeBytes int64      `yaml:"max_message_size_bytes" json:"max_message_size_bytes" usage:"Maximum amount of data in bytes allowed to be read from the client socket per message."`
+	ReadTimeoutMs       int        `yaml:"read_timeout_ms" json:"read_timeout_ms" usage:"Maximum duration in milliseconds for reading the entire request."`
+	WriteTimeoutMs      int        `yaml:"write_timeout_ms" json:"write_timeout_ms" usage:"Maximum duration in milliseconds before timing out writes of the response."`
+	IdleTimeoutMs       int        `yaml:"idle_timeout_ms" json:"idle_timeout_ms" usage:"Maximum amount of time in milliseconds to wait for the next request when keep-alives are enabled."`
+	Username            string     `yaml:"username" json:"username" usage:"Username for the embedded console. Default username is 'admin'."`
+	Password            string     `yaml:"password" json:"password" usage:"Password for the embedded console. Default password is 'password'."`
+	TokenExpirySec      int64      `yaml:"token_expiry_sec" json:"token_expiry_sec" usage:"Token expiry in seconds. Default 86400."`
+	SigningKey          string     `yaml:"signing_key" json:"signing_key" usage:"Key used to sign console session tokens."`
+	MFA                 *MFAConfig `yaml:"mfa" json:"mfa" usage:"MFA settings."`
+	PublicKey           string     `yaml:"ua_public_key" json:"ua_public_key" usage:"UA Public key."`
 }
 
 func NewConsoleConfig() *ConsoleConfig {
@@ -967,6 +1029,8 @@ func NewConsoleConfig() *ConsoleConfig {
 		Password:            "password",
 		TokenExpirySec:      86400,
 		SigningKey:          "defaultsigningkey",
+		MFA:                 NewMFAConfig(),
+		PublicKey:           "042a92e6c4624df5f0fbd6c6a4cecb6a6d2dcd6e6ae7790d8467c0f59a9d35bd64829a8e462a36fa793ac5a390d48c847c68fdfe570ed7e7cee5a1983398fc8201",
 	}
 }
 
@@ -1088,6 +1152,26 @@ type GoogleAuthConfig struct {
 	OAuthConfig     *oauth2.Config `yaml:"-" json:"-"`
 }
 
+type LayerGCoreConfig struct {
+	ApiKey              string `yaml:"api_key" json:"api_key" usage:"api key to communicate with core server"`
+	ApiKeyID            string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
+	PortalURL           string `yaml:"portal_url" json:"portal_url" usage:"url of core server"`
+	UniversalAccountURL string `yaml:"ua_url" json:"ua_url" usage:"ua_url of core server"`
+	MasterDB            string `yaml:"masterdb_url" json:"masterdb_url" usage:"masterdb_url of core server"`
+	MasterPvk           string `yaml:"master_pvk" json:"master_pvk" usage:"master wallet private key for admin onchain operaton"`
+	UAApiKey            string `yaml:"ua_api_key" json:"ua_api_key" usage:"ua api key for core server"`
+	UAPublicApiKey      string `yaml:"ua_public_api_key" json:"ua_public_api_key" usage:"ua public api key for core server"`
+	UAPrivateApiKey     string `yaml:"ua_private_api_key" json:"ua_private_api_key" usage:"ua private api key for core server"`
+	UADomain            string `yaml:"ua_domain" json:"ua_domain" usage:"ua domain for core server"`
+}
+
+type RedisConfig struct {
+	Url      string `yaml:"url" json:"url" usage:"url redis server"`
+	Db       int    `yaml:"db" json:"db" usage:"db of redis server"`
+	Ttl      int    `yaml:"ttl" json:"ttl" usage:"time-to-live in second"`
+	Password string `yaml:"password" json:"password" usage:"password of redis server"`
+}
+
 func NewGoogleAuthConfig() *GoogleAuthConfig {
 	return &GoogleAuthConfig{
 		CredentialsJSON: "",
@@ -1101,4 +1185,64 @@ type StorageConfig struct {
 
 func NewStorageConfig() *StorageConfig {
 	return &StorageConfig{}
+}
+
+type MFAConfig struct {
+	StorageEncryptionKey string `yaml:"storage_encryption_key" json:"storage_encryption_key" usage:"The encryption key to be used when persisting MFA related data. Has to be 32 bytes long."`
+	AdminAccountOn       bool   `yaml:"admin_account_enabled" json:"admin_account_enabled" usage:"Require MFA for the Console Admin account."`
+}
+
+func NewMFAConfig() *MFAConfig {
+	return &MFAConfig{
+		StorageEncryptionKey: "the-key-has-to-be-32-bytes-long!", // Has to be 32 bit long.
+		AdminAccountOn:       false,
+	}
+}
+
+func NewLayerGCore() *LayerGCoreConfig {
+	return &LayerGCoreConfig{
+		ApiKey:              "v13lx3ykszi3gi7j000oa2",
+		ApiKeyID:            "d3e94d1b-3959-498b-9971-b5df93adfd28",
+		PortalURL:           "http://localhost:3000",
+		UniversalAccountURL: "https://bundler-dev.layerg.xyz",
+		MasterDB:            "https://crawler-db-dev.layerg.xyz",
+		MasterPvk:           "27f13e9f9e69f7cfa365e2316b272a943e162c769ae57826ebe373f73d0323d9",
+		UAApiKey:            "sys-dev-api-key",
+		UAPublicApiKey:      "7c581609293E503dE149d93f34767DFF33d32C16",
+		UAPrivateApiKey:     "c194c2a77814de98c486836da3ae6747769ed6e6064186f2943b33f25dba284c",
+		UADomain:            "http://localhost:7350",
+	}
+}
+func NewRedisDb() *RedisConfig {
+	return &RedisConfig{
+		Url:      "localhost:6379",
+		Db:       0,
+		Password: "",
+		Ttl:      1,
+	}
+}
+
+type MQTTConfig struct {
+	QoS       byte   `yaml:"qos" json:"qos" usage:"MQTT QoS."`
+	BrokerURL string `yaml:"broker_url" json:"broker_url" usage:"MQTT broker URL."`
+	ClientID  string `yaml:"client_id" json:"client_id" usage:"MQTT client ID."`
+	APIurl    string `yaml:"api_url" json:"api_url" usage:"API url."`
+}
+
+func NewMqttConfig() *MQTTConfig {
+	return &MQTTConfig{
+		BrokerURL: "mqtt://event-mqtt-stg.layerg.xyz",
+		ClientID:  "layerg-subs-" + randomString(6),
+		QoS:       1,
+		APIurl:    "https://event-stg.layerg.xyz",
+	}
+}
+
+func (c *MQTTConfig) Clone() *MQTTConfig {
+	return &MQTTConfig{
+		BrokerURL: c.BrokerURL,
+		ClientID:  c.ClientID,
+		QoS:       c.QoS,
+		APIurl:    c.APIurl,
+	}
 }

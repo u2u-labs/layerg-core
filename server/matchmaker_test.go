@@ -8,11 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/u2u-labs/go-layerg-common/api"
-
 	"github.com/blugelabs/bluge"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/u2u-labs/go-layerg-common/api"
 	"github.com/u2u-labs/go-layerg-common/rtapi"
 	"github.com/u2u-labs/go-layerg-common/runtime"
 	"go.uber.org/atomic"
@@ -1643,7 +1642,7 @@ func createTestMatchmaker(t fatalable, logger *zap.Logger, tickerActive bool, me
 		t.Fatalf("error creating test match registry: %v", err)
 	}
 
-	runtime, _, err := NewRuntime(context.Background(), logger, logger, nil, jsonpbMarshaler, jsonpbUnmarshaler, cfg, "", nil, nil, nil, nil, sessionRegistry, nil, nil, nil, tracker, metrics, nil, messageRouter, storageIdx, nil)
+	runtime, _, err := NewRuntime(context.Background(), logger, logger, nil, jsonpbMarshaler, jsonpbUnmarshaler, cfg, "", nil, nil, nil, nil, sessionRegistry, nil, nil, nil, tracker, metrics, nil, messageRouter, storageIdx, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1702,14 +1701,14 @@ func NewLocalBenchMatchmaker(logger, startupLogger *zap.Logger, config Config, r
 		ctx:         ctx,
 		ctxCancelFn: ctxCancelFn,
 
-		indexWriter:    indexWriter,
-		stats:          NewStats(10),
-		statsSnapshot:  atomic.NewPointer[api.MatchmakerStats](&api.MatchmakerStats{}),
-		sessionTickets: make(map[string]map[string]struct{}),
-		partyTickets:   make(map[string]map[string]struct{}),
-		indexes:        make(map[string]*MatchmakerIndex),
-		activeIndexes:  make(map[string]*MatchmakerIndex),
-		revCache:       &MapOf[string, map[string]bool]{},
+		indexWriter:      indexWriter,
+		statsCompletions: NewBuffer(10),
+		statsSnapshot:    atomic.NewPointer[api.MatchmakerStats](&api.MatchmakerStats{}),
+		sessionTickets:   make(map[string]map[string]struct{}),
+		partyTickets:     make(map[string]map[string]struct{}),
+		indexes:          make(map[string]*MatchmakerIndex),
+		activeIndexes:    make(map[string]*MatchmakerIndex),
+		revCache:         &MapOf[string, map[string]bool]{},
 	}
 
 	if tickerActive {

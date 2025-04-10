@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/u2u-labs/go-layerg-common/api"
+	"github.com/u2u-labs/go-layerg-common/runtime"
 	"github.com/u2u-labs/layerg-core/social"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -267,78 +268,94 @@ WHERE NOT EXISTS
 	return userID, username, true, nil
 }
 
-func AuthenticateEmail(ctx context.Context, logger *zap.Logger, db *sql.DB, email, password, username string, create bool) (string, string, bool, error) {
+func AuthenticateEmail(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, email, otp string, create bool) (string, string, string, string, int64, int64, bool, error) {
 	found := true
 
 	// Look for an existing account.
-	query := "SELECT id, username, password, disable_time FROM users WHERE email = $1"
+	query := "SELECT id, username, email, disable_time FROM users WHERE email = $1"
 	var dbUserID string
 	var dbUsername string
-	var dbPassword []byte
+	var dbEmail string
 	var dbDisableTime pgtype.Timestamptz
-	err := db.QueryRowContext(ctx, query, email).Scan(&dbUserID, &dbUsername, &dbPassword, &dbDisableTime)
+	err := db.QueryRowContext(ctx, query, email).Scan(&dbUserID, &dbUsername, &dbEmail, &dbDisableTime)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			found = false
 		} else {
-			logger.Error("Error looking up user by email.", zap.Error(err), zap.String("email", email), zap.String("username", username), zap.Bool("create", create))
-			return "", "", false, status.Error(codes.Internal, "Error finding user account.")
+			logger.Error("Error looking up user by email.", zap.Error(err), zap.String("email", email), zap.Bool("create", create))
+			return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding user account.")
 		}
 	}
+
+	if !create {
+		// No user account found, and creation is not allowed.
+		return "", "", "", "", 0, 0, false, status.Error(codes.NotFound, "User account not found.")
+	}
+
+	var loginRequest EmailOTPVerifyRequest
+	if found {
+		loginRequest = EmailOTPVerifyRequest{
+			Email: dbEmail,
+			OTP:   otp,
+		}
+	} else {
+		loginRequest = EmailOTPVerifyRequest{
+			Email: email,
+			OTP:   otp,
+		}
+	}
+
+	loginResponse, err := EmailLoginUA(ctx, loginRequest, config)
+	if err != nil {
+		return "", "", "", "", 0, 0, false, err
+	}
+
+	logger.Info("Login response", zap.Any("loginResponse", loginResponse))
 
 	// Existing account found.
 	if found {
 		// Check if it's disabled.
 		if dbDisableTime.Valid && dbDisableTime.Time.Unix() != 0 {
-			logger.Info("User account is disabled.", zap.String("email", email), zap.String("username", username), zap.Bool("create", create))
-			return "", "", false, status.Error(codes.PermissionDenied, "User account banned.")
+			logger.Info("User account is disabled.", zap.String("email", email), zap.Bool("create", create))
+			return "", "", "", "", 0, 0, false, status.Error(codes.PermissionDenied, "User account banned.")
 		}
 
-		// Check if password matches.
-		err = bcrypt.CompareHashAndPassword(dbPassword, []byte(password))
-		if err != nil {
-			return "", "", false, status.Error(codes.Unauthenticated, "Invalid credentials.")
+		if loginResponse.Data.AAWallet.AAAddress != "" {
+			_, err = db.ExecContext(ctx, "UPDATE users SET onchain_id = $1 WHERE id = $2", loginResponse.Data.AAWallet.AAAddress, dbUserID)
+			if err != nil {
+				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("email", email))
+			}
 		}
 
-		return dbUserID, dbUsername, false, nil
-	}
-
-	if !create {
-		// No user account found, and creation is not allowed.
-		return "", "", false, status.Error(codes.NotFound, "User account not found.")
+		return dbUserID, dbUsername, "", "", 0, 0, false, nil
 	}
 
 	// Create a new account.
 	userID := uuid.Must(uuid.NewV4()).String()
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		logger.Error("Error hashing password.", zap.Error(err), zap.String("email", email), zap.String("username", username), zap.Bool("create", create))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
-	}
-	query = "INSERT INTO users (id, username, email, password, create_time, update_time) VALUES ($1, $2, $3, $4, now(), now())"
-	result, err := db.ExecContext(ctx, query, userID, username, email, hashedPassword)
+	query = "INSERT INTO users (id, username, email, create_time, update_time) VALUES ($1, $2, $3, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, email, email)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
 			if strings.Contains(pgErr.Message, "users_username_key") {
 				// Username is already in use by a different account.
-				return "", "", false, status.Error(codes.AlreadyExists, "Username is already in use.")
+				return "", "", "", "", 0, 0, false, status.Error(codes.AlreadyExists, "Username is already in use.")
 			} else if strings.Contains(pgErr.Message, "users_email_key") {
 				// A concurrent write has inserted this email.
-				logger.Info("Did not insert new user as email already exists.", zap.Error(err), zap.String("email", email), zap.String("username", username), zap.Bool("create", create))
-				return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+				logger.Info("Did not insert new user as email already exists.", zap.Error(err), zap.String("email", email), zap.Bool("create", create))
+				return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 			}
 		}
-		logger.Error("Cannot find or create user with email.", zap.Error(err), zap.String("email", email), zap.String("username", username), zap.Bool("create", create))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		logger.Error("Cannot find or create user with email.", zap.Error(err), zap.String("email", email), zap.Bool("create", create))
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
 	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
 		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
-	return userID, username, true, nil
+	return dbUserID, dbUsername, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, true, nil
 }
 
 func AuthenticateUsername(ctx context.Context, logger *zap.Logger, db *sql.DB, username, password string) (string, error) {
@@ -610,11 +627,32 @@ func RemapGoogleId(ctx context.Context, logger *zap.Logger, db *sql.DB, googlePr
 	return err
 }
 
-func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, idToken, username string, create bool) (string, string, bool, error) {
-	googleProfile, err := client.CheckGoogleToken(ctx, idToken)
-	if err != nil {
-		logger.Info("Could not authenticate Google profile.", zap.Error(err))
-		return "", "", false, status.Error(codes.Unauthenticated, "Could not authenticate Google profile.")
+func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, idToken, username string, create bool, uaInfo *UALoginCallBackRequest) (string, string, *UALoginCallbackResponse, bool, error) {
+	var googleProfile social.GoogleProfile
+	var err error
+	var data *UALoginCallbackResponse
+	if idToken != "" {
+		googleProfile, err = client.CheckGoogleToken(ctx, idToken)
+		if err != nil {
+			logger.Info("Could not authenticate Google profile.", zap.Error(err))
+			return "", "", nil, false, status.Error(codes.Unauthenticated, "Could not authenticate Google profile.")
+		}
+	} else {
+		// get google profile from ua callback
+		data, err = GoogleLoginCallback(ctx, "", UALoginCallBackRequest{
+			Code:  uaInfo.Code,
+			Error: uaInfo.Error,
+			State: uaInfo.State,
+		}, config)
+		if err != nil {
+			return "", "", nil, false, status.Error(codes.Internal, "Error request google login call back")
+		}
+
+		googleProfile = &social.GooglePlayServiceProfile{
+			PlayerId:       data.Data.User.GoogleID,
+			DisplayName:    data.Data.User.GoogleFirstName + " " + data.Data.User.GoogleLastName,
+			AvatarImageUrl: data.Data.User.GoogleAvatarURL,
+		}
 	}
 	found := true
 
@@ -641,7 +679,7 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 				zap.String("googleID", googleProfile.GetGoogleId()),
 				zap.String("originalGoogleID", googleProfile.GetOriginalGoogleId()),
 				zap.String("username", username), zap.Bool("create", create))
-			return "", "", false, status.Error(codes.Internal, "Error finding user account.")
+			return "", "", nil, false, status.Error(codes.Internal, "Error finding user account.")
 		}
 	}
 
@@ -664,7 +702,7 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 		// Check if it's disabled.
 		if dbDisableTime.Valid && dbDisableTime.Time.Unix() != 0 {
 			logger.Info("User account is disabled.", zap.String("googleID", googleProfile.GetGoogleId()), zap.String("username", username), zap.Bool("create", create))
-			return "", "", false, status.Error(codes.PermissionDenied, "User account banned.")
+			return "", "", nil, false, status.Error(codes.PermissionDenied, "User account banned.")
 		}
 
 		// Check if the display name or avatar received from Google have values but the DB does not.
@@ -692,12 +730,19 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 			}
 		}
 
-		return dbUserID, dbUsername, false, nil
+		// Update onchain_id if it's not set
+		if data != nil && data.Data.W.AAAddress != "" {
+			_, err = db.ExecContext(ctx, "UPDATE users SET onchain_id = $1 WHERE id = $2", data.Data.W.AAAddress, dbUserID)
+			if err != nil {
+				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("googleId", data.Data.User.GoogleID), zap.String("username", dbUsername))
+			}
+		}
+		return dbUserID, dbUsername, data, false, nil
 	}
 
 	if !create {
 		// No user account found, and creation is not allowed.
-		return "", "", false, status.Error(codes.NotFound, "User account not found.")
+		return "", "", nil, false, status.Error(codes.NotFound, "User account not found.")
 	}
 
 	// Create a new account.
@@ -709,37 +754,42 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
 			if strings.Contains(pgErr.Message, "users_username_key") {
 				// Username is already in use by a different account.
-				return "", "", false, status.Error(codes.AlreadyExists, "Username is already in use.")
+				return "", "", nil, false, status.Error(codes.AlreadyExists, "Username is already in use.")
 			} else if strings.Contains(pgErr.Message, "users_google_id_key") {
 				// A concurrent write has inserted this Google ID.
 				logger.Info("Did not insert new user as Google ID already exists.", zap.Error(err), zap.String("googleID", googleProfile.GetGoogleId()), zap.String("username", username), zap.Bool("create", create))
-				return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+				return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
 			}
 		}
 		logger.Error("Cannot find or create user with Google ID.", zap.Error(err), zap.String("googleID", googleProfile.GetGoogleId()), zap.String("username", username), zap.Bool("create", create))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
 	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
 		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
 	// Import email address, if it exists.
-	if googleProfile.GetEmail() != "" {
-		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", googleProfile.GetEmail(), userID)
+	if googleProfile.GetEmail() != "" || (data != nil && data.Data.User.GoogleEmail != "") {
+		email := googleProfile.GetEmail()
+		if data != nil && data.Data.User.GoogleEmail != "" {
+			email = data.Data.User.GoogleEmail
+		}
+
+		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", email, userID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
 				logger.Warn("Skipping google account email import as it is already set in another user.", zap.Error(err), zap.String("googleID", googleProfile.GetGoogleId()), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
 			} else {
 				logger.Error("Failed to import google account email.", zap.Error(err), zap.String("googleID", googleProfile.GetGoogleId()), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
-				return "", "", false, status.Error(codes.Internal, "Error importing google account email.")
+				return "", "", nil, false, status.Error(codes.Internal, "Error importing google account email.")
 			}
 		}
 	}
 
-	return userID, username, true, nil
+	return userID, username, data, true, nil
 }
 
 func AuthenticateSteam(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, appID int, publisherKey, token, username string, create bool) (string, string, string, bool, error) {
@@ -808,6 +858,147 @@ func AuthenticateSteam(ctx context.Context, logger *zap.Logger, db *sql.DB, clie
 	}
 
 	return userID, username, steamID, true, nil
+}
+
+func AuthenticateTwitter(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, config Config, username string, create bool, uaInfo *UALoginCallBackRequest) (string, string, *UALoginCallbackResponse, bool, error) {
+	var err error
+	var data *UALoginCallbackResponse
+	decodedCode, _ := decodeURIToken(uaInfo.Code)
+	decodedState, _ := decodeURIToken(uaInfo.State)
+
+	// get twitter profile from ua callback
+	data, err = TwitterLoginCallback(ctx, "", UALoginCallBackRequest{
+		Code:  decodedCode,
+		Error: uaInfo.Error,
+		State: decodedState,
+	}, config)
+	if err != nil {
+		return "", "", nil, false, status.Error(codes.Internal, "Error request twitter login call back")
+	}
+
+	found := true
+
+	// Look for an existing account.
+	query := "SELECT id, username, disable_time, display_name, avatar_url FROM users WHERE twitter_id = $1"
+	var dbUserID string
+	var dbUsername string
+	var dbDisableTime pgtype.Timestamptz
+	var dbDisplayName sql.NullString
+	var dbAvatarURL sql.NullString
+	err = db.QueryRowContext(ctx, query, data.Data.User.TwitterId).Scan(&dbUserID, &dbUsername, &dbDisableTime, &dbDisplayName, &dbAvatarURL)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			found = false
+		} else {
+			logger.Error("Error looking up user by Twitter ID.", zap.Error(err),
+				zap.String("twitterID", data.Data.User.TwitterId),
+				zap.String("username", username), zap.Bool("create", create))
+			return "", "", nil, false, status.Error(codes.Internal, "Error finding user account.")
+		}
+	}
+
+	var displayName string
+	if len(data.Data.User.TwitterFirstName)+len(data.Data.User.TwitterLastName) <= 255 {
+		displayName = data.Data.User.TwitterFirstName + " " + data.Data.User.TwitterLastName
+	} else {
+		logger.Warn("Skipping updating display_name: value received from Twitter longer than max length of 255 chars.", zap.String("display_name", data.Data.User.TwitterFirstName+" "+data.Data.User.TwitterLastName))
+	}
+
+	var avatarURL string
+	if len(data.Data.User.TwitterAvatarURL) <= 512 {
+		avatarURL = data.Data.User.TwitterAvatarURL
+	} else {
+		logger.Warn("Skipping updating avatar_url: value received from Twitter longer than max length of 512 chars.", zap.String("avatar_url", data.Data.User.TwitterAvatarURL))
+	}
+
+	// Existing account found.
+	if found {
+		// Check if it's disabled.
+		if dbDisableTime.Valid && dbDisableTime.Time.Unix() != 0 {
+			logger.Info("User account is disabled.", zap.String("twitterID", data.Data.User.TwitterId), zap.String("username", username), zap.Bool("create", create))
+			return "", "", nil, false, status.Error(codes.PermissionDenied, "User account banned.")
+		}
+
+		// Check if the display name or avatar received from Twitter have values but the DB does not.
+		if (dbDisplayName.String == "" && displayName != "") || (dbAvatarURL.String == "" && avatarURL != "") {
+			// At least one valid change found, update the DB to reflect changes.
+			params := make([]interface{}, 0, 3)
+			params = append(params, dbUserID)
+
+			// Ensure only changed values are applied.
+			statements := make([]string, 0, 2)
+			if dbDisplayName.String == "" && displayName != "" {
+				params = append(params, displayName)
+				statements = append(statements, "display_name = $"+strconv.Itoa(len(params)))
+			}
+			if dbAvatarURL.String == "" && avatarURL != "" {
+				params = append(params, avatarURL)
+				statements = append(statements, "avatar_url = $"+strconv.Itoa(len(params)))
+			}
+
+			if len(statements) > 0 {
+				if _, err = db.ExecContext(ctx, "UPDATE users SET "+strings.Join(statements, ", ")+", update_time = now() WHERE id = $1", params...); err != nil {
+					// Failure to update does not interrupt the execution. Just log the error and continue.
+					logger.Error("Error in updating twitter profile details", zap.Error(err), zap.String("twitterID", data.Data.User.TwitterId), zap.String("display_name", displayName), zap.String("avatar_url", avatarURL))
+				}
+			}
+		}
+
+		// Update onchain_id if it's not set
+		if data.Data.W.AAAddress != "" {
+			_, err = db.ExecContext(ctx, "UPDATE users SET onchain_id = $1 WHERE id = $2", data.Data.W.AAAddress, dbUserID)
+			if err != nil {
+				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("twitterId", data.Data.User.TwitterId), zap.String("username", dbUsername))
+			}
+		}
+		return dbUserID, dbUsername, data, false, nil
+	}
+
+	if !create {
+		// No user account found, and creation is not allowed.
+		return "", "", nil, false, status.Error(codes.NotFound, "User account not found.")
+	}
+
+	// Create a new account.
+	userID := uuid.Must(uuid.NewV4()).String()
+	query = "INSERT INTO users (id, username, twitter_id, display_name, avatar_url, create_time, update_time) VALUES ($1, $2, $3, $4, $5, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, username, data.Data.User.TwitterId, displayName, avatarURL)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
+			if strings.Contains(pgErr.Message, "users_username_key") {
+				// Username is already in use by a different account.
+				return "", "", nil, false, status.Error(codes.AlreadyExists, "Username is already in use.")
+			} else if strings.Contains(pgErr.Message, "users_twitter_id_key") {
+				// A concurrent write has inserted this Twitter ID.
+				logger.Info("Did not insert new user as Twitter ID already exists.", zap.Error(err), zap.String("twitterID", data.Data.User.TwitterId), zap.String("username", username), zap.Bool("create", create))
+				return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
+			}
+		}
+		logger.Error("Cannot find or create user with Twitter ID.", zap.Error(err), zap.String("twitterID", data.Data.User.TwitterId), zap.String("username", username), zap.Bool("create", create))
+		return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
+		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
+		return "", "", nil, false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+
+	// Import email address, if it exists.
+	if data.Data.User.TwitterEmail != "" {
+		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", data.Data.User.TwitterEmail, userID)
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
+				logger.Warn("Skipping twitter account email import as it is already set in another user.", zap.Error(err), zap.String("twitterID", data.Data.User.TwitterId), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
+			} else {
+				logger.Error("Failed to import twitter account email.", zap.Error(err), zap.String("twitterID", data.Data.User.TwitterId), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
+				return "", "", nil, false, status.Error(codes.Internal, "Error importing twitter account email.")
+			}
+		}
+	}
+
+	return userID, username, data, true, nil
 }
 
 func importSteamFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tracker, messageRouter MessageRouter, client *social.Client, userID uuid.UUID, username, publisherKey, steamId string, reset bool) error {
@@ -1106,12 +1297,66 @@ func sendFriendAddedNotification(ctx context.Context, logger *zap.Logger, db *sq
 	_ = NotificationSend(ctx, logger, db, tracker, messageRouter, notifications)
 }
 
-func AuthenticateEvm(ctx context.Context, logger *zap.Logger, db *sql.DB, address, signature, username string, create bool) (string, string, bool, error) {
-	query := "SELECT id, username, display_name FROM users WHERE onchain_id = $1"
+func AuthenticateUA(ctx context.Context, logger *zap.Logger, db *sql.DB, in runtime.UADirectLoginData) (string, string, bool, error) {
+	// Get username from social data if not provided
+	// username := ""
+	// if in.User.Username != nil {
+	// 	username = *in.User.Username
+	// }
+	username := ""
+
+	// If username is empty, try to get it from social profiles
+	if username == "" {
+		if in.User.TelegramUsername != nil && *in.User.TelegramUsername != "" {
+			username = *in.User.TelegramUsername
+		} else if in.User.GoogleEmail != nil && *in.User.GoogleEmail != "" {
+			username = *in.User.GoogleEmail
+		} else if in.User.FacebookEmail != nil && *in.User.FacebookEmail != "" {
+			username = *in.User.FacebookEmail
+		} else if in.User.TwitterEmail != nil && *in.User.TwitterEmail != "" {
+			username = *in.User.TwitterEmail
+		} else {
+			username = generateUsername()
+		}
+	}
+
+	// Create user if doesn't exist
+	userID := in.UserID
+	if userID == "" {
+		userID = uuid.Must(uuid.NewV4()).String()
+	}
+
+	err := createUAUser(ctx, db, userID, username, &in)
+	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == dbErrorUniqueViolation {
+			err = updateUAUserData(ctx, db, &in)
+			if err != nil {
+				logger.Error("Error updating user data", zap.Error(err))
+				return "", "", false, status.Error(codes.Internal, "Error updating user account")
+			}
+			return userID, username, false, nil
+		}
+		logger.Error("Error creating user", zap.Error(err))
+		return "", "", false, status.Error(codes.Internal, "Error creating user account")
+	}
+
+	return userID, username, true, nil
+}
+
+func AuthenticateEvm(ctx context.Context, logger *zap.Logger, db *sql.DB, address, signature, username string, create bool, config Config) (string, string, *UALoginCallbackResponse, bool, error) {
+	data, err := EVMAuthUA(ctx, "", UAWeb3AuthRequest{
+		Signature: signature,
+		Signer:    address,
+	}, config)
+	if err != nil {
+		return "", "", nil, false, status.Error(codes.Internal, "Error request twitter login call back")
+	}
+
+	query := "SELECT id, username, display_name FROM users WHERE onchain_id ILIKE $1"
 	var dbUserID string
 	var dbUsername string
 	var dbDisplayName sql.NullString
-	err := db.QueryRowContext(ctx, query, address).Scan(&dbUserID, &dbUsername, &dbDisplayName)
+	err = db.QueryRowContext(ctx, query, address).Scan(&dbUserID, &dbUsername, &dbDisplayName)
 	found := true
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -1120,18 +1365,18 @@ func AuthenticateEvm(ctx context.Context, logger *zap.Logger, db *sql.DB, addres
 			logger.Error("Error looking up user by EVM ID.", zap.Error(err),
 				zap.String("address", address),
 				zap.Bool("create", create))
-			return "", "", false, status.Error(codes.Internal, "Error finding user account.")
+			return "", "", nil, false, status.Error(codes.Internal, "Error finding user account.")
 		}
 	}
 
 	// Existing account found.
 	if found {
-		return dbUserID, dbUsername, false, nil
+		return dbUserID, dbUsername, data, false, nil
 	}
 
 	if !create {
 		// No user account found, and creation is not allowed.
-		return "", "", false, status.Error(codes.NotFound, "User account not found.")
+		return "", "", data, false, status.Error(codes.NotFound, "User account not found.")
 	}
 
 	// Create a new account.
@@ -1142,82 +1387,343 @@ func AuthenticateEvm(ctx context.Context, logger *zap.Logger, db *sql.DB, addres
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
 			if strings.Contains(pgErr.Message, "users_username_key") {
-				// Username is already in use by a different account.
-				logger.Info("Username is already in use.", zap.Error(err), zap.String("Address", address), zap.String("username", username))
-				return "", "", false, status.Error(codes.AlreadyExists, "Username is already in use.")
+				// Username is already in use by a different account
+				logger.Info("Username is already in use.", zap.Error(err),
+					zap.String("address", address),
+					zap.String("username", username))
+				return "", "", data, false, status.Error(codes.AlreadyExists, "Username is already in use.")
 			} else if strings.Contains(pgErr.Message, "users_onchain_id_key") {
 				// A concurrent write has inserted this Wallet address.
-				logger.Info("Did not insert new user as Wallet address already exists.", zap.Error(err), zap.String("Wallet address", address), zap.String("username", username), zap.Bool("create", create))
-				return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+				logger.Info("Did not insert new user as Wallet address already exists.",
+					zap.Error(err),
+					zap.String("address", address),
+					zap.String("username", username),
+					zap.Bool("create", create))
+				return "", "", data, false, status.Error(codes.Internal, "Error finding or creating user account.")
 			}
 		}
-		logger.Error("Cannot find or create user with Wallet address.", zap.Error(err), zap.String("Wallet address", address), zap.String("username", username), zap.Bool("create", create))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		logger.Error("Cannot find or create user with Wallet address.",
+			zap.Error(err),
+			zap.String("address", address),
+			zap.String("username", username),
+			zap.Bool("create", create))
+		return "", "", data, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
 	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
 		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		return "", "", data, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
-	return userID, username, true, nil
+	return userID, username, data, true, nil
 }
-func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, telegramId, username, telegramAppData string, create bool) (string, string, bool, error) {
-	//TODO: verify telegram invalid
-	// Look for an existing account
-	query := "SELECT id, username, display_name FROM users WHERE telegram_id = $1"
+
+func SendTelegramAuthOTP(ctx context.Context, logger *zap.Logger, config Config, telegramId string) error {
+	// Request OTP
+	otpRequest := TelegramOTPRequest{
+		TelegramID: telegramId,
+	}
+
+	otpResponse, err := SendTelegramOTP(ctx, otpRequest, config)
+	if err != nil {
+		logger.Error("Error requesting OTP from AA", zap.Error(err))
+		return status.Error(codes.Internal, "Error requesting OTP")
+	}
+	logger.Info("OTP response", zap.Any("otpResponse", otpResponse))
+
+	if !otpResponse.Success {
+		logger.Error("Failed to request OTP", zap.String("message", otpResponse.Message))
+		return status.Error(codes.Internal, otpResponse.Message)
+	}
+
+	return nil
+}
+
+func AuthenticateTelegram(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, telegramId string, chainId int, username, firstname, lastname, avatarUrl, otp string, create bool) (string, string, string, string, int64, int64, bool, error) {
+	found := true
+	// Look for an existing account.
+	query := "SELECT id, username, display_name, avatar_url FROM users WHERE telegram_id = $1"
 	var dbUserID string
 	var dbUsername string
 	var dbDisplayName sql.NullString
-	err := db.QueryRowContext(ctx, query, telegramId).Scan(&dbUserID, &dbUsername, &dbDisplayName)
-	found := true
+	var dbAvatarURL sql.NullString
+	err := db.QueryRowContext(ctx, query, telegramId).Scan(&dbUserID, &dbUsername, &dbDisplayName, &dbAvatarURL)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			found = false
-		} else if err != nil {
-			logger.Error("Error looking up user by Telegram ID.", zap.Error(err),
-				zap.String("telegramID", telegramId),
-				zap.String("telegramAppData", telegramAppData),
-				zap.Bool("create", create))
-			return "", "", false, status.Error(codes.Internal, "Error finding user account.")
+		} else {
+			logger.Error("Error looking up user by Telegram ID.", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", username), zap.Bool("create", create))
+			return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding user account.")
 		}
 	}
 
-	// Existing account found.
+	// Prepare login request based on whether user exists or is being created
+	var loginRequest TelegramLoginRequest
 	if found {
-		return dbUserID, dbUsername, false, nil
+		// Use existing user data for login
+		loginRequest = TelegramLoginRequest{
+			TelegramID: telegramId,
+			ChainID:    chainId,
+			Username:   dbUsername,
+			Firstname:  strings.Split(dbDisplayName.String, " ")[0],
+			Lastname:   strings.Split(dbDisplayName.String, " ")[1],
+			AvatarURL:  dbAvatarURL.String,
+			OTP:        otp,
+		}
+	} else {
+		// Use provided data for new user creation
+		loginRequest = TelegramLoginRequest{
+			TelegramID: telegramId,
+			ChainID:    chainId,
+			Username:   username,
+			Firstname:  firstname,
+			Lastname:   lastname,
+			AvatarURL:  avatarUrl,
+			OTP:        otp,
+		}
+	}
+	logger.Info("Login request", zap.Any("loginRequest", loginRequest))
+	// Attempt login with the prepared request
+	loginResponse, err := TelegramLogin(ctx, "", loginRequest, config)
+	if err != nil {
+		logger.Error("Error logging in to AA", zap.Error(err))
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error logging in to AA")
+	}
+
+	logger.Info("Login response", zap.Any("loginResponse", loginResponse))
+
+	if !loginResponse.Success {
+		logger.Error("Failed to login", zap.String("message", loginResponse.Message))
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, loginResponse.Message)
+	}
+
+	// Existing account found
+	if found {
+		// Update onchain_id if it's not set
+		if loginResponse.Data.AAWallet.AAAddress != "" {
+			_, err = db.ExecContext(ctx, "UPDATE users SET onchain_id = $1 WHERE id = $2", loginResponse.Data.AAWallet.AAAddress, dbUserID)
+			if err != nil {
+				logger.Error("Error updating onchain_id for existing user", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", dbUsername))
+			}
+		}
+		return dbUserID, dbUsername, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, false, nil
 	}
 
 	if !create {
 		// No user account found, and creation is not allowed.
-		return "", "", false, status.Error(codes.NotFound, "User account not found.")
+		return "", "", "", "", 0, 0, false, status.Error(codes.NotFound, "User account not found.")
 	}
 
-	// Create a new account.
+	// Create a new account
 	userID := uuid.Must(uuid.NewV4()).String()
-	query = "INSERT INTO users (id, username, telegram_id, display_name, create_time, update_time) VALUES ($1, $2, $3, $4, now(), now())"
-	result, err := db.ExecContext(ctx, query, userID, username, telegramId, username)
+	query = "INSERT INTO users (id, username, display_name, avatar_url, telegram_id, onchain_id, create_time, update_time) VALUES ($1, $2, $3, $4, $5, $6, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, username, firstname+" "+lastname, avatarUrl, telegramId, loginResponse.Data.AAWallet.AAAddress)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
 			if strings.Contains(pgErr.Message, "users_username_key") {
 				// Username is already in use by a different account.
-				logger.Info("Username is already in use.", zap.Error(err), zap.String("telegramID", telegramId), zap.String("username", username))
-				return "", "", false, status.Error(codes.AlreadyExists, "Username is already in use.")
+				return "", "", "", "", 0, 0, false, status.Error(codes.AlreadyExists, "Username is already in use.")
 			} else if strings.Contains(pgErr.Message, "users_telegram_id_key") {
 				// A concurrent write has inserted this Telegram ID.
-				logger.Info("Did not insert new user as Telegram ID already exists.", zap.Error(err), zap.String("telegramID", telegramId), zap.String("username", username), zap.Bool("create", create))
-				return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+				logger.Info("Did not insert new user as Telegram ID already exists.", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", username), zap.Bool("create", create))
+				return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 			}
 		}
-		logger.Error("Cannot find or create user with Telegram ID.", zap.Error(err), zap.String("Telegram", telegramId), zap.String("username", username), zap.Bool("create", create))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		logger.Error("Cannot find or create user with Telegram ID.", zap.Error(err), zap.String("telegramId", telegramId), zap.String("username", username), zap.Bool("create", create))
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
 	if rowsAffectedCount, _ := result.RowsAffected(); rowsAffectedCount != 1 {
 		logger.Error("Did not insert new user.", zap.Int64("rows_affected", rowsAffectedCount))
-		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
+		return "", "", "", "", 0, 0, false, status.Error(codes.Internal, "Error finding or creating user account.")
+	}
+	dbUserID = userID
+	dbUsername = username
+
+	return dbUserID, dbUsername, loginResponse.Data.Rs.AccessToken, loginResponse.Data.Rs.RefreshToken, loginResponse.Data.Rs.AccessTokenExpire, loginResponse.Data.Rs.RefreshTokenExpire, true, nil
+}
+
+func createUAUser(ctx context.Context, db *sql.DB, userID, username string, in *runtime.UADirectLoginData) error {
+	// Base query with common fields
+	query := `
+        INSERT INTO users (
+            id, username, onchain_id, create_time, update_time
+        ) VALUES ($1, $2, $3, now(), now())`
+
+	var err error
+	aaAddress := ""
+	aaAddress = in.W.AAAddress
+
+	// Handle different social auth types
+	if in.User.TelegramID != nil && *in.User.TelegramID != "" {
+		query = `
+            INSERT INTO users (
+                id, username, telegram_id, display_name, onchain_id,
+                create_time, update_time
+            ) VALUES ($1, $2, $3, $4, $5, now(), now())`
+
+		displayName := ""
+		if in.User.TelegramFirstName != nil && *in.User.TelegramFirstName != "" {
+			displayName = *in.User.TelegramFirstName
+			if in.User.TelegramLastName != nil && *in.User.TelegramLastName != "" {
+				displayName += " " + *in.User.TelegramLastName
+			}
+		}
+
+		_, err = db.ExecContext(ctx, query,
+			userID, username, *in.User.TelegramID, displayName, aaAddress)
+	} else if in.User.GoogleID != nil && *in.User.GoogleID != "" {
+		query = `
+            INSERT INTO users (
+                id, username, google_id, email,
+                display_name, onchain_id, create_time, update_time
+            ) VALUES ($1, $2, $3, $4, $5, $6, now(), now())`
+
+		displayName := ""
+		if in.User.GoogleFirstName != nil && *in.User.GoogleFirstName != "" {
+			displayName = *in.User.GoogleFirstName
+			if in.User.GoogleLastName != nil && *in.User.GoogleLastName != "" {
+				displayName += " " + *in.User.GoogleLastName
+			}
+		}
+
+		_, err = db.ExecContext(ctx, query,
+			userID, username, in.User.GoogleID, in.User.GoogleEmail, displayName, aaAddress)
+	} else if in.User.FacebookID != nil && *in.User.FacebookID != "" {
+		query = `
+            INSERT INTO users (
+                id, username, facebook_id, email,
+                display_name, onchain_id, create_time, update_time
+            ) VALUES ($1, $2, $3, $4, $5, $6, now(), now())`
+
+		displayName := ""
+		if in.User.FacebookFirstName != nil && *in.User.FacebookFirstName != "" {
+			displayName = *in.User.FacebookFirstName
+			if in.User.FacebookLastName != nil && *in.User.FacebookLastName != "" {
+				displayName += " " + *in.User.FacebookLastName
+			}
+		}
+
+		_, err = db.ExecContext(ctx, query,
+			userID, username, in.User.FacebookID, in.User.FacebookEmail, displayName, aaAddress)
+	} else if in.User.TwitterID != nil && *in.User.TwitterID != "" {
+		query = `
+            INSERT INTO users (
+                id, username, twitter_id, email,
+                display_name, onchain_id, create_time, update_time
+            ) VALUES ($1, $2, $3, $4, $5, $6, now(), now())`
+
+		displayName := ""
+		if in.User.TwitterFirstName != nil && *in.User.TwitterFirstName != "" {
+			displayName = *in.User.TwitterFirstName
+			if in.User.TwitterLastName != nil && *in.User.TwitterLastName != "" {
+				displayName += " " + *in.User.TwitterLastName
+			}
+		}
+
+		_, err = db.ExecContext(ctx, query,
+			userID, username, in.User.TwitterID, in.User.TwitterEmail, displayName, aaAddress)
+	} else {
+		// Basic user creation if no social auth
+		_, err = db.ExecContext(ctx, query, userID, username)
 	}
 
-	return userID, username, true, nil
+	return err
+}
+
+func updateUAUserData(ctx context.Context, db *sql.DB, in *runtime.UADirectLoginData) error {
+	var query string
+	var args []interface{}
+
+	// Handle different social auth types
+	if in.User.TelegramID != nil && *in.User.TelegramID != "" {
+		query = `
+            UPDATE users SET
+                telegram_id = $2,
+                display_name = CASE 
+                    WHEN $3 <> '' THEN $3 
+                    ELSE display_name 
+                END,
+                update_time = now()
+            WHERE id = $1`
+
+		displayName := ""
+		if in.User.TelegramFirstName != nil && *in.User.TelegramFirstName != "" {
+			displayName = *in.User.TelegramFirstName
+			if in.User.TelegramLastName != nil && *in.User.TelegramLastName != "" {
+				displayName += " " + *in.User.TelegramLastName
+			}
+		}
+
+		args = []interface{}{in.UserID, in.User.TelegramID, displayName}
+	} else if in.User.GoogleID != nil && *in.User.GoogleID != "" {
+		query = `
+            UPDATE users SET
+                google_id = $2,
+                email = COALESCE($3, email),
+                display_name = CASE 
+                    WHEN $4 <> '' THEN $4 
+                    ELSE display_name 
+                END,
+                update_time = now()
+            WHERE id = $1`
+
+		displayName := ""
+		if in.User.GoogleFirstName != nil && *in.User.GoogleFirstName != "" {
+			displayName = *in.User.GoogleFirstName
+			if in.User.GoogleLastName != nil && *in.User.GoogleLastName != "" {
+				displayName += " " + *in.User.GoogleLastName
+			}
+		}
+
+		args = []interface{}{in.UserID, in.User.GoogleID, in.User.GoogleEmail, displayName}
+	} else if in.User.FacebookID != nil && *in.User.FacebookID != "" {
+		query = `
+            UPDATE users SET
+                facebook_id = $2,
+                email = COALESCE($3, email),
+                display_name = CASE 
+                    WHEN $4 <> '' THEN $4 
+                    ELSE display_name 
+                END,
+                update_time = now()
+            WHERE id = $1`
+
+		displayName := ""
+		if in.User.FacebookFirstName != nil && *in.User.FacebookFirstName != "" {
+			displayName = *in.User.FacebookFirstName
+			if in.User.FacebookLastName != nil && *in.User.FacebookLastName != "" {
+				displayName += " " + *in.User.FacebookLastName
+			}
+		}
+
+		args = []interface{}{in.UserID, in.User.FacebookID, in.User.FacebookEmail, displayName}
+	} else if in.User.TwitterID != nil && *in.User.TwitterID != "" {
+		query = `
+            UPDATE users SET
+                twitter_id = $2,
+                email = COALESCE($3, email),
+                display_name = CASE 
+                    WHEN $4 <> '' THEN $4 
+                    ELSE display_name 
+                END,
+                update_time = now()
+            WHERE id = $1`
+
+		displayName := ""
+		if in.User.TwitterFirstName != nil && *in.User.TwitterFirstName != "" {
+			displayName = *in.User.TwitterFirstName
+			if in.User.TwitterLastName != nil && *in.User.TwitterLastName != "" {
+				displayName += " " + *in.User.TwitterLastName
+			}
+		}
+
+		args = []interface{}{in.UserID, in.User.TwitterID, in.User.TwitterEmail, displayName}
+	} else {
+		return nil
+	}
+
+	_, err := db.ExecContext(ctx, query, args...)
+	return err
 }

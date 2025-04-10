@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, ElementRef, Injectable, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, ActivatedRouteSnapshot, Resolve, Router, RouterStateSnapshot} from '@angular/router';
 import {JSONEditor, Mode, toTextContent} from 'vanilla-jsoneditor';
-import {ApiStorageObject, ConsoleService, UserRole, WriteStorageObjectRequest} from '../console.service';
+import {ApiStorageObject, ConsoleService, UserRole, ConsoleWriteStorageObjectBody} from '../console.service';
 import {Observable} from 'rxjs';
 import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {AuthenticationService} from '../authentication.service';
@@ -91,7 +91,7 @@ export class StorageObjectComponent implements OnInit, AfterViewInit {
       version = '';
     }
 
-    const body: WriteStorageObjectRequest = {
+    const body: ConsoleWriteStorageObjectBody = {
       version,
       value,
       permission_read: this.f.permission_read.value,

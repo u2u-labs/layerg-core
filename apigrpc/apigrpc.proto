@@ -245,11 +245,42 @@ service LayerG {
     };
   }
 
-  // Authenticate a user with Google against the server.
+  // Authenticate a user with Telegram.
   rpc AuthenticateTelegram (api.AuthenticateTelegramRequest) returns (api.Session) {
       option (google.api.http) = {
         post: "/v2/account/authenticate/telegram",
         body: "account"
+      };
+      option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+        security: {
+          security_requirement: {
+            key: "BasicAuth";
+            value: {};
+          }
+        }
+      };
+    }
+
+  // Request Telegram OTP for authentication.
+  rpc SendTelegramAuthOTP (api.SendTelegramOTPRequest) returns (google.protobuf.Empty) {
+      option (google.api.http) = {
+        post: "/v2/account/authenticate-ua/telegram-otp",
+        body: "*"
+      };
+  }
+
+  // Request Email OTP for authentication.
+  rpc SendEmailAuthOTP (api.SendEmailOTPRequest) returns (google.protobuf.Empty) {
+      option (google.api.http) = {
+        post: "/v2/account/authenticate-ua/email-otp",
+        body: "*"
+      };
+  }
+
+  rpc AuthenticateUA (api.UASocialLoginRequest) returns (api.Session) {
+      option (google.api.http) = {
+        post: "/v2/account/authenticate/ua",
+        body: "*"
       };
       option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
         security: {
@@ -281,6 +312,22 @@ service LayerG {
   rpc AuthenticateSteam (api.AuthenticateSteamRequest) returns (api.Session) {
     option (google.api.http) = {
       post: "/v2/account/authenticate/steam",
+      body: "account"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      security: {
+        security_requirement: {
+          key: "BasicAuth";
+          value: {};
+        }
+      }
+    };
+  }
+
+  // Authenticate a user with Twitter against the server.
+  rpc AuthenticateTwitter (api.AuthenticateTwitterRequest) returns (api.Session) {
+    option (google.api.http) = {
+      post: "/v2/account/authenticate/twitter",
       body: "account"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

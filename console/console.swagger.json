@@ -1108,6 +1108,58 @@
         ]
       }
     },
+    "/v2/console/collection/{collection_address}/type/{type}/block/{initial_block}/chain/{chain_id}": {
+      "post": {
+        "summary": "Add new NFT collection",
+        "operationId": "Console_AddNFTCollection",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "collection_address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "initial_block",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "chain_id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Console"
+        ]
+      }
+    },
     "/v2/console/config": {
       "get": {
         "summary": "Get server config and configuration warnings.",
@@ -2608,6 +2660,46 @@
       },
       "title": "Module information"
     },
+    "StatusListServiceStatus": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Node name."
+        },
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "ip": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "role": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "weight": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "balancer": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "allow_stream": {
+          "type": "boolean"
+        }
+      }
+    },
     "UserGroupListUserGroup": {
       "type": "object",
       "properties": {
@@ -3642,6 +3734,13 @@
           "type": "string",
           "format": "date-time",
           "title": "Timestamp"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/StatusListServiceStatus"
+          }
         }
       },
       "description": "List of nodes and their stats."
@@ -4043,6 +4142,10 @@
         "apple_id": {
           "type": "string",
           "description": "The Apple Sign In ID in the user's account."
+        },
+        "onchain_id": {
+          "type": "string",
+          "title": "Wallet address"
         }
       },
       "description": "A user in the server."

@@ -25,7 +25,7 @@ func (s *ConsoleServer) GetRuntime(ctx context.Context, in *emptypb.Empty) (*con
 		GoRpcFunctions:  s.runtimeInfo.GoRpcFunctions,
 		JsRpcFunctions:  s.runtimeInfo.JavaScriptRpcFunctions,
 		GoModules:       toConsole(s.runtimeInfo.GoModules),
-		LuaModules:      toConsole(s.runtimeInfo.LuaModules),
-		JsModules:       toConsole(s.runtimeInfo.JavaScriptModules),
+		// LuaModules:      toConsole(s.runtimeInfo.LuaModules),
+		JsModules: toConsole(s.runtimeInfo.JavaScriptModules),
 	}, nil
 }
