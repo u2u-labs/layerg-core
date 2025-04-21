@@ -542,18 +542,26 @@ func (n *RuntimeGoLayerGModule) AuthenticateTokenGenerate(userID, username strin
 }
 
 // @group accounts
-// @summary Fetch account information by user ID.
+// @summary Fetch account information by user ID or onchain ID.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
 // @param userId(type=string) User ID to fetch information for. Must be valid UUID.
+// @param onchainId(type=string) Onchain ID to fetch information for.
 // @return account(*api.Account) All account information including wallet, device IDs and more.
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) AccountGetId(ctx context.Context, userID string) (*api.Account, error) {
-	u, err := uuid.FromString(userID)
-	if err != nil {
-		return nil, errors.New("invalid user id")
+func (n *RuntimeGoLayerGModule) AccountGetId(ctx context.Context, userID, onchainId string) (*api.Account, error) {
+	if userID == "" && onchainId == "" {
+		return nil, errors.New("either userID or onchainId must be provided")
+	}
+	var u uuid.UUID
+	var err error
+	if userID != "" {
+		u, err = uuid.FromString(userID)
+		if err != nil {
+			return nil, errors.New("invalid user id")
+		}
 	}
 
-	account, err := GetAccount(ctx, n.logger, n.db, n.statusRegistry, u)
+	account, err := GetAccount(ctx, n.logger, n.db, n.statusRegistry, u, onchainId)
 	if err != nil {
 		return nil, err
 	}
@@ -4361,42 +4369,42 @@ func (n *RuntimeGoLayerGModule) ChannelMessagesList(ctx context.Context, channel
 // @summary Get NFTs from core server.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) GetNFTs(ctx context.Context, params runtime.NFTQueryParams) (*runtime.NFTResponse, error) {
-	queryResult, err := GetNFTs(ctx, params, n.config)
-	if err != nil {
-		return nil, err
-	}
+// func (n *RuntimeGoLayerGModule) GetNFTs(ctx context.Context, params runtime.NFTQueryParams) (*runtime.NFTResponse, error) {
+// 	queryResult, err := GetNFTs(ctx, params, n.config)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return queryResult, nil
-}
+// 	return queryResult, nil
+// }
 
 // @nft
 // @summary Get Asset metadata from core server.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
 // @param token(type=string) server token
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) GetCollectionAsset(ctx context.Context, params runtime.CollectionAssetQueryParams, token string) (*runtime.CollectionAssetResponse, error) {
-	queryResult, err := GetCollectionAsset(ctx, params, token, n.config)
-	if err != nil {
-		return nil, err
-	}
+// func (n *RuntimeGoLayerGModule) GetCollectionAsset(ctx context.Context, params runtime.CollectionAssetQueryParams, token string) (*runtime.CollectionAssetResponse, error) {
+// 	queryResult, err := GetCollectionAsset(ctx, params, token, n.config)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return queryResult, nil
-}
+// 	return queryResult, nil
+// }
 
 // @agg
 // @summary Get access token of api key from core server.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
 // @param token(type=string) server token
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) GetAggToken(ctx context.Context) (string, error) {
-	queryResult, err := GetAccessToken(ctx, n.logger, n.activeTokenCacheUser, n.config)
-	if err != nil {
-		return "", err
-	}
+// func (n *RuntimeGoLayerGModule) GetAggToken(ctx context.Context) (string, error) {
+// 	queryResult, err := GetAccessToken(ctx, n.logger, n.activeTokenCacheUser, n.config)
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	return queryResult, nil
-}
+// 	return queryResult, nil
+// }
 
 // @group chat
 // @summary Create a channel identifier to be used in other runtime calls. Does not create a channel.
