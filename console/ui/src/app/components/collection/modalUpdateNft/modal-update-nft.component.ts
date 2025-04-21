@@ -16,6 +16,7 @@ import {UntypedFormBuilder, UntypedFormGroup, Validators, UntypedFormArray} from
 export class ModalUpdateNftComponent implements OnInit, OnDestroy {
   @Input() collectionData: CollectionItem; // Dữ liệu từ component cha truyền vào
   @Input() collectibleData: ICollectibleItem; // Dữ liệu từ component cha truyền vào
+  @Input() baseUriNft: string; // Dữ liệu từ component cha truyền vào
   @Output() collectibleUpdated = new EventEmitter<void>();
   public error = '';
   public collectibleForm: UntypedFormGroup;

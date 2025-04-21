@@ -55,6 +55,9 @@
     <button type="button" class="btn btn-success mr-2" [disabled]="false" (click)="openLinkContractModal(collection)">Link Contract</button>
     <button *ngIf="!collection?.isPublic" type="button" class="btn btn-info" [disabled]="false" (click)="publicCollection(collection?.id)">Public Collection</button>
   </div>
+  <div *ngIf="collection?.SmartContract && collection?.SmartContract?.length" class="d-flex align-items-center mr-1 mt-2">
+    <p class="font-weight-bold">Base URI: <span class="text-success">{{baseUriNft + collection?.SmartContract[0]?.contractAddress}}</span></p>
+  </div>
   <hr />
 
   <div class="w-100 mb-2">
@@ -97,7 +100,7 @@
   <div *ngIf="collectibles.length" class="colectibles w-100">
     <div class="row border-0">
       <div *ngFor="let item of collectibles; index as i;" class="col-md-3">
-        <div class="card-collectible" (click)="viewDetailNft(item, collection)">
+        <div class="card-collectible" (click)="viewDetailNft(item, collection, baseUriNft)">
           <img class="card-collectible-image" src="{{item?.media?.IPFSUrl || item?.media?.S3Url}}" alt="Card image cap">
           <div class="card-collectible-body">
             <h5 class="card-collectible-body-title">{{item?.name || ''}}</h5>

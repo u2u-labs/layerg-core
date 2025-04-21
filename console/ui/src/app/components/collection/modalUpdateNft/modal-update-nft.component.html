@@ -12,6 +12,12 @@
   <div class="d-flex flex-column justify-content-center">
       <p><strong>Collection ID:</strong> {{ collectionData?.id }}</p>
       <p><strong>Collection NFT ID:</strong> {{ collectibleData?.id }}</p>
+    <p *ngIf="collectionData?.SmartContract && collectionData?.SmartContract?.length" class="font-weight-bold" style="word-break: break-all">
+      BaseUri NFT:
+      <a class="text-success" [href]="baseUriNft + collectionData?.SmartContract?.[0]?.contractAddress + '/' + collectibleData?.tokenId" target="_blank">
+        {{ baseUriNft + collectionData?.SmartContract?.[0]?.contractAddress + '/' + collectibleData?.tokenId }}
+      </a>
+    </p>
     <form [formGroup]="collectibleForm" (ngSubmit)="updateCollectible()" autocomplete="off">
       <!-- Image Upload -->
       <div class="mb-3 d-flex justify-content-between align-items-center">
