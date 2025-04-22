@@ -38,6 +38,7 @@ export class CollectionDetail1Component implements OnInit, AfterViewInit {
   public collectionForm: UntypedFormGroup;
   public collection: CollectionItem;
   public config: Config;
+  public baseUriNft: string;
   selectedFile: File | null = null;
   imagePreview: string | ArrayBuffer | null = null;
   public limit = 10;
@@ -66,6 +67,9 @@ export class CollectionDetail1Component implements OnInit, AfterViewInit {
     this.route.parent.data.subscribe(
       d => {
         this.config = d[0][0];
+        const parsed = JSON.parse(this.config?.config || '{}');
+        this.baseUriNft = `${parsed?.layerg_core?.portal_url}/assets/`;
+
         this.collection = d[0][1];
         this.collectionForm.patchValue(this.collection);
         this.imagePreview = this.collection.avatarUrl;
@@ -181,7 +185,7 @@ export class CollectionDetail1Component implements OnInit, AfterViewInit {
     this.c.limit.setValue(limit);
     this.getListCollectible();
   }
-  viewDetailNft(collectible: ICollectibleItem, collection: CollectionItem): void {
+  viewDetailNft(collectible: ICollectibleItem, collection: CollectionItem, baseUriNft: string): void {
     const modalOptions: NgbModalOptions = {
       backdrop: true,
       centered: true,
@@ -189,6 +193,7 @@ export class CollectionDetail1Component implements OnInit, AfterViewInit {
     const modalRef = this.modalService.open(ModalUpdateNftComponent, modalOptions);
     modalRef.componentInstance.collectionData = collection; // Truyền dữ liệu vào modal
     modalRef.componentInstance.collectibleData = collectible; // Truyền dữ liệu vào modal
+    modalRef.componentInstance.baseUriNft = baseUriNft; // Truyền dữ liệu vào modal
     modalRef.componentInstance.collectibleUpdated.subscribe(() => {
       this.getListCollectible();
     });
