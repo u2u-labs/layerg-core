@@ -1995,7 +1995,7 @@ func (n *runtimeJavascriptLayerGModule) accountGetId(r *goja.Runtime) func(goja.
 			panic(r.NewTypeError("invalid user id"))
 		}
 
-		account, err := GetAccount(n.ctx, n.logger, n.db, n.statusRegistry, userID)
+		account, err := GetAccount(n.ctx, n.logger, n.db, n.statusRegistry, userID, "")
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error getting account: %v", err.Error())))
 		}

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -37,7 +38,12 @@ type accountUpdate struct {
 	metadata    *wrapperspb.StringValue
 }
 
-func GetAccount(ctx context.Context, logger *zap.Logger, db *sql.DB, statusRegistry StatusRegistry, userID uuid.UUID) (*api.Account, error) {
+func GetAccount(ctx context.Context, logger *zap.Logger, db *sql.DB, statusRegistry StatusRegistry, userID uuid.UUID, onchainId string) (*api.Account, error) {
+	// Validate input parameters
+	if userID == uuid.Nil && onchainId == "" {
+		return nil, fmt.Errorf("either userID or onchainId must be provided")
+	}
+	var dbUserID uuid.UUID
 	var username sql.NullString
 	var displayName sql.NullString
 	var avatarURL sql.NullString
@@ -54,7 +60,7 @@ func GetAccount(ctx context.Context, logger *zap.Logger, db *sql.DB, statusRegis
 	var gamecenter sql.NullString
 	var steam sql.NullString
 	var customID sql.NullString
-	var onchainId sql.NullString
+	var dbOnchainId sql.NullString
 	var edgeCount int
 	var createTime pgtype.Timestamptz
 	var updateTime pgtype.Timestamptz
@@ -64,14 +70,32 @@ func GetAccount(ctx context.Context, logger *zap.Logger, db *sql.DB, statusRegis
 
 	m := pgtype.NewMap()
 
-	query := `
-SELECT u.username, u.display_name, u.avatar_url, u.lang_tag, u.location, u.timezone, u.metadata, u.wallet,
+	var query string
+	var args []interface{}
+
+	if userID != uuid.Nil {
+		logger.Info("Fetching account by user ID", zap.String("user_id", userID.String()))
+		// If userID is provided, use it for the query
+		query = `
+SELECT u.id, u.username, u.display_name, u.avatar_url, u.lang_tag, u.location, u.timezone, u.metadata, u.wallet,
 	u.email, u.apple_id, u.facebook_id, u.facebook_instant_game_id, u.google_id, u.gamecenter_id, u.steam_id, u.custom_id, u.onchain_id, u.edge_count,
 	u.create_time, u.update_time, u.verify_time, u.disable_time, array(select ud.id from user_device ud where u.id = ud.user_id)
 FROM users u
 WHERE u.id = $1`
+		args = append(args, userID)
+	} else {
+		// If only onchainId is provided, use it for the query
+		logger.Info("Fetching account by onchain ID", zap.String("onchain_id", onchainId))
+		query = `
+SELECT u.id, u.username, u.display_name, u.avatar_url, u.lang_tag, u.location, u.timezone, u.metadata, u.wallet,
+	u.email, u.apple_id, u.facebook_id, u.facebook_instant_game_id, u.google_id, u.gamecenter_id, u.steam_id, u.custom_id, u.onchain_id, u.edge_count,
+	u.create_time, u.update_time, u.verify_time, u.disable_time, array(select ud.id from user_device ud where u.id = ud.user_id)
+FROM users u
+WHERE u.onchain_id = $1`
+		args = append(args, onchainId)
+	}
 
-	if err := db.QueryRowContext(ctx, query, userID).Scan(&username, &displayName, &avatarURL, &langTag, &location, &timezone, &metadata, &wallet, &email, &apple, &facebook, &facebookInstantGame, &google, &gamecenter, &steam, &customID, &onchainId, &edgeCount, &createTime, &updateTime, &verifyTime, &disableTime, m.SQLScanner(&deviceIDs)); err != nil {
+	if err := db.QueryRowContext(ctx, query, args...).Scan(&dbUserID, &username, &displayName, &avatarURL, &langTag, &location, &timezone, &metadata, &wallet, &email, &apple, &facebook, &facebookInstantGame, &google, &gamecenter, &steam, &customID, &dbOnchainId, &edgeCount, &createTime, &updateTime, &verifyTime, &disableTime, m.SQLScanner(&deviceIDs)); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrAccountNotFound
 		}
@@ -100,7 +124,7 @@ WHERE u.id = $1`
 
 	return &api.Account{
 		User: &api.User{
-			Id:                    userID.String(),
+			Id:                    dbUserID.String(),
 			Username:              username.String,
 			DisplayName:           displayName.String,
 			AvatarUrl:             avatarURL.String,
@@ -114,7 +138,7 @@ WHERE u.id = $1`
 			GoogleId:              google.String,
 			GamecenterId:          gamecenter.String,
 			SteamId:               steam.String,
-			OnchainId:             onchainId.String,
+			OnchainId:             dbOnchainId.String,
 			EdgeCount:             int32(edgeCount),
 			CreateTime:            &timestamppb.Timestamp{Seconds: createTime.Time.Unix()},
 			UpdateTime:            &timestamppb.Timestamp{Seconds: updateTime.Time.Unix()},
@@ -357,7 +381,7 @@ func updateAccounts(ctx context.Context, logger *zap.Logger, tx pgx.Tx, updates 
 
 func ExportAccount(ctx context.Context, logger *zap.Logger, db *sql.DB, userID uuid.UUID) (*console.AccountExport, error) {
 	// Core user account.
-	account, err := GetAccount(ctx, logger, db, nil, userID)
+	account, err := GetAccount(ctx, logger, db, nil, userID, "")
 	if err != nil {
 		if err == ErrAccountNotFound {
 			return nil, status.Error(codes.NotFound, "Account not found.")

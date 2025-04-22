@@ -168,7 +168,7 @@ func (s *ConsoleServer) GetAccount(ctx context.Context, in *console.AccountId) (
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
 	}
 
-	account, err := GetAccount(ctx, s.logger, s.db, s.statusRegistry, userID)
+	account, err := GetAccount(ctx, s.logger, s.db, s.statusRegistry, userID, "")
 	if err != nil {
 		// Error already logged in function above.
 		if err == ErrAccountNotFound {
