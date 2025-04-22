@@ -5,7 +5,7 @@ import {forkJoin, Observable, Subject} from 'rxjs';
 import {UntypedFormBuilder, UntypedFormGroup} from '@angular/forms';
 import {AuthenticationService} from '../authentication.service';
 import {DeleteConfirmService} from '../shared/delete-confirm.service';
-import {takeUntil} from 'rxjs/operators';
+import {switchMap, takeUntil, tap} from 'rxjs/operators';
 import {AuthLoginApiKey, CollectionItem, CollectionList, LayergPortalService} from '../layergPortal.service';
 import {NgbModal, NgbModalOptions} from '@ng-bootstrap/ng-bootstrap';
 import {ModalLinkContractComponent} from '../components/collection/modalLinkContract/modal-link-contract.component';
@@ -54,43 +54,37 @@ export class CollectionsComponent implements OnInit, OnDestroy {
     this.f.page.setValue(qp.get('page'));
     this.f.limit.setValue(qp.get('limit'));
     this.f.search.setValue(qp.get('search'));
-    this.search();
 
     this.route.data.subscribe(
         d => {
-          const configData: Config = d[0][0];
-          const config = JSON.parse(configData?.config);
-          const apiKey = config?.layerg_core?.api_key;
-          const apiKeyID = config?.layerg_core?.api_key_id;
-          const params = {
-            apiKey,
-            apiKeyID,
-          };
-          this.handleLogin(params);
-          // this.collections.length = 0;
-          // if (d) {
-          //   this.collections.push(...d[0][1].data);
-          //   this.collectionsCount = d[0][1]?.paging?.total;
-          // }
+          // this.search();
+          // const configData: Config = d[0][0];
+          // const config = JSON.parse(configData?.config);
+          // const apiKey = config?.layerg_core?.api_key;
+          // const apiKeyID = config?.layerg_core?.api_key_id;
+          // const params = {
+          //   apiKey,
+          //   apiKeyID,
+          // };
+          this.search();
         },
         err => {
           this.error = err;
         });
   }
-  handleLogin(params: AuthLoginApiKey): any{
-    try {
-      this.layergPortalService.login(params).subscribe((d) => {
-        console.log(d);
-        localStorage.setItem('accessToken', JSON.stringify(d));
-      }, err => {
-        console.log(err);
-        this.error = err?.message;
-        localStorage.removeItem('accessToken');
-      });
-    } catch (e) {
-      console.log(e);
-    }
-  }
+  // handleLogin(params: AuthLoginApiKey): any{
+  //   try {
+  //     this.layergPortalService.login(params).subscribe((d) => {
+  //       localStorage.setItem('accessToken', JSON.stringify(d));
+  //     }, err => {
+  //       console.log(err);
+  //       this.error = err?.message;
+  //       localStorage.removeItem('accessToken');
+  //     });
+  //   } catch (e) {
+  //     console.log(e);
+  //   }
+  // }
 
   ngOnDestroy(): void {
     this.querySubject.next();
@@ -203,4 +197,35 @@ export class CollectionsResolver implements Resolve<any> {
       // const collectionList = this.layergPortalService.listCollections(filter);
       return forkJoin([config]);
   }
+
+  // resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
+  //   return this.consoleService.getConfig('').pipe(
+  //     tap((configRes: any) => {
+  //       const parsed = JSON.parse(configRes?.config || '{}');
+  //       const apiKey = parsed?.layerg_core?.api_key;
+  //       const apiKeyID = parsed?.layerg_core?.api_key_id;
+  //       const params = {
+  //         apiKey,
+  //         apiKeyID,
+  //       };
+  //       this.handleLogin(params);
+  //     }),
+  //   );
+  // }
+  // private handleLogin(params: AuthLoginApiKey): void {
+  //   try {
+  //     this.layergPortalService.login(params).subscribe(
+  //       (d) => {
+  //         console.log(d);
+  //         localStorage.setItem('accessToken', JSON.stringify(d));
+  //       },
+  //       (err) => {
+  //         console.error(err);
+  //         localStorage.removeItem('accessToken');
+  //       }
+  //     );
+  //   } catch (e) {
+  //     console.error(e);
+  //   }
+  // }
 }

@@ -18,7 +18,7 @@ import {SegmentService} from 'ngx-segment-analytics';
 import {ConsoleService, UserRole} from '../console.service';
 import {Globals} from '../globals';
 import {environment} from '../../environments/environment';
-import {LayergPortalService} from '../layergPortal.service';
+import {AuthLoginApiKey, LayergPortalService} from '../layergPortal.service';
 
 @Component({
   templateUrl: './base.component.html',
@@ -100,8 +100,29 @@ export class BaseComponent implements OnInit, OnDestroy {
           host,
           timeoutMs: 5000,
         }; // Dynamically update the host
+        const apiKey = parsed?.layerg_core?.api_key;
+        const apiKeyID = parsed?.layerg_core?.api_key_id;
+        const params = {
+          apiKey,
+          apiKeyID,
+        };
+        this.handleLogin(params);
       })
     ).subscribe(); // Ensure the observable is subscribed to
+  }
+
+  handleLogin(params: AuthLoginApiKey): any{
+    try {
+      this.layergPortalService.login(params).subscribe((d) => {
+        localStorage.setItem('accessToken', JSON.stringify(d));
+      }, err => {
+        console.log(err);
+        this.error = err?.message;
+        localStorage.removeItem('accessToken');
+      });
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   ngOnInit(): void {
