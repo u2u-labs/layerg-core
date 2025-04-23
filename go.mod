@@ -22,7 +22,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/u2u-labs/go-layerg-common v0.1.1-0.20250421103807-fe113f2806a4
+	github.com/u2u-labs/go-layerg-common v0.1.1-0.20250424024607-f2f5f8ace488
 	github.com/u2u-labs/layerg-kit v0.0.0-20241023235723-b6a14baaaa29
 	github.com/uber-go/tally/v4 v4.1.16
 	github.com/unicornultrafoundation/go-u2u v1.1.4
