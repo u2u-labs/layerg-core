@@ -93,7 +93,6 @@ func (m *MQTTRegistry) RegisterMQTTSubscription(ctx context.Context, config runt
 	// Subscribe to both specific topic and wildcard for debugging
 	topics := []string{
 		config.Topic,
-		"events/#", // Subscribe to all events for debugging
 	}
 
 	for _, topic := range topics {
