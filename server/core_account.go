@@ -91,7 +91,7 @@ SELECT u.id, u.username, u.display_name, u.avatar_url, u.lang_tag, u.location, u
 	u.email, u.apple_id, u.facebook_id, u.facebook_instant_game_id, u.google_id, u.gamecenter_id, u.steam_id, u.custom_id, u.onchain_id, u.edge_count,
 	u.create_time, u.update_time, u.verify_time, u.disable_time, array(select ud.id from user_device ud where u.id = ud.user_id)
 FROM users u
-WHERE u.onchain_id = $1`
+WHERE LOWER(u.onchain_id) = LOWER($1)`
 		args = append(args, onchainId)
 	}
 
