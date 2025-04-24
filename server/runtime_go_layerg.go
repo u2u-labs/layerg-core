@@ -4365,6 +4365,14 @@ func (n *RuntimeGoLayerGModule) ChannelMessagesList(ctx context.Context, channel
 	return list.Messages, list.NextCursor, list.PrevCursor, nil
 }
 
+func (n *RuntimeGoLayerGModule) AssetCreate(ctx context.Context, params runtime.CreateNFTArgs) error {
+	err := AssetCreate(ctx, n.tokenPairCache, n.config, params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // @nft
 // @summary Get NFTs from core server.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
