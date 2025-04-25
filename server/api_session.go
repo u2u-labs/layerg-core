@@ -45,14 +45,17 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 		return nil, err
 	}
 
-	uaToken, _ := s.tokenPairCache.Get(userID.String())
-
-	refreshResponse, err := RefreshUAToken(ctx, uaToken.RefreshToken, s.config)
-	if err != nil {
-		s.logger.Error("Error refreshing UA token.", zap.Error(err))
-		return nil, err
+	uaToken, ok := s.tokenPairCache.Get(userID.String())
+	if ok {
+		refreshResponse, err := RefreshUAToken(ctx, uaToken.RefreshToken, s.config)
+		if err != nil {
+			s.logger.Error("Error refreshing UA token.", zap.Error(err))
+			return nil, err
+		}
+		s.tokenPairCache.Update(userID.String(), refreshResponse.Data.AccessToken, refreshResponse.Data.RefreshToken, refreshResponse.Data.AccessTokenExpire, refreshResponse.Data.RefreshTokenExpire)
+	} else {
+		s.logger.Warn("UA token not found in cache. Treating as offchain user.", zap.String("user_id", userID.String()))
 	}
-	s.tokenPairCache.Update(userID.String(), refreshResponse.Data.AccessToken, refreshResponse.Data.RefreshToken, refreshResponse.Data.AccessTokenExpire, refreshResponse.Data.RefreshTokenExpire)
 
 	// Use updated vars if they are provided, otherwise use existing ones from refresh token.
 	useVars := in.Vars
@@ -60,27 +63,6 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 		useVars = vars
 	}
 	userIDStr := userID.String()
-
-	//newTokenId := uuid.Must(uuid.NewV4()).String()
-	//token, tokenExp := generateToken(s.config, newTokenId, userIDStr, username, useVars)
-	//refreshToken, refreshTokenExp := generateRefreshToken(s.config, newTokenId, userIDStr, username, useVars)
-	//s.sessionCache.Remove(userID, tokenExp, "", refreshTokenExp, tokenId)
-	//s.sessionCache.Add(userID, tokenExp, newTokenId, refreshTokenExp, newTokenId)
-	//session := &api.Session{Created: false, Token: token, RefreshToken: refreshToken}
-
-	// token, tokenExp := generateToken(s.config, tokenId, userIDStr, username, useVars)
-	// tokenExp, err := time.Parse(time.RFC3339Nano, uaResponse.AccessTokenExpires)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// refreshExp, err := time.Parse(time.RFC3339Nano, uaResponse.RefreshTokenExpires)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// refreshToken, refreshTokenExp := generateRefreshToken(s.config, tokenId, userIDStr, username, useVars)
-	// s.sessionCache.Add(userID, tokenExp.Unix(), tokenId, refreshExp.Unix(), tokenId)
-	// session := &api.Session{Created: false, Token: uaResponse.AccessToken, RefreshToken: uaResponse.RefreshToken}
 
 	token, tokenExp := generateToken(s.config, tokenId, userIDStr, username, useVars)
 	refreshToken, refreshTokenExp := generateRefreshToken(s.config, tokenId, userIDStr, username, useVars)
