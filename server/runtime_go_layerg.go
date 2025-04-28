@@ -4472,3 +4472,7 @@ func (n *RuntimeGoLayerGModule) EventQuery(ctx context.Context, query runtime.Ev
 	config := n.config
 	return n.mqttRegistry.GetEventByTxHash(query.ChainId, query.ContractAddress, query.TxHash, config)
 }
+
+func (n *RuntimeGoLayerGModule) DecodeContractEvent(contractABI string, receiptJSON string, eventName string, output interface{}) error {
+	return DecodeContractEvent(contractABI, receiptJSON, eventName, output)
+}
