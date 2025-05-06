@@ -58,7 +58,7 @@ func TestUpdateWalletSingleUser(t *testing.T) {
 	}
 
 	db := NewDB(t)
-	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	userID, _, _, err := AuthenticateCustom(context.Background(), logger, db, uuid.Must(uuid.NewV4()).String(), uuid.Must(uuid.NewV4()).String(), true)
 	if err != nil {
@@ -86,7 +86,7 @@ func TestUpdateWalletSingleUser(t *testing.T) {
 	}
 	wg.Wait()
 
-	account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID))
+	account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID), "")
 	if err != nil {
 		t.Fatalf("error getting user: %v", err.Error())
 	}
@@ -150,7 +150,7 @@ func TestUpdateWalletMultiUser(t *testing.T) {
 	}
 
 	db := NewDB(t)
-	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	count := 5
 
 	userIDs := make([]string, 0, count)
@@ -172,7 +172,7 @@ func TestUpdateWalletMultiUser(t *testing.T) {
 	}
 
 	for _, userID := range userIDs {
-		account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID))
+		account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID), "")
 		if err != nil {
 			t.Fatalf("error getting user: %v", err.Error())
 		}
@@ -237,7 +237,7 @@ func TestUpdateWalletsMultiUser(t *testing.T) {
 	}
 
 	db := NewDB(t)
-	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	count := 5
 
 	userIDs := make([]string, 0, count)
@@ -264,7 +264,7 @@ func TestUpdateWalletsMultiUser(t *testing.T) {
 	}
 
 	for _, userID := range userIDs {
-		account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID))
+		account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID), "")
 		if err != nil {
 			t.Fatalf("error getting user: %v", err.Error())
 		}
@@ -329,7 +329,7 @@ func TestUpdateWalletsMultiUserSharedChangeset(t *testing.T) {
 	}
 
 	db := NewDB(t)
-	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	count := 5
 
 	userIDs := make([]string, 0, count)
@@ -357,7 +357,7 @@ func TestUpdateWalletsMultiUserSharedChangeset(t *testing.T) {
 	}
 
 	for _, userID := range userIDs {
-		account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID))
+		account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID), "")
 		if err != nil {
 			t.Fatalf("error getting user: %v", err.Error())
 		}
@@ -425,7 +425,7 @@ func TestUpdateWalletsMultiUserSharedChangesetDeductions(t *testing.T) {
 	}
 
 	db := NewDB(t)
-	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	count := 5
 
 	userIDs := make([]string, 0, count)
@@ -459,7 +459,7 @@ func TestUpdateWalletsMultiUserSharedChangesetDeductions(t *testing.T) {
 	}
 
 	for _, userID := range userIDs {
-		account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID))
+		account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID), "")
 		if err != nil {
 			t.Fatalf("error getting user: %v", err.Error())
 		}
@@ -480,7 +480,7 @@ func TestUpdateWalletsMultiUserSharedChangesetDeductions(t *testing.T) {
 
 func TestUpdateWalletsSingleUser(t *testing.T) {
 	db := NewDB(t)
-	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	userID, _, _, err := AuthenticateCustom(context.Background(), logger, db, uuid.Must(uuid.NewV4()).String(), uuid.Must(uuid.NewV4()).String(), true)
 	if err != nil {
@@ -507,7 +507,7 @@ func TestUpdateWalletsSingleUser(t *testing.T) {
 		t.Fatalf("error updating wallets: %v", err.Error())
 	}
 
-	account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID))
+	account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID), "")
 	if err != nil {
 		t.Fatalf("error getting user: %v", err.Error())
 	}
@@ -527,7 +527,7 @@ func TestUpdateWalletsSingleUser(t *testing.T) {
 
 func TestUpdateWalletRepeatedSingleUser(t *testing.T) {
 	db := NewDB(t)
-	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	nk := NewRuntimeGoLayerGModule(logger, db, nil, cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	userID, _, _, err := AuthenticateCustom(context.Background(), logger, db, uuid.Must(uuid.NewV4()).String(), uuid.Must(uuid.NewV4()).String(), true)
 	if err != nil {
@@ -547,7 +547,7 @@ func TestUpdateWalletRepeatedSingleUser(t *testing.T) {
 		t.Fatalf("error updating wallet: %v", err.Error())
 	}
 
-	account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID))
+	account, err := GetAccount(context.Background(), logger, db, nil, uuid.FromStringOrNil(userID), "")
 	if err != nil {
 		t.Fatalf("error getting user: %v", err.Error())
 	}

@@ -90,7 +90,7 @@ func runtimeWithModulesWithData(t *testing.T, modules map[string]string) (*Runti
 	tracker := &LocalTracker{sessionRegistry: sessionRegistry}
 	statusRegistry := NewLocalStatusRegistry(logger, cfg, sessionRegistry, protojsonMarshaler)
 
-	rt, rtInfo, err := NewRuntime(ctx, logger, logger, db, protojsonMarshaler, protojsonUnmarshaler, cfg, "", nil, lbCache, lbRankCache, lbSched, sessionRegistry, nil, statusRegistry, nil, tracker, metrics, nil, &DummyMessageRouter{}, storageIdx, nil, nil, nil)
+	rt, rtInfo, err := NewRuntime(ctx, logger, logger, db, protojsonMarshaler, protojsonUnmarshaler, cfg, "", nil, lbCache, lbRankCache, lbSched, sessionRegistry, nil, statusRegistry, nil, tracker, metrics, nil, &DummyMessageRouter{}, storageIdx, nil, nil, nil, nil, nil)
 
 	return rt, rtInfo, data, err
 }
