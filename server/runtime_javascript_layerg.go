@@ -1987,15 +1987,16 @@ func (n *runtimeJavascriptLayerGModule) authenticateTokenGenerate(r *goja.Runtim
 func (n *runtimeJavascriptLayerGModule) accountGetId(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
 	return func(f goja.FunctionCall) goja.Value {
 		input := getJsString(r, f.Argument(0))
-		if input == "" {
-			panic(r.NewTypeError("expects user id"))
+		onchainId := getJsString(r, f.Argument(1))
+		if input == "" && onchainId == "" {
+			panic(r.NewTypeError("expects either user id or onchain id"))
 		}
 		userID, err := uuid.FromString(input)
 		if err != nil {
 			panic(r.NewTypeError("invalid user id"))
 		}
 
-		account, err := GetAccount(n.ctx, n.logger, n.db, n.statusRegistry, userID, "")
+		account, err := GetAccount(n.ctx, n.logger, n.db, n.statusRegistry, userID, onchainId)
 		if err != nil {
 			panic(r.NewGoError(fmt.Errorf("error getting account: %v", err.Error())))
 		}
