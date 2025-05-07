@@ -1,0 +1,55 @@
+<h2 class="pb-1">Subgraph registration</h2>
+
+<ngb-alert [dismissible]="false" type="danger" class="mb-3" *ngIf="error">
+  <img src="/static/svg/red-triangle.svg" alt="" width="16" height="" class="mr-2">
+  <h6 class="mr-2 d-inline font-weight-bold">Error when querying subgraph registration: {{error}}</h6>
+</ngb-alert>
+
+<form [formGroup]="subgraphForm" (ngSubmit)="formSubmit()">
+  <div class="row mb-3">
+    <div class="col-md-6 d-flex flex-column justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline" for="contractAddress">Contract Address</label>
+      </div>
+      <input type="text" id="contractAddress" class="form-control form-control-sm my-2" placeholder="Address" required formControlName="contractAddress" [ngClass]="{'is-invalid': f.contractAddress.dirty && f.contractAddress.errors}">
+      <div class="invalid-tooltip" [hidden]="f.contractAddress.disabled || f.contractAddress.valid || f.contractAddress.pristine">contractAddress is required</div>
+    </div>
+  </div>
+  <div *ngIf="chainIds && chainIds.length" class="row mb-3">
+    <div class="col-md-6 d-flex flex-column justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline">Chain ID</label>
+      </div>
+      <div class="btn-group" ngbDropdown role="group">
+        <select formControlName="chainId" class="custom-select custom-select-md">
+          <option *ngFor="let chain of chainIds" value="{{chain.id}}">{{chain.name}}</option>
+        </select>
+      </div>
+      <div class="invalid-tooltip" [hidden]="f.chainId.disabled || f.chainId.valid || f.chainId.pristine">Address is required</div>
+    </div>
+  </div>
+  <div class="row mb-3">
+    <div class="col-md-6 d-flex flex-column justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline" for="upload">Upload ABI Json</label>
+      </div>
+      <input id="upload" type="file" (change)="onFileUpload($event)" accept=".json" />
+    </div>
+  </div>
+  <div *ngIf="parsedAbi && parsedAbi.length" class="row mb-3">
+    <div class="col-md-6 d-flex flex-column justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline">Event Signature</label>
+      </div>
+      <div class="btn-group" ngbDropdown role="group">
+        <select formControlName="eventSignature" class="custom-select custom-select-md">
+          <option *ngFor="let key of parsedAbi" value="{{key}}">{{key}}</option>
+        </select>
+      </div>
+      <div class="invalid-tooltip" [hidden]="f.eventSignature.disabled || f.eventSignature.valid || f.eventSignature.pristine">eventSignature is required</div>
+    </div>
+  </div>
+  <div class="d-flex align-items-center">
+    <button type="submit" class="btn btn-primary mr-2" [disabled]="false">Create</button>
+  </div>
+</form>

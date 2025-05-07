@@ -1,0 +1,111 @@
+import {AfterViewInit, Component, Injectable, OnInit} from '@angular/core';
+import {ActivatedRoute, ActivatedRouteSnapshot, Resolve, Router, RouterStateSnapshot} from '@angular/router';
+import {ConsoleService} from '../console.service';
+import {AuthenticationService} from '../authentication.service';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
+import {forkJoin, Observable} from 'rxjs';
+import {CHAIN_IDS, parseEventSignaturesOnly} from '../../utils';
+
+@Component({
+  templateUrl: './subgraph-registration.component.html',
+  styleUrls: ['./subgraph-registration.component.scss'],
+})
+export class SubgraphRegistrationComponent implements OnInit, AfterViewInit {
+  constructor(
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly consoleService: ConsoleService,
+    private readonly authService: AuthenticationService,
+    private readonly formBuilder: UntypedFormBuilder,
+  ) {}
+  public error = '';
+  public subgraphForm: UntypedFormGroup;
+  public parsedAbiEvent: any;
+  public parsedAbi: any;
+  public chainIds = CHAIN_IDS;
+
+  ngOnInit(): void {
+    // Initialization logic here
+    const defaultChainId = this.chainIds.length > 0 ? this.chainIds[0].id : null;
+    this.subgraphForm = this.formBuilder.group({
+      contractAddress: ['', [Validators.required, Validators.minLength(5)]],
+      chainId: [defaultChainId, [Validators.required]],
+      eventSignature: ['', [Validators.required]],
+    });
+  }
+  get f(): any {
+    return this.subgraphForm.controls;
+  }
+  onFileUpload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        try {
+           const json = JSON.parse(reader.result as string);
+           this.parsedAbiEvent = json.filter((item: any) => item.type === 'event');
+           if (!this.parsedAbiEvent || this.parsedAbiEvent.length === 0) {
+            console.error('Invalid ABI: No events found');
+            return;
+           }
+           this.parsedAbi = parseEventSignaturesOnly(this.parsedAbiEvent);
+        } catch (error) {
+          console.error('Invalid JSON file:', error);
+        }
+      };
+
+      reader.readAsText(file);
+    }
+  }
+
+  formSubmit(): void {
+    try {
+      this.error = '';
+      if (this.subgraphForm.invalid) {
+        return;
+      }
+      if (!this.parsedAbiEvent || this.parsedAbiEvent.length === 0) {
+        this.error = 'Invalid ABI: No events found';
+        return;
+      }
+      if (!this.subgraphForm.value.eventSignature) {
+        this.error = 'Please upload abi json and select an event signature';
+        return;
+      }
+      const body = {
+        contractAddress: this.subgraphForm.value.contractAddress,
+        eventSignature: this.subgraphForm.value.eventSignature,
+        chainId: this.subgraphForm.value.chainId,
+        eventAbi: this.parsedAbiEvent
+      };
+      console.log('Form submitted', body);
+    } catch (e) {
+      this.error = e.message;
+      console.error('Error during form submission:', e);
+    }
+  }
+
+  ngAfterViewInit(): void {
+    // Logic to be executed after the view has been initialized
+  }
+
+}
+
+@Injectable({providedIn: 'root'})
+export class SubgraphRegistrationResolver implements Resolve<any> {
+  constructor(private readonly consoleService: ConsoleService) {}
+
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
+    // const filter = {
+    //   limit: route.queryParamMap.get('limit') || 10,
+    //   page: route.queryParamMap.get('page') || 1,
+    //   search: route.queryParamMap.get('search') || '',
+    // };
+    // const config = this.consoleService.getConfig('');
+
+    // const collectionList = this.layergPortalService.listCollections(filter);
+    return null; // Replace with actual logic to fetch data
+  }
+}
