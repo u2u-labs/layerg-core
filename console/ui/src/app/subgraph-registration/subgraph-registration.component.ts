@@ -5,6 +5,7 @@ import {AuthenticationService} from '../authentication.service';
 import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {forkJoin, Observable} from 'rxjs';
 import {CHAIN_IDS, parseEventSignaturesOnly} from '../../utils';
+import {LayergEventService} from "../layergEvent.service";
 
 @Component({
   templateUrl: './subgraph-registration.component.html',
@@ -15,6 +16,7 @@ export class SubgraphRegistrationComponent implements OnInit, AfterViewInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly consoleService: ConsoleService,
+    private readonly layergEventService: LayergEventService,
     private readonly authService: AuthenticationService,
     private readonly formBuilder: UntypedFormBuilder,
   ) {}
@@ -23,6 +25,7 @@ export class SubgraphRegistrationComponent implements OnInit, AfterViewInit {
   public parsedAbiEvent: any;
   public parsedAbi: any;
   public chainIds = CHAIN_IDS;
+  public isSuccess = false;
 
   ngOnInit(): void {
     // Initialization logic here
@@ -77,9 +80,21 @@ export class SubgraphRegistrationComponent implements OnInit, AfterViewInit {
       const body = {
         contractAddress: this.subgraphForm.value.contractAddress,
         eventSignature: this.subgraphForm.value.eventSignature,
-        chainId: this.subgraphForm.value.chainId,
-        eventAbi: this.parsedAbiEvent
+        chainId: Number(this.subgraphForm.value.chainId),
+        eventAbi: JSON.stringify(this.parsedAbiEvent),
       };
+      this.layergEventService.subgraphRegistration(body).subscribe((d) => {
+        console.log(d);
+        if (d?.id) {
+          this.isSuccess = true;
+          this.subgraphForm.reset();
+          this.parsedAbiEvent = null;
+          this.parsedAbi = null;
+        }
+      }, err => {
+        console.log(err);
+        this.error = err;
+      });
       console.log('Form submitted', body);
     } catch (e) {
       this.error = e.message;

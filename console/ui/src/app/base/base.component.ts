@@ -19,6 +19,7 @@ import {ConsoleService, UserRole} from '../console.service';
 import {Globals} from '../globals';
 import {environment} from '../../environments/environment';
 import {AuthLoginApiKey, LayergPortalService} from '../layergPortal.service';
+import {LayergEventService} from '../layergEvent.service';
 
 @Component({
   templateUrl: './base.component.html',
@@ -55,6 +56,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     private segment: SegmentService,
     private readonly consoleService: ConsoleService,
     private readonly layergPortalService: LayergPortalService,
+    private readonly layergEventService: LayergEventService,
     private readonly authService: AuthenticationService,
   ) {
     this.loading = false;
@@ -112,6 +114,19 @@ export class BaseComponent implements OnInit, OnDestroy {
       })
     ).subscribe(); // Ensure the observable is subscribed to
   }
+  initLaygergEventCatcherService(): void {
+    this.consoleService.getConfig('').pipe(
+      tap((configRes: any) => {
+        const parsed = JSON.parse(configRes?.config || '{}');
+        console.log(parsed?.layerg_core);
+        const host = parsed?.layerg_core?.event_catcher_url;
+        this.layergEventService.layergEvent = {
+          host,
+          timeoutMs: 5000,
+        }; // Dynamically update the host
+      })
+    ).subscribe(); // Ensure the observable is subscribed to
+  }
 
   handleLogin(params: AuthLoginApiKey): any{
     try {
@@ -129,6 +144,7 @@ export class BaseComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initLaygergPortalService();
+    this.initLaygergEventCatcherService();
     this.route.data.subscribe(data => {
       this.error = data.error ? data.error : '';
     });
@@ -158,8 +174,13 @@ export class BaseComponent implements OnInit, OnDestroy {
 
 @Injectable({providedIn: 'root'})
 export class PageviewGuard implements CanActivate, CanActivateChild {
-  constructor(private readonly authService: AuthenticationService, private readonly consoleService: ConsoleService,
-              private readonly layergPortalService: LayergPortalService, private readonly router: Router, private readonly globals: Globals) {}
+  constructor(
+    private readonly authService: AuthenticationService,
+    private readonly consoleService: ConsoleService,
+    private readonly layergPortalService: LayergPortalService,
+    private readonly layergEventService: LayergEventService,
+    private readonly router: Router, private readonly globals: Globals
+  ) {}
 
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     this.consoleService.getConfig('').pipe(
@@ -170,6 +191,11 @@ export class PageviewGuard implements CanActivate, CanActivateChild {
           host,
           timeoutMs: 5000,
         }; // Dynamically update the host
+        const hostEvent = parsed?.layerg_core?.event_catcher_url;
+        this.layergEventService.layergEvent = {
+          host: hostEvent,
+          timeoutMs: 5000,
+        };
       })
     ).subscribe();
     return true;
@@ -190,6 +216,11 @@ export class PageviewGuard implements CanActivate, CanActivateChild {
           host,
           timeoutMs: 5000,
         }; // Dynamically update the host
+        const hostEvent = parsed?.layerg_core?.event_catcher_url;
+        this.layergEventService.layergEvent = {
+          host: hostEvent,
+          timeoutMs: 5000,
+        };
       })
     ).subscribe();
 

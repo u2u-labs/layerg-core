@@ -5,6 +5,11 @@
   <h6 class="mr-2 d-inline font-weight-bold">Error when querying subgraph registration: {{error}}</h6>
 </ngb-alert>
 
+<ngb-alert *ngIf="isSuccess" type="success" [dismissible]="true" (close)="isSuccess=false">
+  <img src="/static/svg/green-tick.svg" alt="" width="16" height="" class="mr-2">
+  <h6 class="mr-2 d-inline font-weight-bold">Subgraph registration successful</h6>
+</ngb-alert>
+
 <form [formGroup]="subgraphForm" (ngSubmit)="formSubmit()">
   <div class="row mb-3">
     <div class="col-md-6 d-flex flex-column justify-content-start align-items-baseline">
