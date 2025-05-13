@@ -61,6 +61,15 @@ type RuntimeGoInitializer struct {
 	matchLock *sync.RWMutex
 
 	fmCallbackHandler runtime.FmCallbackHandler
+	config            Config
+}
+
+func (ri *RuntimeGoInitializer) GetConfig() (runtime.Config, error) {
+	cfg, err := ri.config.GetRuntimeConfig()
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
 }
 
 func (ri *RuntimeGoInitializer) RegisterEvent(fn func(ctx context.Context, logger runtime.Logger, evt *api.Event)) error {
@@ -2868,6 +2877,7 @@ func NewRuntimeProviderGo(ctx context.Context, logger, startupLogger *zap.Logger
 		version: version,
 		env:     env,
 		nk:      nk,
+		config:  config,
 
 		rpc: make(map[string]RuntimeRpcFunction, 0),
 

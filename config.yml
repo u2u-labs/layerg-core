@@ -5,7 +5,7 @@ logger:
   file: ""
 database:
   # address: ["root@localhost:26257"]
-  address: ["postgresql://postgres:postgres@127.0.0.1:5432/layerg"]
+  address: ["postgresql://postgres:postgres@127.0.0.1:5433/layerg"]
   database: "layerg"
 cluster:
   gossip_bindport: 8353
@@ -19,5 +19,6 @@ layerg_core:
   api_key: "syip1g6wd29f4tn8p78yc"
   api_key_id: "f74c1b2e-33c0-4189-b639-f3162c84b13b"
   portal_url: "https://agg-dev.layerg.xyz/api"
+  event_catcher_url: "https://event-gateway-dev.layerg.xyz/"
 redis_db:
   url: "localhost:6379"

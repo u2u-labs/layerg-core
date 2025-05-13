@@ -42,6 +42,7 @@ const (
 	Console_DeleteAccounts_FullMethodName            = "/layerg.console.Console/DeleteAccounts"
 	Console_DeleteLeaderboard_FullMethodName         = "/layerg.console.Console/DeleteLeaderboard"
 	Console_DeleteLeaderboardRecord_FullMethodName   = "/layerg.console.Console/DeleteLeaderboardRecord"
+	Console_DeleteNotification_FullMethodName        = "/layerg.console.Console/DeleteNotification"
 	Console_DeleteUser_FullMethodName                = "/layerg.console.Console/DeleteUser"
 	Console_AddNFTCollection_FullMethodName          = "/layerg.console.Console/AddNFTCollection"
 	Console_DeleteWalletLedger_FullMethodName        = "/layerg.console.Console/DeleteWalletLedger"
@@ -60,12 +61,14 @@ const (
 	Console_GetStatus_FullMethodName                 = "/layerg.console.Console/GetStatus"
 	Console_GetStorage_FullMethodName                = "/layerg.console.Console/GetStorage"
 	Console_GetWalletLedger_FullMethodName           = "/layerg.console.Console/GetWalletLedger"
+	Console_GetNotification_FullMethodName           = "/layerg.console.Console/GetNotification"
 	Console_GetPurchase_FullMethodName               = "/layerg.console.Console/GetPurchase"
 	Console_GetSubscription_FullMethodName           = "/layerg.console.Console/GetSubscription"
 	Console_ListApiEndpoints_FullMethodName          = "/layerg.console.Console/ListApiEndpoints"
 	Console_ListLeaderboardRecords_FullMethodName    = "/layerg.console.Console/ListLeaderboardRecords"
 	Console_ListLeaderboards_FullMethodName          = "/layerg.console.Console/ListLeaderboards"
 	Console_ListStorage_FullMethodName               = "/layerg.console.Console/ListStorage"
+	Console_ListNotifications_FullMethodName         = "/layerg.console.Console/ListNotifications"
 	Console_ListStorageCollections_FullMethodName    = "/layerg.console.Console/ListStorageCollections"
 	Console_ListAccounts_FullMethodName              = "/layerg.console.Console/ListAccounts"
 	Console_ListChannelMessages_FullMethodName       = "/layerg.console.Console/ListChannelMessages"
@@ -133,6 +136,8 @@ type ConsoleClient interface {
 	DeleteLeaderboard(ctx context.Context, in *LeaderboardRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Delete leaderboard record
 	DeleteLeaderboardRecord(ctx context.Context, in *DeleteLeaderboardRecordRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Delete notification
+	DeleteNotification(ctx context.Context, in *DeleteNotificationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Delete console user.
 	DeleteUser(ctx context.Context, in *Username, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Add new NFT collection
@@ -169,6 +174,8 @@ type ConsoleClient interface {
 	GetStorage(ctx context.Context, in *api.ReadStorageObjectId, opts ...grpc.CallOption) (*api.StorageObject, error)
 	// Get a list of the user's wallet transactions.
 	GetWalletLedger(ctx context.Context, in *GetWalletLedgerRequest, opts ...grpc.CallOption) (*WalletLedgerList, error)
+	// Get a notification by id.
+	GetNotification(ctx context.Context, in *GetNotificationRequest, opts ...grpc.CallOption) (*Notification, error)
 	// Get purchase by transaction_id
 	GetPurchase(ctx context.Context, in *GetPurchaseRequest, opts ...grpc.CallOption) (*api.ValidatedPurchase, error)
 	// Get subscription by original_transaction_id
@@ -181,6 +188,8 @@ type ConsoleClient interface {
 	ListLeaderboards(ctx context.Context, in *LeaderboardListRequest, opts ...grpc.CallOption) (*LeaderboardList, error)
 	// List (and optionally filter) storage data.
 	ListStorage(ctx context.Context, in *ListStorageRequest, opts ...grpc.CallOption) (*StorageList, error)
+	// List notifications.
+	ListNotifications(ctx context.Context, in *ListNotificationsRequest, opts ...grpc.CallOption) (*NotificationList, error)
 	// List storage collections
 	ListStorageCollections(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StorageCollectionsList, error)
 	// List (and optionally filter) accounts.
@@ -415,6 +424,16 @@ func (c *consoleClient) DeleteLeaderboardRecord(ctx context.Context, in *DeleteL
 	return out, nil
 }
 
+func (c *consoleClient) DeleteNotification(ctx context.Context, in *DeleteNotificationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Console_DeleteNotification_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *consoleClient) DeleteUser(ctx context.Context, in *Username, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
@@ -595,6 +614,16 @@ func (c *consoleClient) GetWalletLedger(ctx context.Context, in *GetWalletLedger
 	return out, nil
 }
 
+func (c *consoleClient) GetNotification(ctx context.Context, in *GetNotificationRequest, opts ...grpc.CallOption) (*Notification, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Notification)
+	err := c.cc.Invoke(ctx, Console_GetNotification_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *consoleClient) GetPurchase(ctx context.Context, in *GetPurchaseRequest, opts ...grpc.CallOption) (*api.ValidatedPurchase, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(api.ValidatedPurchase)
@@ -649,6 +678,16 @@ func (c *consoleClient) ListStorage(ctx context.Context, in *ListStorageRequest,
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StorageList)
 	err := c.cc.Invoke(ctx, Console_ListStorage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consoleClient) ListNotifications(ctx context.Context, in *ListNotificationsRequest, opts ...grpc.CallOption) (*NotificationList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NotificationList)
+	err := c.cc.Invoke(ctx, Console_ListNotifications_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -918,6 +957,8 @@ type ConsoleServer interface {
 	DeleteLeaderboard(context.Context, *LeaderboardRequest) (*emptypb.Empty, error)
 	// Delete leaderboard record
 	DeleteLeaderboardRecord(context.Context, *DeleteLeaderboardRecordRequest) (*emptypb.Empty, error)
+	// Delete notification
+	DeleteNotification(context.Context, *DeleteNotificationRequest) (*emptypb.Empty, error)
 	// Delete console user.
 	DeleteUser(context.Context, *Username) (*emptypb.Empty, error)
 	// Add new NFT collection
@@ -954,6 +995,8 @@ type ConsoleServer interface {
 	GetStorage(context.Context, *api.ReadStorageObjectId) (*api.StorageObject, error)
 	// Get a list of the user's wallet transactions.
 	GetWalletLedger(context.Context, *GetWalletLedgerRequest) (*WalletLedgerList, error)
+	// Get a notification by id.
+	GetNotification(context.Context, *GetNotificationRequest) (*Notification, error)
 	// Get purchase by transaction_id
 	GetPurchase(context.Context, *GetPurchaseRequest) (*api.ValidatedPurchase, error)
 	// Get subscription by original_transaction_id
@@ -966,6 +1009,8 @@ type ConsoleServer interface {
 	ListLeaderboards(context.Context, *LeaderboardListRequest) (*LeaderboardList, error)
 	// List (and optionally filter) storage data.
 	ListStorage(context.Context, *ListStorageRequest) (*StorageList, error)
+	// List notifications.
+	ListNotifications(context.Context, *ListNotificationsRequest) (*NotificationList, error)
 	// List storage collections
 	ListStorageCollections(context.Context, *emptypb.Empty) (*StorageCollectionsList, error)
 	// List (and optionally filter) accounts.
@@ -1074,6 +1119,9 @@ func (UnimplementedConsoleServer) DeleteLeaderboard(context.Context, *Leaderboar
 func (UnimplementedConsoleServer) DeleteLeaderboardRecord(context.Context, *DeleteLeaderboardRecordRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteLeaderboardRecord not implemented")
 }
+func (UnimplementedConsoleServer) DeleteNotification(context.Context, *DeleteNotificationRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteNotification not implemented")
+}
 func (UnimplementedConsoleServer) DeleteUser(context.Context, *Username) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
 }
@@ -1128,6 +1176,9 @@ func (UnimplementedConsoleServer) GetStorage(context.Context, *api.ReadStorageOb
 func (UnimplementedConsoleServer) GetWalletLedger(context.Context, *GetWalletLedgerRequest) (*WalletLedgerList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWalletLedger not implemented")
 }
+func (UnimplementedConsoleServer) GetNotification(context.Context, *GetNotificationRequest) (*Notification, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNotification not implemented")
+}
 func (UnimplementedConsoleServer) GetPurchase(context.Context, *GetPurchaseRequest) (*api.ValidatedPurchase, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPurchase not implemented")
 }
@@ -1145,6 +1196,9 @@ func (UnimplementedConsoleServer) ListLeaderboards(context.Context, *Leaderboard
 }
 func (UnimplementedConsoleServer) ListStorage(context.Context, *ListStorageRequest) (*StorageList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListStorage not implemented")
+}
+func (UnimplementedConsoleServer) ListNotifications(context.Context, *ListNotificationsRequest) (*NotificationList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListNotifications not implemented")
 }
 func (UnimplementedConsoleServer) ListStorageCollections(context.Context, *emptypb.Empty) (*StorageCollectionsList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListStorageCollections not implemented")
@@ -1557,6 +1611,24 @@ func _Console_DeleteLeaderboardRecord_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Console_DeleteNotification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteNotificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsoleServer).DeleteNotification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Console_DeleteNotification_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsoleServer).DeleteNotification(ctx, req.(*DeleteNotificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Console_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Username)
 	if err := dec(in); err != nil {
@@ -1881,6 +1953,24 @@ func _Console_GetWalletLedger_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Console_GetNotification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNotificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsoleServer).GetNotification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Console_GetNotification_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsoleServer).GetNotification(ctx, req.(*GetNotificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Console_GetPurchase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPurchaseRequest)
 	if err := dec(in); err != nil {
@@ -1985,6 +2075,24 @@ func _Console_ListStorage_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ConsoleServer).ListStorage(ctx, req.(*ListStorageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Console_ListNotifications_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListNotificationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsoleServer).ListNotifications(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Console_ListNotifications_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsoleServer).ListNotifications(ctx, req.(*ListNotificationsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2465,6 +2573,10 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Console_DeleteLeaderboardRecord_Handler,
 		},
 		{
+			MethodName: "DeleteNotification",
+			Handler:    _Console_DeleteNotification_Handler,
+		},
+		{
 			MethodName: "DeleteUser",
 			Handler:    _Console_DeleteUser_Handler,
 		},
@@ -2537,6 +2649,10 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Console_GetWalletLedger_Handler,
 		},
 		{
+			MethodName: "GetNotification",
+			Handler:    _Console_GetNotification_Handler,
+		},
+		{
 			MethodName: "GetPurchase",
 			Handler:    _Console_GetPurchase_Handler,
 		},
@@ -2559,6 +2675,10 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListStorage",
 			Handler:    _Console_ListStorage_Handler,
+		},
+		{
+			MethodName: "ListNotifications",
+			Handler:    _Console_ListNotifications_Handler,
 		},
 		{
 			MethodName: "ListStorageCollections",

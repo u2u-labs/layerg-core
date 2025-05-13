@@ -63,7 +63,7 @@ func (s *ApiServer) ListNotifications(ctx context.Context, in *api.ListNotificat
 		}
 	}
 
-	notificationList, err := NotificationList(ctx, s.logger, s.db, userID, limit, cursor, nc)
+	notificationList, err := NotificationList(ctx, s.logger, s.db, userID, limit, cursor, true)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Error retrieving notifications.")
 	}

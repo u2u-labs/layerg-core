@@ -177,6 +177,7 @@ func (n *runtimeJavascriptLayerGModule) mappings(r *goja.Runtime) map[string]fun
 		"accountExportId":                      n.accountExportId(r),
 		"usersGetId":                           n.usersGetId(r),
 		"usersGetUsername":                     n.usersGetUsername(r),
+		"usersGetFriendStatus":                 n.usersGetFriendStatus(r),
 		"usersGetRandom":                       n.usersGetRandom(r),
 		"usersBanId":                           n.usersBanId(r),
 		"usersUnbanId":                         n.usersUnbanId(r),
@@ -218,12 +219,15 @@ func (n *runtimeJavascriptLayerGModule) mappings(r *goja.Runtime) map[string]fun
 		"notificationsSend":                    n.notificationsSend(r),
 		"notificationSendAll":                  n.notificationSendAll(r),
 		"notificationsDelete":                  n.notificationsDelete(r),
+		"notificationsUpdate":                  n.notificationsUpdate(r),
 		"notificationsGetId":                   n.notificationsGetId(r),
 		"notificationsDeleteId":                n.notificationsDeleteId(r),
 		"walletUpdate":                         n.walletUpdate(r),
 		"walletsUpdate":                        n.walletsUpdate(r),
 		"walletLedgerUpdate":                   n.walletLedgerUpdate(r),
 		"walletLedgerList":                     n.walletLedgerList(r),
+		"statusFollow":                         n.statusFollow(r),
+		"statusUnfollow":                       n.statusUnfollow(r),
 		"storageList":                          n.storageList(r),
 		"storageRead":                          n.storageRead(r),
 		"storageWrite":                         n.storageWrite(r),
@@ -2269,6 +2273,61 @@ func (n *runtimeJavascriptLayerGModule) usersGetUsername(r *goja.Runtime) func(g
 }
 
 // @group users
+// @summary Get user's friend status information for a list of target users.
+// @param userID (type=string) The current user ID.
+// @param userIDs(type=string[]) An array of target user IDs.
+// @return friends(nkruntime.Friend[]) A list of user friends objects.
+// @return error(error) An optional error value if an error occurred.
+func (n *runtimeJavascriptLayerGModule) usersGetFriendStatus(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		id := getJsString(r, f.Argument(0))
+
+		uid, err := uuid.FromString(id)
+		if err != nil {
+			panic(r.NewTypeError("invalid user id"))
+		}
+
+		ids := f.Argument(1)
+
+		uids, err := exportToSlice[[]string](ids)
+		if err != nil {
+			panic(r.NewTypeError("expects an array of strings"))
+		}
+
+		fids := make([]uuid.UUID, 0, len(uids))
+		for _, id := range uids {
+			fid, err := uuid.FromString(id)
+			if err != nil {
+				panic(r.NewTypeError("invalid user id"))
+			}
+			fids = append(fids, fid)
+		}
+
+		friends, err := GetFriends(n.ctx, n.logger, n.db, n.statusRegistry, uid, fids)
+		if err != nil {
+			panic(r.NewGoError(fmt.Errorf("failed to get user friends status: %s", err.Error())))
+		}
+
+		userFriends := make([]interface{}, 0, len(friends))
+		for _, f := range friends {
+			fum, err := userToJsObject(f.User)
+			if err != nil {
+				panic(r.NewGoError(err))
+			}
+
+			fm := make(map[string]interface{}, 3)
+			fm["state"] = f.State.Value
+			fm["updateTime"] = f.UpdateTime.Seconds
+			fm["user"] = fum
+
+			userFriends = append(userFriends, fm)
+		}
+
+		return r.ToValue(userFriends)
+	}
+}
+
+// @group users
 // @summary Fetch one or more users randomly.
 // @param count(type=number) The number of users to fetch.
 // @return users(nkruntime.User[]) A list of user record objects.
@@ -4054,6 +4113,74 @@ func (n *runtimeJavascriptLayerGModule) notificationsDelete(r *goja.Runtime) fun
 }
 
 // @group notifications
+// @summary Update notifications by their id.
+// @param updates(type=nkruntime.NotificationUpdate[])
+// @return error(error) An optional error value if an error occurred.
+func (n *runtimeJavascriptLayerGModule) notificationsUpdate(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		updatesIn := f.Argument(0)
+
+		dataSlice, err := exportToSlice[[]map[string]any](updatesIn)
+		if err != nil {
+			panic(r.NewTypeError("expects an array of notification updates objects"))
+		}
+
+		nUpdates := make([]notificationUpdate, 0, len(dataSlice))
+		for _, u := range dataSlice {
+			update := notificationUpdate{}
+			id, ok := u["id"]
+			if !ok || id == "" {
+				panic(r.NewTypeError("expects 'id' value to be set"))
+			}
+			idstr, ok := id.(string)
+			if !ok || idstr == "" {
+				panic(r.NewTypeError("expects 'id' value to be a non-empty string"))
+			}
+			uid, err := uuid.FromString(idstr)
+			if err != nil {
+				panic(r.NewGoError(fmt.Errorf("expects 'id' value to be a valid id")))
+			}
+			update.Id = uid
+
+			content, ok := u["content"]
+			if ok {
+				cmap, ok := content.(map[string]any)
+				if !ok {
+					panic(r.NewTypeError("expects 'content' value to be a non-empty map"))
+				}
+				update.Content = cmap
+			}
+
+			subject, ok := u["subject"]
+			if ok {
+				substr, ok := subject.(string)
+				if !ok || substr == "" {
+					panic(r.NewTypeError("expects 'subject' value to be a non-empty string"))
+				}
+				update.Subject = &substr
+			}
+
+			sender, ok := u["sender"]
+			if ok {
+				substr, ok := sender.(string)
+				if !ok || substr == "" {
+					panic(r.NewTypeError("expects 'sender' value to be a non-empty string"))
+				}
+				update.Sender = &substr
+			}
+
+			nUpdates = append(nUpdates, update)
+		}
+
+		if err := NotificationsUpdate(n.ctx, n.logger, n.db, nUpdates...); err != nil {
+			panic(r.NewGoError(fmt.Errorf("failed to update notifications: %s", err.Error())))
+		}
+
+		return goja.Undefined()
+	}
+}
+
+// @group notifications
 // @summary Get notifications by their id.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
 // @param ids(type=string[]) A list of notification ids.
@@ -4356,6 +4483,86 @@ func (n *runtimeJavascriptLayerGModule) walletLedgerUpdate(r *goja.Runtime) func
 			"changeset":  metadataMap,
 			"metadata":   item.Metadata,
 		})
+	}
+}
+
+// @group status
+// @summary Follow a player's status changes on a given session.
+// @param sessionID(type=string) A valid session identifier.
+// @param userIDs(type=string[]) A list of userIDs to follow.
+// @return error(error) An optional error value if an error occurred.
+func (n *runtimeJavascriptLayerGModule) statusFollow(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		sid := getJsString(r, f.Argument(0))
+
+		suid, err := uuid.FromString(sid)
+		if err != nil {
+			panic(r.NewTypeError("expects a valid session id"))
+		}
+
+		uidsIn := f.Argument(1)
+
+		uidsSlice, err := exportToSlice[[]string](uidsIn)
+		if err != nil {
+			panic(r.NewTypeError("expects an array of user ids"))
+		}
+
+		if len(uidsSlice) == 0 {
+			return goja.Undefined()
+		}
+
+		uids := make(map[uuid.UUID]struct{}, len(uidsSlice))
+		for _, id := range uidsSlice {
+			uid, err := uuid.FromString(id)
+			if err != nil {
+				panic(r.NewTypeError("expects a valid user id"))
+			}
+			uids[uid] = struct{}{}
+		}
+
+		n.statusRegistry.Follow(suid, uids)
+
+		return nil
+	}
+}
+
+// @group status
+// @summary Unfollow a player's status changes on a given session.
+// @param sessionID(type=string) A valid session identifier.
+// @param userIDs(type=string[]) A list of userIDs to unfollow.
+// @return error(error) An optional error value if an error occurred.
+func (n *runtimeJavascriptLayerGModule) statusUnfollow(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		sid := getJsString(r, f.Argument(0))
+
+		suid, err := uuid.FromString(sid)
+		if err != nil {
+			panic(r.NewTypeError("expects a valid session id"))
+		}
+
+		uidsIn := f.Argument(1)
+
+		uidsSlice, err := exportToSlice[[]string](uidsIn)
+		if err != nil {
+			panic(r.NewTypeError("expects an array of user ids"))
+		}
+
+		if len(uidsSlice) == 0 {
+			return goja.Undefined()
+		}
+
+		uids := make([]uuid.UUID, 0, len(uidsSlice))
+		for _, id := range uidsSlice {
+			uid, err := uuid.FromString(id)
+			if err != nil {
+				panic(r.NewTypeError("expects a valid user id"))
+			}
+			uids = append(uids, uid)
+		}
+
+		n.statusRegistry.Unfollow(suid, uids)
+
+		return nil
 	}
 }
 
@@ -7146,7 +7353,7 @@ func (n *runtimeJavascriptLayerGModule) groupDelete(r *goja.Runtime) func(goja.F
 			panic(r.NewTypeError("expects group ID to be a valid identifier"))
 		}
 
-		if err = DeleteGroup(n.ctx, n.logger, n.db, groupID, uuid.Nil); err != nil {
+		if err = DeleteGroup(n.ctx, n.logger, n.db, n.tracker, groupID, uuid.Nil); err != nil {
 			panic(r.NewGoError(fmt.Errorf("error while trying to delete group: %v", err.Error())))
 		}
 
@@ -7426,8 +7633,8 @@ func (n *runtimeJavascriptLayerGModule) friendsList(r *goja.Runtime) func(goja.F
 		limit := 100
 		if !goja.IsUndefined(f.Argument(1)) && !goja.IsNull(f.Argument(1)) {
 			limit = int(getJsInt(r, f.Argument(1)))
-			if limit < 1 || limit > 100 {
-				panic(r.NewTypeError("expects limit to be 1-100"))
+			if limit < 1 || limit > 1000 {
+				panic(r.NewTypeError("expects limit to be 1-1000"))
 			}
 		}
 

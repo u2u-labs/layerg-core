@@ -114,6 +114,11 @@ var restrictedMethods = map[string]console.UserRole{
 	"/layerg.console.Console/DeleteUser":       console.UserRole_USER_ROLE_ADMIN,
 	"/layerg.console.Console/ListUsers":        console.UserRole_USER_ROLE_ADMIN,
 	"/layerg.console.Console/AddNFTCollection": console.UserRole_USER_ROLE_ADMIN,
+
+	// Notification
+	"/layerg.console.Console/ListNotifications":  console.UserRole_USER_ROLE_READONLY,
+	"/layerg.console.Console/GetNotification":    console.UserRole_USER_ROLE_READONLY,
+	"/layerg.console.Console/DeleteNotification": console.UserRole_USER_ROLE_MAINTAINER,
 }
 
 type ctxConsoleUsernameKey struct{}

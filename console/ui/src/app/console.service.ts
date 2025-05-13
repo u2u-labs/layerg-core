@@ -309,6 +309,34 @@ export interface MatchState {
   tick?:string
 }
 
+export interface Notification {
+  // Category code for this notification.
+  code?:number
+  // Content of the notification in JSON.
+  content?:string
+  // The UNIX time (for gRPC clients) or ISO string (for REST clients) when the notification was created.
+  create_time?:string
+  // ID of the Notification.
+  id?:string
+  // True if this notification was persisted to the database.
+  persistent?:boolean
+  // ID of the sender, if a user. Otherwise 'null'.
+  sender_id?:string
+  // Subject of the notification.
+  subject?:string
+  // User id.
+  user_id?:string
+}
+
+export interface NotificationList {
+  // Next page cursor if any.
+  next_cursor?:string
+  // List of notifications.
+  notifications?:Array<Notification>
+  // Previous page cursor if any.
+  prev_cursor?:string
+}
+
 export interface RuntimeInfo {
   // Go loaded modules
   go_modules?:Array<RuntimeInfoModuleInfo>
@@ -1163,15 +1191,15 @@ export class ConsoleService {
   }
 
   /** Add new NFT collection */
-  // addNFTCollection(auth_token: string, collection_address: string, type: string, initial_block: string, chain_id: number): Observable<any> {
-  //   collection_address = encodeURIComponent(String(collection_address))
-  //   type = encodeURIComponent(String(type))
-  //   initial_block = encodeURIComponent(String(initial_block))
-  //   chain_id = encodeURIComponent(String(chain_id))
-  //   const urlPath = `/v2/console/collection/${collection_address}/type/${type}/block/${initial_block}/chain/${chain_id}`;
-  //   let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
-  //   return this.httpClient.post(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
-  // }
+  addNFTCollection(auth_token: string, collection_address: string, type: string, initial_block: string, chain_id: integer): Observable<any> {
+    collection_address = encodeURIComponent(String(collection_address))
+    type = encodeURIComponent(String(type))
+    initial_block = encodeURIComponent(String(initial_block))
+    chain_id = encodeURIComponent(String(chain_id))
+    const urlPath = `/v2/console/collection/${collection_address}/type/${type}/block/${initial_block}/chain/${chain_id}`;
+    let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+    return this.httpClient.post(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  }
 
   /** Get server config and configuration warnings. */
   getConfig(auth_token: string): Observable<Config> {
@@ -1380,6 +1408,38 @@ export class ConsoleService {
       ids.forEach(e => params = params.append('ids', String(e)))
     }
     return this.httpClient.delete<DeleteChannelMessagesResponse>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  }
+
+  /** List notifications. */
+  listNotifications(auth_token: string, user_id?: string, limit?: number, cursor?: string): Observable<NotificationList> {
+    const urlPath = `/v2/console/notification`;
+    let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+    if (user_id) {
+      params = params.set('user_id', user_id);
+    }
+    if (limit) {
+      params = params.set('limit', String(limit));
+    }
+    if (cursor) {
+      params = params.set('cursor', cursor);
+    }
+    return this.httpClient.get<NotificationList>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  }
+
+  /** Delete notification */
+  deleteNotification(auth_token: string, id: string): Observable<any> {
+    id = encodeURIComponent(String(id))
+    const urlPath = `/v2/console/notification/${id}`;
+    let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+    return this.httpClient.delete(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  }
+
+  /** Get a notification by id. */
+  getNotification(auth_token: string, id: string): Observable<Notification> {
+    id = encodeURIComponent(String(id))
+    const urlPath = `/v2/console/notification/${id}`;
+    let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+    return this.httpClient.get<Notification>(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
 
   /** List validated purchases */

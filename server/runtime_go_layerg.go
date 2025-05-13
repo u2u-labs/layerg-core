@@ -740,6 +740,31 @@ func (n *RuntimeGoLayerGModule) UsersGetUsername(ctx context.Context, usernames 
 }
 
 // @group users
+// @summary Get user's friend status information for a list of target users.
+// @param ctx(type=context.Context) The context object represents information about the server and requester.
+// @param userID (type=string) The current user ID.
+// @param userIDs(type=[]string) An array of target user IDs.
+// @return friends([]*api.Friend) A list of user friends objects.
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) UsersGetFriendStatus(ctx context.Context, userID string, userIDs []string) ([]*api.Friend, error) {
+	uid, err := uuid.FromString(userID)
+	if err != nil {
+		return nil, errors.New("expects user ID to be a valid identifier")
+	}
+
+	fids := make([]uuid.UUID, 0, len(userIDs))
+	for _, id := range userIDs {
+		fid, err := uuid.FromString(id)
+		if err != nil {
+			return nil, errors.New("expects user ID to be a valid identifier")
+		}
+		fids = append(fids, fid)
+	}
+
+	return GetFriends(ctx, n.logger, n.db, n.statusRegistry, uid, fids)
+}
+
+// @group users
 // @summary Fetch one or more users randomly.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
 // @param count(type=int) The number of users to fetch.
@@ -1909,6 +1934,31 @@ func (n *RuntimeGoLayerGModule) NotificationsDeleteId(ctx context.Context, userI
 	return NotificationsDeleteId(ctx, n.logger, n.db, userID, ids...)
 }
 
+// @group notifications
+// @summary Update notifications by their id.
+// @param ctx(type=context.Context) The context object represents information about the server and requester.
+// @param userID(type=[]runtime.NotificationUpdate)
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) NotificationsUpdate(ctx context.Context, updates ...runtime.NotificationUpdate) error {
+	nUpdates := make([]notificationUpdate, 0, len(updates))
+
+	for _, update := range updates {
+		uid, err := uuid.FromString(update.Id)
+		if err != nil {
+			return errors.New("expects id to be a valid UUID")
+		}
+
+		nUpdates = append(nUpdates, notificationUpdate{
+			Id:      uid,
+			Content: update.Content,
+			Subject: update.Subject,
+			Sender:  update.Sender,
+		})
+	}
+
+	return NotificationsUpdate(ctx, n.logger, n.db, nUpdates...)
+}
+
 // @group wallets
 // @summary Update a user's wallet with the given changeset.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
@@ -2041,6 +2091,64 @@ func (n *RuntimeGoLayerGModule) WalletLedgerList(ctx context.Context, userID str
 		runtimeItems[i] = runtime.WalletLedgerItem(item)
 	}
 	return runtimeItems, newCursor, nil
+}
+
+// @group status
+// @summary Follow a player's status changes on a given session.
+// @param sessionID(type=string) A valid session identifier.
+// @param userIDs(type=[]string) A list of userIDs to follow.
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) StatusFollow(sessionID string, userIDs []string) error {
+	suid, err := uuid.FromString(sessionID)
+	if err != nil {
+		return errors.New("expects a valid session id")
+	}
+
+	if len(userIDs) == 0 {
+		return nil
+	}
+
+	uids := make(map[uuid.UUID]struct{}, len(userIDs))
+	for _, id := range userIDs {
+		uid, err := uuid.FromString(id)
+		if err != nil {
+			return errors.New("expects a valid user id")
+		}
+		uids[uid] = struct{}{}
+	}
+
+	n.statusRegistry.Follow(suid, uids)
+
+	return nil
+}
+
+// @group status
+// @summary Unfollow a player's status changes on a given session.
+// @param sessionID(type=string) A valid session identifier.
+// @param userIDs(type=[]string) A list of userIDs to unfollow.
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) StatusUnfollow(sessionID string, userIDs []string) error {
+	suid, err := uuid.FromString(sessionID)
+	if err != nil {
+		return errors.New("expects a valid session id")
+	}
+
+	if len(userIDs) == 0 {
+		return nil
+	}
+
+	uids := make([]uuid.UUID, 0, len(userIDs))
+	for _, id := range userIDs {
+		uid, err := uuid.FromString(id)
+		if err != nil {
+			return errors.New("expects a valid user id")
+		}
+		uids = append(uids, uid)
+	}
+
+	n.statusRegistry.Unfollow(suid, uids)
+
+	return nil
 }
 
 // @group storage
@@ -3580,7 +3688,7 @@ func (n *RuntimeGoLayerGModule) GroupDelete(ctx context.Context, id string) erro
 		return errors.New("expects group ID to be a valid identifier")
 	}
 
-	return DeleteGroup(ctx, n.logger, n.db, groupID, uuid.Nil)
+	return DeleteGroup(ctx, n.logger, n.db, n.tracker, groupID, uuid.Nil)
 }
 
 // @group groups
@@ -4024,8 +4132,8 @@ func (n *RuntimeGoLayerGModule) FriendsList(ctx context.Context, userID string, 
 		return nil, "", errors.New("expects user ID to be a valid identifier")
 	}
 
-	if limit < 1 || limit > 100 {
-		return nil, "", errors.New("expects limit to be 1-100")
+	if limit < 1 || limit > 1000 {
+		return nil, "", errors.New("expects limit to be 1-1000")
 	}
 
 	var stateWrapper *wrapperspb.Int32Value
