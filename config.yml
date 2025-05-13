@@ -19,5 +19,7 @@ layerg_core:
   api_key: "syip1g6wd29f4tn8p78yc"
   api_key_id: "f74c1b2e-33c0-4189-b639-f3162c84b13b"
   portal_url: "https://agg-dev.layerg.xyz/api"
+#  event_catcher_url: "https://event-gateway-dev.layerg.xyz"
+  event_catcher_url: "https://w0f43x62-8080.asse.devtunnels.ms"
 redis_db:
   url: "localhost:6379"

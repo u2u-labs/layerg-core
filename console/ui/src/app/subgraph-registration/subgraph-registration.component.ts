@@ -3,9 +3,11 @@ import {ActivatedRoute, ActivatedRouteSnapshot, Resolve, Router, RouterStateSnap
 import {ConsoleService} from '../console.service';
 import {AuthenticationService} from '../authentication.service';
 import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
-import {forkJoin, Observable} from 'rxjs';
+import {Observable} from 'rxjs';
 import {CHAIN_IDS, parseEventSignaturesOnly} from '../../utils';
-import {LayergEventService} from "../layergEvent.service";
+import {LayergEventService} from '../layergEvent.service';
+import {LayergNodeService} from '../layergNode.service';
+import {SubgraphRegistrationData} from '../@types/layergNode';
 
 @Component({
   templateUrl: './subgraph-registration.component.html',
@@ -17,6 +19,7 @@ export class SubgraphRegistrationComponent implements OnInit, AfterViewInit {
     private readonly router: Router,
     private readonly consoleService: ConsoleService,
     private readonly layergEventService: LayergEventService,
+    private readonly layergNodeService: LayergNodeService,
     private readonly authService: AuthenticationService,
     private readonly formBuilder: UntypedFormBuilder,
   ) {}
@@ -63,7 +66,31 @@ export class SubgraphRegistrationComponent implements OnInit, AfterViewInit {
     }
   }
 
-  formSubmit(): void {
+  async subgraphRegistration(domainUrl: string, body: SubgraphRegistrationData): Promise<void> {
+    try {
+      this.layergNodeService.layergNode = {
+        host: domainUrl,
+        timeoutMs: 5000,
+      };
+      this.layergNodeService.subgraphRegistration(body).subscribe((d) => {
+        console.log(d);
+        if (d?.id) {
+          this.isSuccess = true;
+          this.subgraphForm.reset();
+          this.parsedAbiEvent = null;
+          this.parsedAbi = null;
+        }
+      }, err => {
+        console.log(err);
+        this.error = err;
+      });
+    } catch (e) {
+      this.error = e;
+      console.error('Error during subgraph registration:', e);
+    }
+  }
+
+  async formSubmit(): Promise<void> {
     try {
       this.error = '';
       if (this.subgraphForm.invalid) {
@@ -77,27 +104,22 @@ export class SubgraphRegistrationComponent implements OnInit, AfterViewInit {
         this.error = 'Please upload abi json and select an event signature';
         return;
       }
-      const body = {
+      const body: SubgraphRegistrationData = {
         contractAddress: this.subgraphForm.value.contractAddress,
         eventSignature: this.subgraphForm.value.eventSignature,
         chainId: Number(this.subgraphForm.value.chainId),
         eventAbi: JSON.stringify(this.parsedAbiEvent),
       };
-      this.layergEventService.subgraphRegistration(body).subscribe((d) => {
-        console.log(d);
-        if (d?.id) {
-          this.isSuccess = true;
-          this.subgraphForm.reset();
-          this.parsedAbiEvent = null;
-          this.parsedAbi = null;
-        }
-      }, err => {
-        console.log(err);
-        this.error = err;
-      });
+      const res = await this.layergEventService.getNodeForChainId(this.subgraphForm.value.chainId).toPromise();
+      const domainUrl = res?.nodeDomain;
+      if (!domainUrl) {
+        this.error = 'Node domain not found';
+        return;
+      }
       console.log('Form submitted', body);
+      await this.subgraphRegistration(domainUrl, body);
     } catch (e) {
-      this.error = e.message;
+      this.error = e;
       console.error('Error during form submission:', e);
     }
   }
