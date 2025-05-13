@@ -15,7 +15,7 @@
 
         <ng-template ngFor let-r [ngForOf]="routes">
           <ng-container *ngIf="this.getSessionRole() <= r.minRole" [ngbNavItem]="r.navItem">
-            <a ngbNavLink routerLinkActive="active" [routerLink]="r.routerLink"><img class="link-icon mr-1" src="/static/svg/{{r.icon}}.svg" alt="" width="24" height=""><span class="link-text">{{r.label}}</span></a>
+            <a ngbNavLink routerLinkActive="active" [routerLink]="r.routerLink"><img *ngIf="r.icon" class="link-icon mr-1" src="/static/svg/{{r.icon}}.svg" alt="" width="24" height=""><span class="link-text">{{r.label}}</span></a>
           </ng-container>
           <hr *ngIf="r.separator" />
         </ng-template>

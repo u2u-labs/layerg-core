@@ -36,6 +36,10 @@ import {CreateCollectionComponent, CreateCollectionResolver} from './collections
 import {CollectionDetailComponent} from './collections/detail/collectionDetail.component';
 import {CollectionComponent, CollectionResolver} from './collection/collection.component';
 import {CollectionDetail1Component} from './collection/detail/collectionDetail.component';
+import {
+  SubgraphRegistrationComponent,
+  SubgraphRegistrationResolver
+} from './subgraph-registration/subgraph-registration.component';
 
 const routes: Routes = [
   {
@@ -49,7 +53,7 @@ const routes: Routes = [
       {path: 'config', component: ConfigComponent, resolve: [ConfigResolver]},
       {path: 'users', component: UsersComponent, resolve: [UsersResolver]},
       {path: 'modules', component: RuntimeComponent, resolve: [RuntimeResolver]},
-      {path: 'collections', component: CollectionsComponent, resolve: [CollectionsResolver],},
+      {path: 'collections', component: CollectionsComponent, resolve: [CollectionsResolver]},
       {path: 'collections/create', component: CreateCollectionComponent, resolve: [CreateCollectionResolver]},
       {path: 'collections/:id', component: CollectionComponent, resolve: [CollectionResolver],
         children: [
@@ -95,6 +99,7 @@ const routes: Routes = [
       {path: 'chat', component: ChatListComponent, resolve: [ChatSearchResolver]},
       {path: 'purchases', component: PurchasesListComponent, resolve: [PurchasesResolver]},
       {path: 'subscriptions', component: SubscriptionsListComponent, resolve: [SubscriptionsResolver]},
+      {path: 'subgraph-registration', component: SubgraphRegistrationComponent, resolve: [SubgraphRegistrationResolver]},
     ]},
   {path: 'login', component: LoginComponent, canActivate: [LoginGuard]},
 
