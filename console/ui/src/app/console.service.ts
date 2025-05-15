@@ -1191,7 +1191,7 @@ export class ConsoleService {
   }
 
   /** Add new NFT collection */
-  addNFTCollection(auth_token: string, collection_address: string, type: string, initial_block: string, chain_id: integer): Observable<any> {
+  addNFTCollection(auth_token: string, collection_address: string, type: string, initial_block: string, chain_id: string): Observable<any> {
     collection_address = encodeURIComponent(String(collection_address))
     type = encodeURIComponent(String(type))
     initial_block = encodeURIComponent(String(initial_block))
