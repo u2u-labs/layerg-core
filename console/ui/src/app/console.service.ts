@@ -46,6 +46,8 @@ export interface AccountList {
 export interface AddUserRequest {
   // Email address of the user.
   email?:string
+  // Require MFA
+  mfa_required?:boolean
   // Subscribe to newsletters
   newsletter_subscription?:boolean
   // The password of the user.
@@ -72,8 +74,24 @@ export interface AuthenticateLogoutRequest {
   token?:string
 }
 
+/** Request to change MFA. */
+export interface AuthenticateMFASetupRequest {
+  // MFA code.
+  code?:string
+  // MFA token.
+  mfa?:string
+}
+
+/** Response to change MFA. */
+export interface AuthenticateMFASetupResponse {
+  // An one-time code to configure the MFA mechanism
+  recovery_codes?:Array<string>
+}
+
 /** Authenticate a console user with username and password. */
 export interface AuthenticateRequest {
+  // Multi-factor authentication code.
+  mfa?:string
   // The password of the user.
   password?:string
   // The username of the user.
@@ -123,8 +141,16 @@ export interface ConsoleCallRpcEndpointBody {
   user_id?:string
 }
 
+/** Make a user's mfa required or not. */
+export interface ConsoleRequireUserMfaBody {
+  // Required.
+  required?:boolean
+}
+
 /** A console user session. */
 export interface ConsoleSession {
+  // MFA code required to setup the MFA mechanism.
+  mfa_code?:string
   // A session token (JWT) for the console user.
   token?:string
 }
@@ -464,6 +490,10 @@ export interface UserList {
 export interface UserListUser {
   // Email of the user
   email?:string
+  // Whether the user has MFA enabled.
+  mfa_enabled?:boolean
+  // Whether the user is required to setup MFA.
+  mfa_required?:boolean
   // Role of the user;
   role?:UserRole
   // Username of the user
@@ -1165,6 +1195,13 @@ export class ConsoleService {
     return this.httpClient.post(this.config.host + urlPath, body, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
 
+  /** Change an account's MFA using a code, usually delivered over email. */
+  authenticateMFASetup(auth_token: string, body: AuthenticateMFASetupRequest): Observable<AuthenticateMFASetupResponse> {
+    const urlPath = `/v2/console/authenticate/mfa`;
+    let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+    return this.httpClient.post<AuthenticateMFASetupResponse>(this.config.host + urlPath, body, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  }
+
   /** List channel messages with the selected filter */
   listChannelMessages(auth_token: string, type?: string, label?: string, group_id?: string, user_id_one?: string, user_id_two?: string, cursor?: string): Observable<ApiChannelMessageList> {
     const urlPath = `/v2/console/channel`;
@@ -1191,7 +1228,7 @@ export class ConsoleService {
   }
 
   /** Add new NFT collection */
-  addNFTCollection(auth_token: string, collection_address: string, type: string, initial_block: string, chain_id: string): Observable<any> {
+  addNFTCollection(auth_token: string, collection_address: string, type: string, initial_block: string, chain_id: integer): Observable<any> {
     collection_address = encodeURIComponent(String(collection_address))
     type = encodeURIComponent(String(type))
     initial_block = encodeURIComponent(String(initial_block))
@@ -1587,6 +1624,22 @@ export class ConsoleService {
     const urlPath = `/v2/console/user`;
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
     return this.httpClient.post(this.config.host + urlPath, body, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  }
+
+  /** Sets the user's MFA as required or not required. */
+  requireUserMfa(auth_token: string, username: string, body: ConsoleRequireUserMfaBody): Observable<any> {
+    username = encodeURIComponent(String(username))
+    const urlPath = `/v2/console/user/${username}/mfa/require`;
+    let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+    return this.httpClient.post(this.config.host + urlPath, body, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
+  }
+
+  /** Reset a user's multi-factor authentication credentials. */
+  resetUserMfa(auth_token: string, username: string): Observable<any> {
+    username = encodeURIComponent(String(username))
+    const urlPath = `/v2/console/user/${username}/mfa/reset`;
+    let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
+    return this.httpClient.post(this.config.host + urlPath, { params: params, headers: this.getTokenAuthHeaders(auth_token) })
   }
 
   private getTokenAuthHeaders(token: string): HttpHeaders {

@@ -536,7 +536,8 @@ func (n *RuntimeGoLayerGModule) AuthenticateTokenGenerate(userID, username strin
 	}
 
 	tokenId := uuid.Must(uuid.NewV4()).String()
-	token, exp := generateTokenWithExpiry(n.config.GetSession().EncryptionKey, tokenId, userID, username, vars, exp)
+	tokenIssuedAt := time.Now().UTC().Unix()
+	token, exp := generateTokenWithExpiry(n.config.GetSession().EncryptionKey, tokenId, tokenIssuedAt, userID, username, vars, exp)
 	n.sessionCache.Add(uid, exp, tokenId, 0, "")
 	return token, exp, nil
 }
@@ -2350,25 +2351,25 @@ func (n *RuntimeGoLayerGModule) StorageDelete(ctx context.Context, deletes []*ru
 // @param order(type=[]string, optional=true) The storage object fields to sort the query results by. The prefix '-' before a field name indicates descending order. All specified fields must be indexed and sortable.
 // @return objects(*api.StorageObjectList) A list of storage objects.
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) StorageIndexList(ctx context.Context, callerID, indexName, query string, limit int, order []string) (*api.StorageObjects, error) {
+func (n *RuntimeGoLayerGModule) StorageIndexList(ctx context.Context, callerID, indexName, query string, limit int, order []string, cursor string) (*api.StorageObjects, string, error) {
 	cid := uuid.Nil
 	if callerID != "" {
 		id, err := uuid.FromString(callerID)
 		if err != nil {
-			return nil, errors.New("expects caller id to be empty or a valid user id")
+			return nil, "", errors.New("expects caller id to be empty or a valid user id")
 		}
 		cid = id
 	}
 
 	if indexName == "" {
-		return nil, errors.New("expects a non-empty indexName")
+		return nil, "", errors.New("expects a non-empty indexName")
 	}
 
 	if limit < 1 || limit > 10_000 {
-		return nil, errors.New("limit must be 1-10000")
+		return nil, "", errors.New("limit must be 1-10000")
 	}
 
-	return n.storageIndex.List(ctx, cid, indexName, query, limit, order)
+	return n.storageIndex.List(ctx, cid, indexName, query, limit, order, cursor)
 }
 
 // @group users
@@ -4188,7 +4189,7 @@ func (n *RuntimeGoLayerGModule) FriendsOfFriendsList(ctx context.Context, userID
 // @param ids(type=[]string) The IDs of the users you want to add as friends.
 // @param usernames(type=[]string) The usernames of the users you want to add as friends.
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) FriendsAdd(ctx context.Context, userID string, username string, ids []string, usernames []string) error {
+func (n *RuntimeGoLayerGModule) FriendsAdd(ctx context.Context, userID string, username string, ids []string, usernames []string, metadata map[string]any) error {
 	userUUID, err := uuid.FromString(userID)
 	if err != nil {
 		return errors.New("expects user ID to be a valid identifier")
@@ -4230,7 +4231,17 @@ func (n *RuntimeGoLayerGModule) FriendsAdd(ctx context.Context, userID string, u
 	allIDs = append(allIDs, ids...)
 	allIDs = append(allIDs, fetchIDs...)
 
-	err = AddFriends(ctx, n.logger, n.db, n.tracker, n.router, userUUID, username, allIDs)
+	var metadataStr string
+	if metadata != nil {
+		bytes, err := json.Marshal(metadata)
+		if err != nil {
+			n.logger.Error("Could not marshal metadata", zap.Error(err))
+			return fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		metadataStr = string(bytes)
+	}
+
+	err = AddFriends(ctx, n.logger, n.db, n.tracker, n.router, userUUID, username, allIDs, metadataStr)
 	if err != nil {
 		return err
 	}

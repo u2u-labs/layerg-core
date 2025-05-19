@@ -61,12 +61,13 @@ type sessionWS struct {
 	closeMu                sync.Mutex
 }
 
-func NewSessionWS(logger *zap.Logger, config Config, format SessionFormat, sessionID, userID uuid.UUID, username string, vars map[string]string, expiry int64, clientIP, clientPort, lang string, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, conn *websocket.Conn, sessionRegistry SessionRegistry, statusRegistry StatusRegistry, matchmaker Matchmaker, tracker Tracker, metrics Metrics, pipeline *Pipeline, runtime *Runtime) Session {
+func NewSessionWS(logger *zap.Logger, config Config, format SessionFormat, sessionID, userID uuid.UUID, username, tokenId string, vars map[string]string, tokenExpiry, tokenIssuedAt int64, clientIP, clientPort, lang string, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, conn *websocket.Conn, sessionRegistry SessionRegistry, statusRegistry StatusRegistry, matchmaker Matchmaker, tracker Tracker, metrics Metrics, pipeline *Pipeline, runtime *Runtime) Session {
 	sessionLogger := logger.With(zap.String("uid", userID.String()), zap.String("sid", sessionID.String()))
 
 	sessionLogger.Info("New WebSocket session connected", zap.Uint8("format", uint8(format)))
 
 	ctx, ctxCancelFn := context.WithCancel(context.Background())
+	ctx = populateCtx(ctx, userID, username, tokenId, vars, tokenExpiry, tokenIssuedAt)
 
 	wsMessageType := websocket.TextMessage
 	if format == SessionFormatProtobuf {
@@ -81,7 +82,7 @@ func NewSessionWS(logger *zap.Logger, config Config, format SessionFormat, sessi
 		userID:     userID,
 		username:   atomic.NewString(username),
 		vars:       vars,
-		expiry:     expiry,
+		expiry:     tokenExpiry,
 		clientIP:   clientIP,
 		clientPort: clientPort,
 		lang:       lang,
@@ -187,7 +188,8 @@ IncomingLoop:
 			// Ignore "normal" WebSocket errors.
 			if !websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway, websocket.CloseNoStatusReceived) {
 				// Ignore underlying connection being shut down while read is waiting for data.
-				if e, ok := err.(*net.OpError); !ok || e.Err.Error() != "use of closed network connection" {
+				var opErr *net.OpError
+				if !errors.As(err, &opErr) || opErr.Error() != net.ErrClosed.Error() {
 					s.logger.Debug("Error reading message from client", zap.Error(err))
 					reason = err.Error()
 				}

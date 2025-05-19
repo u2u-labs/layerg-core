@@ -467,7 +467,7 @@ AND state = 0
 	return &api.FriendsOfFriendsList{FriendsOfFriends: fof, Cursor: outgoingCursor}, nil
 }
 
-func AddFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tracker, messageRouter MessageRouter, userID uuid.UUID, username string, friendIDs []string) error {
+func AddFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tracker, messageRouter MessageRouter, userID uuid.UUID, username string, friendIDs []string, metadata string) error {
 	uniqueFriendIDs := make(map[string]struct{})
 	for _, fid := range friendIDs {
 		uniqueFriendIDs[fid] = struct{}{}
@@ -494,7 +494,7 @@ func AddFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tra
 				continue
 			}
 
-			isFriendAccept, addFriendErr := addFriend(ctx, logger, tx, userID, id)
+			isFriendAccept, addFriendErr := addFriend(ctx, logger, tx, userID, id, metadata)
 			if addFriendErr == nil {
 				notificationToSend[id] = isFriendAccept
 			} else if addFriendErr != sql.ErrNoRows { // Check to see if friend had blocked user.
@@ -535,34 +535,41 @@ func AddFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tra
 }
 
 // Returns "true" if accepting an invite, otherwise false
-func addFriend(ctx context.Context, logger *zap.Logger, tx *sql.Tx, userID uuid.UUID, friendID string) (bool, error) {
+func addFriend(ctx context.Context, logger *zap.Logger, tx *sql.Tx, userID uuid.UUID, friendID, metadata string) (bool, error) {
+	if metadata == "" {
+		metadata = "{}"
+	}
+
 	// Mark an invite as accepted, if one was in place.
 	res, err := tx.ExecContext(ctx, `
-UPDATE user_edge SET state = 0, update_time = now()
+UPDATE user_edge SET state = 0, update_time = now(),
+	metadata = CASE
+		WHEN source_id = $2 AND destination_id = $1 THEN metadata || $3::JSONB
+		ELSE metadata
+	END
 WHERE (source_id = $1 AND destination_id = $2 AND state = 1)
 OR (source_id = $2 AND destination_id = $1 AND state = 2)
-  `, friendID, userID)
+  `, friendID, userID, metadata)
 	if err != nil {
 		logger.Debug("Failed to update user state.", zap.Error(err), zap.String("user", userID.String()), zap.String("friend", friendID))
 		return false, err
 	}
 
-	// If both edges were updated, it was accepting an invite was successful.
+	// If both edges were updated, it accepted an invite successfully.
 	if rowsAffected, _ := res.RowsAffected(); rowsAffected == 2 {
 		logger.Debug("Accepting friend invitation.", zap.String("user", userID.String()), zap.String("friend", friendID))
 		return true, nil
 	}
 
 	position := fmt.Sprintf("%v", time.Now().UTC().UnixNano())
-
 	// If no edge updates took place, it's either a new invite being set up, or user was blocked off by friend.
 	_, err = tx.ExecContext(ctx, `
-INSERT INTO user_edge (source_id, destination_id, state, position, update_time)
-SELECT source_id, destination_id, state, position, update_time
+INSERT INTO user_edge (source_id, destination_id, state, position, update_time, metadata)
+SELECT source_id, destination_id, state, position, update_time, metadata
 FROM (VALUES
-  ($1::UUID, $2::UUID, 1, $3::BIGINT, now()),
-  ($2::UUID, $1::UUID, 2, $3::BIGINT, now())
-) AS ue(source_id, destination_id, state, position, update_time)
+  ($1::UUID, $2::UUID, 1, $3::BIGINT, now(), $4::JSONB),
+  ($2::UUID, $1::UUID, 2, $3::BIGINT, now(), '{}'::JSONB)
+) AS ue(source_id, destination_id, state, position, update_time, metadata)
 WHERE
 	EXISTS (SELECT id FROM users WHERE id = $2::UUID)
 	AND
@@ -572,7 +579,7 @@ WHERE
    WHERE source_id = $2::UUID AND destination_id = $1::UUID AND state = 3
   )
 ON CONFLICT (source_id, destination_id) DO NOTHING
-`, userID, friendID, position)
+`, userID, friendID, position, metadata)
 	if err != nil {
 		logger.Debug("Failed to insert new user edge link.", zap.Error(err), zap.String("user", userID.String()), zap.String("friend", friendID))
 		return false, err
@@ -584,7 +591,7 @@ ON CONFLICT (source_id, destination_id) DO NOTHING
 	// This is caused by an existing bug in CockroachDB: https://github.com/cockroachdb/cockroach/issues/10264
 	if res, err = tx.ExecContext(ctx, `
 UPDATE users
-SET edge_count = edge_count +1, update_time = now()
+SET edge_count = edge_count + 1, update_time = now()
 WHERE
 	(id = $1::UUID OR id = $2::UUID)
 AND EXISTS

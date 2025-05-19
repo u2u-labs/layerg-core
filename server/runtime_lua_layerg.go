@@ -2246,7 +2246,8 @@ func (n *RuntimeLuaLayerGModule) authenticateTokenGenerate(l *lua.LState) int {
 	}
 
 	tokenId := uuid.Must(uuid.NewV4()).String()
-	token, exp := generateTokenWithExpiry(n.config.GetSession().EncryptionKey, tokenId, userIDString, username, varsMap, exp)
+	tokenIssuedAt := time.Now().Unix()
+	token, exp := generateTokenWithExpiry(n.config.GetSession().EncryptionKey, tokenId, tokenIssuedAt, userIDString, username, varsMap, exp)
 	n.sessionCache.Add(uid, exp, tokenId, 0, "")
 
 	l.Push(lua.LString(token))
@@ -9663,10 +9664,11 @@ func (n *RuntimeLuaLayerGModule) friendsOfFriendsList(l *lua.LState) int {
 
 // @group friends
 // @summary Add friends to a user.
-// @param userId(type=string) The ID of the user to whom you want to add friends.
+// @param userID(type=string) The ID of the user to whom you want to add friends.
 // @param username(type=string) The name of the user to whom you want to add friends.
-// @param ids(type=table) The IDs of the users you want to add as friends.
+// @param userIDs(type=table) The IDs of the users you want to add as friends.
 // @param usernames(type=table) The usernames of the users you want to add as friends.
+// @param metadataTable(type=table, optional=true) Custom information to store for this friend. Can be left empty as nil/null.
 // @return error(error) An optional error value if an error occurred.
 func (n *RuntimeLuaLayerGModule) friendsAdd(l *lua.LState) int {
 	userID, err := uuid.FromString(l.CheckString(1))
@@ -9681,10 +9683,10 @@ func (n *RuntimeLuaLayerGModule) friendsAdd(l *lua.LState) int {
 		return 0
 	}
 
-	userIDsIn := l.OptTable(3, nil)
-	var userIDs []string
-	if userIDsIn != nil {
-		userIDsTable, ok := RuntimeLuaConvertLuaValue(userIDsIn).([]interface{})
+	userIDs := l.OptTable(3, nil)
+	var uids []string
+	if userIDs != nil {
+		userIDsTable, ok := RuntimeLuaConvertLuaValue(userIDs).([]interface{})
 		if !ok {
 			l.ArgError(3, "invalid user ids list")
 			return 0
@@ -9705,13 +9707,13 @@ func (n *RuntimeLuaLayerGModule) friendsAdd(l *lua.LState) int {
 				userIDStrings = append(userIDStrings, ids)
 			}
 		}
-		userIDs = userIDStrings
+		uids = userIDStrings
 	}
 
-	usernamesIn := l.OptTable(4, nil)
-	var usernames []string
-	if usernamesIn != nil {
-		usernamesIDsTable, ok := RuntimeLuaConvertLuaValue(usernamesIn).([]interface{})
+	usernames := l.OptTable(4, nil)
+	var usernamesArray []string
+	if usernames != nil {
+		usernamesIDsTable, ok := RuntimeLuaConvertLuaValue(usernames).([]interface{})
 		if !ok {
 			l.ArgError(4, "invalid username list")
 			return 0
@@ -9729,32 +9731,50 @@ func (n *RuntimeLuaLayerGModule) friendsAdd(l *lua.LState) int {
 				usernameStrings = append(usernameStrings, names)
 			}
 		}
-		usernames = usernameStrings
+		usernamesArray = usernameStrings
 	}
 
-	if len(userIDs) == 0 && len(usernames) == 0 {
+	if len(uids) == 0 && len(usernamesArray) == 0 {
 		return 0
 	}
 
-	fetchIDs, err := fetchUserID(l.Context(), n.db, usernames)
+	fetchIDs, err := fetchUserID(l.Context(), n.db, usernamesArray)
 	if err != nil {
-		n.logger.Error("Could not fetch user IDs.", zap.Error(err), zap.Strings("usernames", usernames))
+		n.logger.Error("Could not fetch user IDs.", zap.Error(err), zap.Strings("usernames", usernamesArray))
 		l.RaiseError("error while trying to add friends")
 		return 0
 	}
 
-	if len(fetchIDs)+len(userIDs) == 0 {
+	if len(fetchIDs)+len(uids) == 0 {
 		l.RaiseError("no valid ID or username was provided")
 		return 0
 	}
 
-	allIDs := make([]string, 0, len(userIDs)+len(fetchIDs))
-	allIDs = append(allIDs, userIDs...)
+	allIDs := make([]string, 0, len(uids)+len(fetchIDs))
+	allIDs = append(allIDs, uids...)
 	allIDs = append(allIDs, fetchIDs...)
 
-	err = AddFriends(l.Context(), n.logger, n.db, n.tracker, n.router, userID, username, allIDs)
+	// Parse metadata, optional.
+	metadataTable := l.OptTable(5, nil)
+	var metadata map[string]any
+	if metadataTable != nil {
+		metadata = RuntimeLuaConvertLuaTable(metadataTable)
+	}
+
+	var metadataStr string
+	if metadata != nil {
+		bytes, err := json.Marshal(metadata)
+		if err != nil {
+			n.logger.Error("Could not marshal metadata", zap.Error(err))
+			l.RaiseError("error marshalling metadata: %s", err.Error())
+			return 0
+		}
+		metadataStr = string(bytes)
+	}
+
+	err = AddFriends(l.Context(), n.logger, n.db, n.tracker, n.router, userID, username, allIDs, metadataStr)
 	if err != nil {
-		l.RaiseError(err.Error())
+		l.RaiseError("error adding friends: %s", err.Error())
 		return 0
 	}
 
@@ -10312,16 +10332,18 @@ func (n *RuntimeLuaLayerGModule) channelIdBuild(l *lua.LState) int {
 
 // @group storage
 // @summary List storage index entries
-// @param indexName(type=string) Name of the index to list entries from.
-// @param queryString(type=string) Query to filter index entries.
+// @param index(type=string) Name of the index to list entries from.
+// @param query(type=string) Query to filter index entries.
 // @param limit(type=int) Maximum number of results to be returned.
-// @param order(type=[]string, optional=true) The storage object fields to sort the query results by. The prefix '-' before a field name indicates descending order. All specified fields must be indexed and sortable.
-// @param callerId(type=string, optional=true) User ID of the caller, will apply permissions checks of the user. If empty defaults to system user and permission checks are bypassed.
+// @param orderTable(type=[]string, optional=true) The storage object fields to sort the query results by. The prefix '-' before a field name indicates descending order. All specified fields must be indexed and sortable.
+// @param callerID(type=string, optional=true) User ID of the caller, will apply permissions checks of the user. If empty defaults to system user and permission checks are bypassed.
+// @param cursor(type=string, optional=true) A cursor to fetch the next page of results.
 // @return objects(table) A list of storage objects.
+// @return objects(string) A cursor, if there's a next page of results, nil otherwise.
 // @return error(error) An optional error value if an error occurred.
 func (n *RuntimeLuaLayerGModule) storageIndexList(l *lua.LState) int {
-	idxName := l.CheckString(1)
-	queryString := l.CheckString(2)
+	index := l.CheckString(1)
+	query := l.CheckString(2)
 	limit := l.OptInt(3, 100)
 	if limit < 1 || limit > 10_000 {
 		l.ArgError(3, "invalid limit: expects value 1-10000")
@@ -10337,20 +10359,22 @@ func (n *RuntimeLuaLayerGModule) storageIndexList(l *lua.LState) int {
 		order = append(order, v.String())
 	})
 
-	callerID := uuid.Nil
-	callerIDStr := l.OptString(5, "")
-	if callerIDStr != "" {
-		cid, err := uuid.FromString(callerIDStr)
+	callerIDValue := uuid.Nil
+	callerID := l.OptString(5, "")
+	if callerID != "" {
+		cid, err := uuid.FromString(callerID)
 		if err != nil {
 			l.ArgError(5, "expects caller ID to be empty or a valid identifier")
 			return 0
 		}
-		callerID = cid
+		callerIDValue = cid
 	}
 
-	objectList, err := n.storageIndex.List(l.Context(), callerID, idxName, queryString, limit, order)
+	cursor := l.OptString(6, "")
+
+	objectList, newCursor, err := n.storageIndex.List(l.Context(), callerIDValue, index, query, limit, order, cursor)
 	if err != nil {
-		l.RaiseError(err.Error())
+		l.RaiseError("error in storage index list: %s", err.Error())
 		return 0
 	}
 
@@ -10373,7 +10397,7 @@ func (n *RuntimeLuaLayerGModule) storageIndexList(l *lua.LState) int {
 		valueMap := make(map[string]interface{})
 		err = json.Unmarshal([]byte(v.Value), &valueMap)
 		if err != nil {
-			l.RaiseError(fmt.Sprintf("failed to convert value to json: %s", err.Error()))
+			l.RaiseError("failed to convert value to json: %s", err.Error())
 			return 0
 		}
 		valueTable := RuntimeLuaConvertMap(l, valueMap)
@@ -10383,7 +10407,13 @@ func (n *RuntimeLuaLayerGModule) storageIndexList(l *lua.LState) int {
 	}
 	l.Push(lv)
 
-	return 1
+	if newCursor != "" {
+		l.Push(lua.LString(newCursor))
+	} else {
+		l.Push(lua.LNil)
+	}
+
+	return 2
 }
 
 // @group satori

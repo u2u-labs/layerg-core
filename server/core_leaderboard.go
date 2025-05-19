@@ -103,7 +103,7 @@ func LeaderboardList(logger *zap.Logger, leaderboardCache LeaderboardCache, limi
 			logger.Error("Error creating leaderboard records list cursor", zap.Error(err))
 			return nil, err
 		}
-		leaderboardList.Cursor = base64.StdEncoding.EncodeToString(cursorBuf.Bytes())
+		leaderboardList.Cursor = base64.URLEncoding.EncodeToString(cursorBuf.Bytes())
 	}
 
 	return leaderboardList, nil
@@ -623,7 +623,7 @@ func LeaderboardRecordsDeleteAll(ctx context.Context, logger *zap.Logger, leader
 		}
 
 		expiryUnix := expiryTime.Time.Unix()
-		if expiryUnix <= currentTime {
+		if expiryUnix != 0 && expiryUnix <= currentTime {
 			// Expired ranks are handled by the rank cache itself.
 			continue
 		}

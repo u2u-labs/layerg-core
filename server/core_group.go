@@ -376,7 +376,7 @@ WHERE (id = $1) AND (disable_time = '1970-01-01 00:00:00 UTC')`
 		logger.Error("Could not create channel ID.", zap.Error(err))
 		return err
 	}
-	ts := time.Now().Unix()
+	ts := time.Now().UTC()
 	message := &api.ChannelMessage{
 		ChannelId:  channelID,
 		MessageId:  uuid.Must(uuid.NewV4()).String(),
@@ -384,8 +384,8 @@ WHERE (id = $1) AND (disable_time = '1970-01-01 00:00:00 UTC')`
 		SenderId:   userID.String(),
 		Username:   username,
 		Content:    "{}",
-		CreateTime: &timestamppb.Timestamp{Seconds: ts},
-		UpdateTime: &timestamppb.Timestamp{Seconds: ts},
+		CreateTime: timestamppb.New(ts),
+		UpdateTime: timestamppb.New(ts),
 		Persistent: &wrapperspb.BoolValue{Value: true},
 		GroupId:    group.Id,
 	}
@@ -514,7 +514,7 @@ func LeaveGroup(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tra
 		logger.Error("Could not create channel ID.", zap.Error(err))
 		return err
 	}
-	ts := time.Now().Unix()
+	ts := time.Now().UTC()
 	message := &api.ChannelMessage{
 		ChannelId:  channelID,
 		MessageId:  uuid.Must(uuid.NewV4()).String(),
@@ -522,8 +522,8 @@ func LeaveGroup(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tra
 		SenderId:   userID.String(),
 		Username:   username,
 		Content:    "{}",
-		CreateTime: &timestamppb.Timestamp{Seconds: ts},
-		UpdateTime: &timestamppb.Timestamp{Seconds: ts},
+		CreateTime: timestamppb.New(ts),
+		UpdateTime: timestamppb.New(ts),
 		Persistent: &wrapperspb.BoolValue{Value: true},
 		GroupId:    groupID.String(),
 	}
@@ -636,7 +636,7 @@ func AddGroupUsers(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker 
 		logger.Error("Could not create channel ID.", zap.Error(err))
 		return err
 	}
-	ts := time.Now().Unix()
+	ts := time.Now().UTC()
 	var messages []*api.ChannelMessage
 
 	if err := ExecuteInTx(ctx, db, func(tx *sql.Tx) error {
@@ -713,8 +713,8 @@ func AddGroupUsers(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker 
 				SenderId:   uid.String(),
 				Username:   username.String,
 				Content:    "{}",
-				CreateTime: &timestamppb.Timestamp{Seconds: ts},
-				UpdateTime: &timestamppb.Timestamp{Seconds: ts},
+				CreateTime: timestamppb.New(ts),
+				UpdateTime: timestamppb.New(ts),
 				Persistent: &wrapperspb.BoolValue{Value: true},
 				GroupId:    groupID.String(),
 			}
@@ -788,7 +788,7 @@ func BanGroupUsers(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker 
 		logger.Error("Could not create channel ID.", zap.Error(err))
 		return err
 	}
-	ts := time.Now().Unix()
+	ts := time.Now().UTC()
 	var messages []*api.ChannelMessage
 	kicked := make(map[uuid.UUID]struct{}, len(userIDs))
 
@@ -889,8 +889,8 @@ UPDATE SET state = $2, update_time = now()`
 					SenderId:   uid.String(),
 					Username:   username.String,
 					Content:    "{}",
-					CreateTime: &timestamppb.Timestamp{Seconds: ts},
-					UpdateTime: &timestamppb.Timestamp{Seconds: ts},
+					CreateTime: timestamppb.New(ts),
+					UpdateTime: timestamppb.New(ts),
 					Persistent: &wrapperspb.BoolValue{Value: true},
 					GroupId:    groupID.String(),
 				}
@@ -973,7 +973,7 @@ func KickGroupUsers(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker
 		return err
 	}
 
-	ts := time.Now().Unix()
+	ts := time.Now().UTC()
 	var messages []*api.ChannelMessage
 	kicked := make(map[uuid.UUID]struct{}, len(userIDs))
 
@@ -1066,8 +1066,8 @@ RETURNING state`
 					SenderId:   uid.String(),
 					Username:   username.String,
 					Content:    "{}",
-					CreateTime: &timestamppb.Timestamp{Seconds: ts},
-					UpdateTime: &timestamppb.Timestamp{Seconds: ts},
+					CreateTime: timestamppb.New(ts),
+					UpdateTime: timestamppb.New(ts),
 					Persistent: &wrapperspb.BoolValue{Value: true},
 					GroupId:    groupID.String(),
 				}
@@ -1149,7 +1149,7 @@ func PromoteGroupUsers(ctx context.Context, logger *zap.Logger, db *sql.DB, rout
 		return err
 	}
 
-	ts := time.Now().Unix()
+	ts := time.Now().UTC()
 	var messages []*api.ChannelMessage
 
 	if err := ExecuteInTx(ctx, db, func(tx *sql.Tx) error {
@@ -1203,8 +1203,8 @@ RETURNING state`
 				SenderId:   uid.String(),
 				Username:   username.String,
 				Content:    "{}",
-				CreateTime: &timestamppb.Timestamp{Seconds: ts},
-				UpdateTime: &timestamppb.Timestamp{Seconds: ts},
+				CreateTime: timestamppb.New(ts),
+				UpdateTime: timestamppb.New(ts),
 				Persistent: &wrapperspb.BoolValue{Value: true},
 				GroupId:    groupID.String(),
 			}
@@ -1274,7 +1274,7 @@ func DemoteGroupUsers(ctx context.Context, logger *zap.Logger, db *sql.DB, route
 		return err
 	}
 
-	ts := time.Now().Unix()
+	ts := time.Now().UTC()
 	var messages []*api.ChannelMessage
 
 	if err := ExecuteInTx(ctx, db, func(tx *sql.Tx) error {
@@ -1343,8 +1343,8 @@ RETURNING state`
 				SenderId:   uid.String(),
 				Username:   username.String,
 				Content:    "{}",
-				CreateTime: &timestamppb.Timestamp{Seconds: ts},
-				UpdateTime: &timestamppb.Timestamp{Seconds: ts},
+				CreateTime: timestamppb.New(ts),
+				UpdateTime: timestamppb.New(ts),
 				Persistent: &wrapperspb.BoolValue{Value: true},
 				GroupId:    groupID.String(),
 			}
@@ -1373,7 +1373,7 @@ VALUES ($1, $2, $3, $4, $5, $6::UUID, $7::UUID, $8, $9, $10, $10)`
 func ListGroupUsers(ctx context.Context, logger *zap.Logger, db *sql.DB, statusRegistry StatusRegistry, groupID uuid.UUID, limit int, state *wrapperspb.Int32Value, cursor string) (*api.GroupUserList, error) {
 	var incomingCursor *edgeListCursor
 	if cursor != "" {
-		cb, err := base64.StdEncoding.DecodeString(cursor)
+		cb, err := base64.URLEncoding.DecodeString(cursor)
 		if err != nil {
 			return nil, runtime.ErrGroupUserInvalidCursor
 		}
@@ -1470,7 +1470,7 @@ WHERE u.id = ge.destination_id AND ge.source_id = $1`
 				logger.Error("Error creating group user list cursor", zap.Error(err))
 				return nil, err
 			}
-			outgoingCursor = base64.StdEncoding.EncodeToString(cursorBuf.Bytes())
+			outgoingCursor = base64.URLEncoding.EncodeToString(cursorBuf.Bytes())
 			break
 		}
 
@@ -1515,7 +1515,7 @@ WHERE u.id = ge.destination_id AND ge.source_id = $1`
 func ListUserGroups(ctx context.Context, logger *zap.Logger, db *sql.DB, userID uuid.UUID, limit int, state *wrapperspb.Int32Value, cursor string) (*api.UserGroupList, error) {
 	var incomingCursor *edgeListCursor
 	if cursor != "" {
-		cb, err := base64.StdEncoding.DecodeString(cursor)
+		cb, err := base64.URLEncoding.DecodeString(cursor)
 		if err != nil {
 			return nil, runtime.ErrUserGroupInvalidCursor
 		}
@@ -1604,7 +1604,7 @@ WHERE g.id = ge.destination_id AND ge.source_id = $1`
 				logger.Error("Error creating group user list cursor", zap.Error(err))
 				return nil, err
 			}
-			outgoingCursor = base64.StdEncoding.EncodeToString(cursorBuf.Bytes())
+			outgoingCursor = base64.URLEncoding.EncodeToString(cursorBuf.Bytes())
 			break
 		}
 
@@ -1758,7 +1758,7 @@ SELECT id, creator_id, name, description, avatar_url, state, edge_count, lang_ta
 FROM groups
 WHERE disable_time = '1970-01-01 00:00:00 UTC'
 AND state = $2
-AND edge_count = $3`
+AND edge_count <= $3`
 		if cursor != nil {
 			params = append(params, cursor.GetState(), cursor.EdgeCount, cursor.Lang, cursor.ID)
 			query += " AND (disable_time, state, edge_count, lang_tag, id) < ('1970-01-01 00:00:00 UTC', $4, $5, $6, $7)"

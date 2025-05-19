@@ -39,7 +39,7 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 		return nil, status.Error(codes.InvalidArgument, "Refresh token is required.")
 	}
 
-	userID, username, vars, tokenId, err := SessionRefresh(ctx, s.logger, s.db, s.config, s.sessionCache, in.Token)
+	userID, username, vars, tokenId, tokenIssuedAt, err := SessionRefresh(ctx, s.logger, s.db, s.config, s.sessionCache, in.Token)
 	if err != nil {
 		s.logger.Error("Error refreshing session.", zap.Error(err))
 		return nil, err
@@ -64,8 +64,8 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 	}
 	userIDStr := userID.String()
 
-	token, tokenExp := generateToken(s.config, tokenId, userIDStr, username, useVars)
-	refreshToken, refreshTokenExp := generateRefreshToken(s.config, tokenId, userIDStr, username, useVars)
+	token, tokenExp := generateToken(s.config, tokenId, tokenIssuedAt, userIDStr, username, useVars)
+	refreshToken, refreshTokenExp := generateRefreshToken(s.config, tokenId, tokenIssuedAt, userIDStr, username, useVars)
 	s.sessionCache.Add(userID, tokenExp, tokenId, refreshTokenExp, tokenId)
 	session := &api.Session{Created: false, Token: token, RefreshToken: refreshToken}
 

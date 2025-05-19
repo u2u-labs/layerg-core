@@ -4,12 +4,12 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"context"
-	"crypto"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net"
@@ -21,12 +21,13 @@ import (
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/gofrs/uuid/v5"
-	jwt "github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	grpcgw "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/u2u-labs/go-layerg-common/api"
 	"github.com/u2u-labs/layerg-core/apigrpc"
+	"github.com/u2u-labs/layerg-core/internal/ctxkeys"
 	"github.com/u2u-labs/layerg-core/social"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -47,10 +48,12 @@ var once sync.Once
 const byteBracket byte = '{'
 
 // Keys used for storing/retrieving user information in the context of a request after authentication.
-type ctxUserIDKey struct{}
-type ctxUsernameKey struct{}
-type ctxVarsKey struct{}
-type ctxExpiryKey struct{}
+type ctxUserIDKey = ctxkeys.UserIDKey
+type ctxUsernameKey = ctxkeys.UsernameKey
+type ctxVarsKey = ctxkeys.VarsKey
+type ctxExpiryKey = ctxkeys.ExpiryKey
+type ctxTokenIDKey = ctxkeys.TokenIDKey
+type ctxTokenIssuedAtKey = ctxkeys.TokenIssuedAtKey
 
 type ctxFullMethodKey struct{}
 
@@ -219,9 +222,9 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 
 	grpcGatewayRouter := mux.NewRouter()
 	// Special case routes. Do NOT enable compression on WebSocket route, it results in "http: response.Write on hijacked connection" errors.
-	grpcGatewayRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) }).Methods("GET")
-	grpcGatewayRouter.HandleFunc("/ws", NewSocketWsAcceptor(logger, config, sessionRegistry, sessionCache, statusRegistry, matchmaker, tracker, metrics, runtime, protojsonMarshaler, protojsonUnmarshaler, pipeline)).Methods("GET")
-	grpcGatewayRouter.HandleFunc("/ua-headers", GetUAHeadersHandler(config)).Methods("GET")
+	grpcGatewayRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) }).Methods(http.MethodGet)
+	grpcGatewayRouter.HandleFunc("/ws", NewSocketWsAcceptor(logger, config, sessionRegistry, sessionCache, statusRegistry, matchmaker, tracker, metrics, runtime, protojsonMarshaler, protojsonUnmarshaler, pipeline)).Methods(http.MethodGet)
+	grpcGatewayRouter.HandleFunc("/ua-headers", GetUAHeadersHandler(config)).Methods(http.MethodGet)
 
 	// Add webhook routes before wrapping the router
 	webhookRegistry := runtime.GetWebhookRegistry()
@@ -231,7 +234,7 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 
 	// Another nested router to hijack RPC requests bound for GRPC Gateway.
 	grpcGatewayMux := mux.NewRouter()
-	grpcGatewayMux.HandleFunc("/v2/rpc/{id:.*}", s.RpcFuncHttp).Methods("GET", "POST")
+	grpcGatewayMux.HandleFunc("/v2/rpc/{id:.*}", s.RpcFuncHttp).Methods(http.MethodGet, http.MethodPost)
 	grpcGatewayMux.NewRoute().Handler(grpcGateway)
 
 	// Enable stats recording on all request paths except:
@@ -269,7 +272,7 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 	// Enable CORS on all requests.
 	CORSHeaders := handlers.AllowedHeaders([]string{"Authorization", "Content-Type", "User-Agent"})
 	CORSOrigins := handlers.AllowedOrigins([]string{"*"})
-	CORSMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE"})
+	CORSMethods := handlers.AllowedMethods([]string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodDelete})
 	handlerWithCORS := handlers.CORS(CORSHeaders, CORSOrigins, CORSMethods)(grpcGatewayRouter)
 
 	// Enable configured response headers, if any are set. Do not override values that may have been set by server processing.
@@ -309,11 +312,11 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *sql.DB, p
 		}
 
 		if config.GetSocket().TLSCert != nil {
-			if err := s.grpcGatewayServer.ServeTLS(listener, "", ""); err != nil && err != http.ErrServerClosed {
+			if err := s.grpcGatewayServer.ServeTLS(listener, "", ""); err != nil && errors.Is(err, http.ErrServerClosed) {
 				startupLogger.Fatal("API server gateway listener failed", zap.Error(err))
 			}
 		} else {
-			if err := s.grpcGatewayServer.Serve(listener); err != nil && err != http.ErrServerClosed {
+			if err := s.grpcGatewayServer.Serve(listener); err != nil && errors.Is(err, http.ErrServerClosed) {
 				startupLogger.Fatal("API server gateway listener failed", zap.Error(err))
 			}
 		}
@@ -436,7 +439,7 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 			// Value of "authorization" or "grpc-authorization" was empty or repeated.
 			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
 		}
-		userID, username, vars, exp, tokenId, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
+		userID, username, vars, exp, tokenId, tokenIssuedAt, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
 		if !ok {
 			// Value of "authorization" or "grpc-authorization" was malformed or expired.
 			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
@@ -444,7 +447,7 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 		if !sessionCache.IsValidSession(userID, exp, tokenId) {
 			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
 		}
-		ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
+		ctx = populateCtx(ctx, userID, username, tokenId, vars, exp, tokenIssuedAt)
 	default:
 		// Unless explicitly defined above, handlers require full user authentication.
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -464,7 +467,7 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 			// Value of "authorization" or "grpc-authorization" was empty or repeated.
 			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
 		}
-		userID, username, vars, exp, tokenId, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
+		userID, username, vars, exp, tokenId, tokenIssuedAt, ok := parseBearerAuth([]byte(config.GetSession().EncryptionKey), auth[0])
 		if !ok {
 			// Value of "authorization" or "grpc-authorization" was malformed or expired.
 			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
@@ -472,9 +475,22 @@ func securityInterceptorFunc(logger *zap.Logger, config Config, sessionCache Ses
 		if !sessionCache.IsValidSession(userID, exp, tokenId) {
 			return nil, status.Error(codes.Unauthenticated, "Auth token invalid")
 		}
-		ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
+		// ctx = context.WithValue(context.WithValue(context.WithValue(context.WithValue(ctx, ctxUserIDKey{}, userID), ctxUsernameKey{}, username), ctxVarsKey{}, vars), ctxExpiryKey{}, exp)
+		ctx = populateCtx(ctx, userID, username, tokenId, vars, exp, tokenIssuedAt)
+
 	}
 	return context.WithValue(ctx, ctxFullMethodKey{}, info.FullMethod), nil
+}
+
+func populateCtx(ctx context.Context, userId uuid.UUID, username, tokenId string, vars map[string]string, tokenExpiry, tokenIssuedAt int64) context.Context {
+	ctx = context.WithValue(ctx, ctxUserIDKey{}, userId)
+	ctx = context.WithValue(ctx, ctxUsernameKey{}, username)
+	ctx = context.WithValue(ctx, ctxTokenIDKey{}, tokenId)
+	ctx = context.WithValue(ctx, ctxVarsKey{}, vars)
+	ctx = context.WithValue(ctx, ctxExpiryKey{}, tokenExpiry)
+	ctx = context.WithValue(ctx, ctxTokenIssuedAtKey{}, tokenIssuedAt)
+
+	return ctx
 }
 
 func parseBasicAuth(auth string) (username, password string, ok bool) {
@@ -497,7 +513,7 @@ func parseBasicAuth(auth string) (username, password string, ok bool) {
 	return cs[:s], cs[s+1:], true
 }
 
-func parseBearerAuth(hmacSecretByte []byte, auth string) (userID uuid.UUID, username string, vars map[string]string, exp int64, tokenId string, ok bool) {
+func parseBearerAuth(hmacSecretByte []byte, auth string) (userID uuid.UUID, username string, vars map[string]string, exp int64, tokenId string, issuedAt int64, ok bool) {
 	if auth == "" {
 		return
 	}
@@ -593,13 +609,10 @@ func parseBearerAuth(hmacSecretByte []byte, auth string) (userID uuid.UUID, user
 
 // }
 
-func parseToken(hmacSecretByte []byte, tokenString string) (userID uuid.UUID, username string, vars map[string]string, exp int64, tokenId string, ok bool) {
+func parseToken(hmacSecretByte []byte, tokenString string) (userID uuid.UUID, username string, vars map[string]string, exp int64, tokenId string, issuedAt int64, ok bool) {
 	jwtToken, err := jwt.ParseWithClaims(tokenString, &SessionTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if s, ok := token.Method.(*jwt.SigningMethodHMAC); !ok || s.Hash != crypto.SHA256 {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
 		return hmacSecretByte, nil
-	})
+	}, jwt.WithExpirationRequired(), jwt.WithValidMethods([]string{"HS256"}))
 	if err != nil {
 		return
 	}
@@ -611,7 +624,7 @@ func parseToken(hmacSecretByte []byte, tokenString string) (userID uuid.UUID, us
 	if err != nil {
 		return
 	}
-	return userID, claims.Username, claims.Vars, claims.ExpiresAt, claims.TokenId, true
+	return userID, claims.Username, claims.Vars, claims.ExpiresAt, claims.TokenId, claims.IssuedAt, true
 }
 
 func decompressHandler(logger *zap.Logger, h http.Handler) http.HandlerFunc {
@@ -668,17 +681,19 @@ func extractClientAddress(logger *zap.Logger, clientAddr string, source interfac
 		if host, port, err := net.SplitHostPort(clientAddr); err == nil {
 			clientIP = host
 			clientPort = port
-		} else if addrErr, ok := err.(*net.AddrError); ok {
-			switch addrErr.Err {
-			case "missing port in address":
-				fallthrough
-			case "too many colons in address":
-				clientIP = clientAddr
-			default:
-				// Unknown address error, ignore the address.
+		} else {
+			var addrErr *net.AddrError
+			if errors.As(err, &addrErr) {
+				switch addrErr.Err {
+				case "missing port in address":
+					fallthrough
+				case "too many colons in address":
+					clientIP = clientAddr
+				default:
+					// Unknown address error, ignore the address.
+				}
 			}
 		}
-		// At this point err may still be a non-nil value that's not a *net.AddrError, ignore the address.
 	}
 
 	if clientIP == "" {

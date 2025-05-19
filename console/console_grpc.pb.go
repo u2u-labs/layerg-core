@@ -26,6 +26,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	Console_Authenticate_FullMethodName              = "/layerg.console.Console/Authenticate"
 	Console_AuthenticateLogout_FullMethodName        = "/layerg.console.Console/AuthenticateLogout"
+	Console_AuthenticateMFASetup_FullMethodName      = "/layerg.console.Console/AuthenticateMFASetup"
 	Console_AddUser_FullMethodName                   = "/layerg.console.Console/AddUser"
 	Console_AddGroupUsers_FullMethodName             = "/layerg.console.Console/AddGroupUsers"
 	Console_BanAccount_FullMethodName                = "/layerg.console.Console/BanAccount"
@@ -68,16 +69,18 @@ const (
 	Console_ListLeaderboardRecords_FullMethodName    = "/layerg.console.Console/ListLeaderboardRecords"
 	Console_ListLeaderboards_FullMethodName          = "/layerg.console.Console/ListLeaderboards"
 	Console_ListStorage_FullMethodName               = "/layerg.console.Console/ListStorage"
-	Console_ListNotifications_FullMethodName         = "/layerg.console.Console/ListNotifications"
 	Console_ListStorageCollections_FullMethodName    = "/layerg.console.Console/ListStorageCollections"
 	Console_ListAccounts_FullMethodName              = "/layerg.console.Console/ListAccounts"
 	Console_ListChannelMessages_FullMethodName       = "/layerg.console.Console/ListChannelMessages"
 	Console_ListGroups_FullMethodName                = "/layerg.console.Console/ListGroups"
+	Console_ListNotifications_FullMethodName         = "/layerg.console.Console/ListNotifications"
 	Console_ListMatches_FullMethodName               = "/layerg.console.Console/ListMatches"
 	Console_ListPurchases_FullMethodName             = "/layerg.console.Console/ListPurchases"
 	Console_ListSubscriptions_FullMethodName         = "/layerg.console.Console/ListSubscriptions"
 	Console_ListUsers_FullMethodName                 = "/layerg.console.Console/ListUsers"
 	Console_PromoteGroupMember_FullMethodName        = "/layerg.console.Console/PromoteGroupMember"
+	Console_RequireUserMfa_FullMethodName            = "/layerg.console.Console/RequireUserMfa"
+	Console_ResetUserMfa_FullMethodName              = "/layerg.console.Console/ResetUserMfa"
 	Console_UnbanAccount_FullMethodName              = "/layerg.console.Console/UnbanAccount"
 	Console_UnlinkCustom_FullMethodName              = "/layerg.console.Console/UnlinkCustom"
 	Console_UnlinkDevice_FullMethodName              = "/layerg.console.Console/UnlinkDevice"
@@ -104,6 +107,8 @@ type ConsoleClient interface {
 	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*ConsoleSession, error)
 	// Log out a session and invalidate the session token.
 	AuthenticateLogout(ctx context.Context, in *AuthenticateLogoutRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Change an account's MFA using a code, usually delivered over email.
+	AuthenticateMFASetup(ctx context.Context, in *AuthenticateMFASetupRequest, opts ...grpc.CallOption) (*AuthenticateMFASetupResponse, error)
 	// Add a new console user.
 	AddUser(ctx context.Context, in *AddUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Add/join members to a group.
@@ -188,8 +193,6 @@ type ConsoleClient interface {
 	ListLeaderboards(ctx context.Context, in *LeaderboardListRequest, opts ...grpc.CallOption) (*LeaderboardList, error)
 	// List (and optionally filter) storage data.
 	ListStorage(ctx context.Context, in *ListStorageRequest, opts ...grpc.CallOption) (*StorageList, error)
-	// List notifications.
-	ListNotifications(ctx context.Context, in *ListNotificationsRequest, opts ...grpc.CallOption) (*NotificationList, error)
 	// List storage collections
 	ListStorageCollections(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StorageCollectionsList, error)
 	// List (and optionally filter) accounts.
@@ -198,6 +201,8 @@ type ConsoleClient interface {
 	ListChannelMessages(ctx context.Context, in *ListChannelMessagesRequest, opts ...grpc.CallOption) (*api.ChannelMessageList, error)
 	// List (and optionally filter) groups.
 	ListGroups(ctx context.Context, in *ListGroupsRequest, opts ...grpc.CallOption) (*GroupList, error)
+	// List notifications.
+	ListNotifications(ctx context.Context, in *ListNotificationsRequest, opts ...grpc.CallOption) (*NotificationList, error)
 	// List ongoing matches
 	ListMatches(ctx context.Context, in *ListMatchesRequest, opts ...grpc.CallOption) (*MatchList, error)
 	// List validated purchases
@@ -208,6 +213,10 @@ type ConsoleClient interface {
 	ListUsers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserList, error)
 	// Promote a user from a group.
 	PromoteGroupMember(ctx context.Context, in *UpdateGroupUserStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Sets the user's MFA as required or not required.
+	RequireUserMfa(ctx context.Context, in *RequireUserMfaRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Reset a user's multi-factor authentication credentials.
+	ResetUserMfa(ctx context.Context, in *ResetUserMfaRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Unban a user.
 	UnbanAccount(ctx context.Context, in *AccountId, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Unlink the custom ID from a user account.
@@ -258,6 +267,16 @@ func (c *consoleClient) AuthenticateLogout(ctx context.Context, in *Authenticate
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Console_AuthenticateLogout_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consoleClient) AuthenticateMFASetup(ctx context.Context, in *AuthenticateMFASetupRequest, opts ...grpc.CallOption) (*AuthenticateMFASetupResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthenticateMFASetupResponse)
+	err := c.cc.Invoke(ctx, Console_AuthenticateMFASetup_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -684,16 +703,6 @@ func (c *consoleClient) ListStorage(ctx context.Context, in *ListStorageRequest,
 	return out, nil
 }
 
-func (c *consoleClient) ListNotifications(ctx context.Context, in *ListNotificationsRequest, opts ...grpc.CallOption) (*NotificationList, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NotificationList)
-	err := c.cc.Invoke(ctx, Console_ListNotifications_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *consoleClient) ListStorageCollections(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StorageCollectionsList, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StorageCollectionsList)
@@ -728,6 +737,16 @@ func (c *consoleClient) ListGroups(ctx context.Context, in *ListGroupsRequest, o
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GroupList)
 	err := c.cc.Invoke(ctx, Console_ListGroups_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consoleClient) ListNotifications(ctx context.Context, in *ListNotificationsRequest, opts ...grpc.CallOption) (*NotificationList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NotificationList)
+	err := c.cc.Invoke(ctx, Console_ListNotifications_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -778,6 +797,26 @@ func (c *consoleClient) PromoteGroupMember(ctx context.Context, in *UpdateGroupU
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Console_PromoteGroupMember_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consoleClient) RequireUserMfa(ctx context.Context, in *RequireUserMfaRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Console_RequireUserMfa_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consoleClient) ResetUserMfa(ctx context.Context, in *ResetUserMfaRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Console_ResetUserMfa_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -925,6 +964,8 @@ type ConsoleServer interface {
 	Authenticate(context.Context, *AuthenticateRequest) (*ConsoleSession, error)
 	// Log out a session and invalidate the session token.
 	AuthenticateLogout(context.Context, *AuthenticateLogoutRequest) (*emptypb.Empty, error)
+	// Change an account's MFA using a code, usually delivered over email.
+	AuthenticateMFASetup(context.Context, *AuthenticateMFASetupRequest) (*AuthenticateMFASetupResponse, error)
 	// Add a new console user.
 	AddUser(context.Context, *AddUserRequest) (*emptypb.Empty, error)
 	// Add/join members to a group.
@@ -1009,8 +1050,6 @@ type ConsoleServer interface {
 	ListLeaderboards(context.Context, *LeaderboardListRequest) (*LeaderboardList, error)
 	// List (and optionally filter) storage data.
 	ListStorage(context.Context, *ListStorageRequest) (*StorageList, error)
-	// List notifications.
-	ListNotifications(context.Context, *ListNotificationsRequest) (*NotificationList, error)
 	// List storage collections
 	ListStorageCollections(context.Context, *emptypb.Empty) (*StorageCollectionsList, error)
 	// List (and optionally filter) accounts.
@@ -1019,6 +1058,8 @@ type ConsoleServer interface {
 	ListChannelMessages(context.Context, *ListChannelMessagesRequest) (*api.ChannelMessageList, error)
 	// List (and optionally filter) groups.
 	ListGroups(context.Context, *ListGroupsRequest) (*GroupList, error)
+	// List notifications.
+	ListNotifications(context.Context, *ListNotificationsRequest) (*NotificationList, error)
 	// List ongoing matches
 	ListMatches(context.Context, *ListMatchesRequest) (*MatchList, error)
 	// List validated purchases
@@ -1029,6 +1070,10 @@ type ConsoleServer interface {
 	ListUsers(context.Context, *emptypb.Empty) (*UserList, error)
 	// Promote a user from a group.
 	PromoteGroupMember(context.Context, *UpdateGroupUserStateRequest) (*emptypb.Empty, error)
+	// Sets the user's MFA as required or not required.
+	RequireUserMfa(context.Context, *RequireUserMfaRequest) (*emptypb.Empty, error)
+	// Reset a user's multi-factor authentication credentials.
+	ResetUserMfa(context.Context, *ResetUserMfaRequest) (*emptypb.Empty, error)
 	// Unban a user.
 	UnbanAccount(context.Context, *AccountId) (*emptypb.Empty, error)
 	// Unlink the custom ID from a user account.
@@ -1070,6 +1115,9 @@ func (UnimplementedConsoleServer) Authenticate(context.Context, *AuthenticateReq
 }
 func (UnimplementedConsoleServer) AuthenticateLogout(context.Context, *AuthenticateLogoutRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateLogout not implemented")
+}
+func (UnimplementedConsoleServer) AuthenticateMFASetup(context.Context, *AuthenticateMFASetupRequest) (*AuthenticateMFASetupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateMFASetup not implemented")
 }
 func (UnimplementedConsoleServer) AddUser(context.Context, *AddUserRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddUser not implemented")
@@ -1197,9 +1245,6 @@ func (UnimplementedConsoleServer) ListLeaderboards(context.Context, *Leaderboard
 func (UnimplementedConsoleServer) ListStorage(context.Context, *ListStorageRequest) (*StorageList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListStorage not implemented")
 }
-func (UnimplementedConsoleServer) ListNotifications(context.Context, *ListNotificationsRequest) (*NotificationList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListNotifications not implemented")
-}
 func (UnimplementedConsoleServer) ListStorageCollections(context.Context, *emptypb.Empty) (*StorageCollectionsList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListStorageCollections not implemented")
 }
@@ -1211,6 +1256,9 @@ func (UnimplementedConsoleServer) ListChannelMessages(context.Context, *ListChan
 }
 func (UnimplementedConsoleServer) ListGroups(context.Context, *ListGroupsRequest) (*GroupList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListGroups not implemented")
+}
+func (UnimplementedConsoleServer) ListNotifications(context.Context, *ListNotificationsRequest) (*NotificationList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListNotifications not implemented")
 }
 func (UnimplementedConsoleServer) ListMatches(context.Context, *ListMatchesRequest) (*MatchList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListMatches not implemented")
@@ -1226,6 +1274,12 @@ func (UnimplementedConsoleServer) ListUsers(context.Context, *emptypb.Empty) (*U
 }
 func (UnimplementedConsoleServer) PromoteGroupMember(context.Context, *UpdateGroupUserStateRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PromoteGroupMember not implemented")
+}
+func (UnimplementedConsoleServer) RequireUserMfa(context.Context, *RequireUserMfaRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequireUserMfa not implemented")
+}
+func (UnimplementedConsoleServer) ResetUserMfa(context.Context, *ResetUserMfaRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResetUserMfa not implemented")
 }
 func (UnimplementedConsoleServer) UnbanAccount(context.Context, *AccountId) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnbanAccount not implemented")
@@ -1319,6 +1373,24 @@ func _Console_AuthenticateLogout_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ConsoleServer).AuthenticateLogout(ctx, req.(*AuthenticateLogoutRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Console_AuthenticateMFASetup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthenticateMFASetupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsoleServer).AuthenticateMFASetup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Console_AuthenticateMFASetup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsoleServer).AuthenticateMFASetup(ctx, req.(*AuthenticateMFASetupRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2079,24 +2151,6 @@ func _Console_ListStorage_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Console_ListNotifications_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListNotificationsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConsoleServer).ListNotifications(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Console_ListNotifications_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsoleServer).ListNotifications(ctx, req.(*ListNotificationsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Console_ListStorageCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
@@ -2165,6 +2219,24 @@ func _Console_ListGroups_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ConsoleServer).ListGroups(ctx, req.(*ListGroupsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Console_ListNotifications_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListNotificationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsoleServer).ListNotifications(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Console_ListNotifications_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsoleServer).ListNotifications(ctx, req.(*ListNotificationsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2255,6 +2327,42 @@ func _Console_PromoteGroupMember_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ConsoleServer).PromoteGroupMember(ctx, req.(*UpdateGroupUserStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Console_RequireUserMfa_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequireUserMfaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsoleServer).RequireUserMfa(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Console_RequireUserMfa_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsoleServer).RequireUserMfa(ctx, req.(*RequireUserMfaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Console_ResetUserMfa_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResetUserMfaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsoleServer).ResetUserMfa(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Console_ResetUserMfa_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsoleServer).ResetUserMfa(ctx, req.(*ResetUserMfaRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2509,6 +2617,10 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Console_AuthenticateLogout_Handler,
 		},
 		{
+			MethodName: "AuthenticateMFASetup",
+			Handler:    _Console_AuthenticateMFASetup_Handler,
+		},
+		{
 			MethodName: "AddUser",
 			Handler:    _Console_AddUser_Handler,
 		},
@@ -2677,10 +2789,6 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Console_ListStorage_Handler,
 		},
 		{
-			MethodName: "ListNotifications",
-			Handler:    _Console_ListNotifications_Handler,
-		},
-		{
 			MethodName: "ListStorageCollections",
 			Handler:    _Console_ListStorageCollections_Handler,
 		},
@@ -2695,6 +2803,10 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListGroups",
 			Handler:    _Console_ListGroups_Handler,
+		},
+		{
+			MethodName: "ListNotifications",
+			Handler:    _Console_ListNotifications_Handler,
 		},
 		{
 			MethodName: "ListMatches",
@@ -2715,6 +2827,14 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PromoteGroupMember",
 			Handler:    _Console_PromoteGroupMember_Handler,
+		},
+		{
+			MethodName: "RequireUserMfa",
+			Handler:    _Console_RequireUserMfa_Handler,
+		},
+		{
+			MethodName: "ResetUserMfa",
+			Handler:    _Console_ResetUserMfa_Handler,
 		},
 		{
 			MethodName: "UnbanAccount",
