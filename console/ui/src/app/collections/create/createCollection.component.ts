@@ -30,8 +30,8 @@ export class CreateCollectionComponent implements OnInit, OnDestroy {
     });
     this.route.data.subscribe(
       d => {
-        const data = JSON.parse(d[0].config);
-        console.log(data);
+        // const data = JSON.parse(d[0].config);
+        // console.log(data);
       },
       err => {
         this.error = err;

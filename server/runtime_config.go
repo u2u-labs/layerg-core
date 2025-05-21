@@ -10,6 +10,7 @@ type RuntimeConfigClone struct {
 	Socket        runtime.SocketConfig
 	Runtime       runtime.RuntimeConfig
 	Iap           runtime.IAPConfig
+	LayerGConfig  runtime.LayerGModuleConfig
 	// Social        runtime.SocialConfig
 }
 
@@ -39,6 +40,10 @@ func (c *RuntimeConfigClone) GetRuntime() runtime.RuntimeConfig {
 
 func (c *RuntimeConfigClone) GetIAP() runtime.IAPConfig {
 	return c.Iap
+}
+
+func (c *RuntimeConfigClone) GetLayerGCoreConfig() runtime.LayerGModuleConfig {
+	return c.LayerGConfig
 }
 
 // func (c *RuntimeConfigClone) GetSocial() runtime.SocialConfig {

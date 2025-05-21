@@ -698,7 +698,7 @@ message AddNFTCollectionRequest {
   string collection_address = 1;
   string type = 2;
   uint64 initial_block = 3;
-  uint32 chain_id = 4;
+  uint64 chain_id = 4;
 }
 
 // Reset a user's mfa setup.

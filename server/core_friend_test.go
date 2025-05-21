@@ -2,10 +2,11 @@ package server
 
 import (
 	"context"
+	"testing"
+
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/u2u-labs/go-layerg-common/api"
-	"testing"
 )
 
 func TestServer_ListFriendsOfFriends(t *testing.T) {
@@ -50,22 +51,50 @@ func TestServer_ListFriendsOfFriends(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	addFriend(ctx, logger, tx, uid, uidA1.String())
-	addFriend(ctx, logger, tx, uidA1, uid.String())
-	addFriend(ctx, logger, tx, uidA1, uidA2.String())
-	addFriend(ctx, logger, tx, uidA2, uidA1.String())
-	addFriend(ctx, logger, tx, uidA1, uidA3.String())
-	addFriend(ctx, logger, tx, uidA3, uidA1.String())
+	if _, err := addFriend(ctx, logger, tx, uid, uidA1.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidA1, uid.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidA1, uidA2.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidA2, uidA1.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidA1, uidA3.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidA3, uidA1.String(), ""); err != nil {
+		t.Fatal(err)
+	}
 
-	addFriend(ctx, logger, tx, uid, uidB1.String())
-	addFriend(ctx, logger, tx, uidB1, uid.String())
-	addFriend(ctx, logger, tx, uidB1, uidB2.String())
-	addFriend(ctx, logger, tx, uidB2, uidB1.String())
-	addFriend(ctx, logger, tx, uidB1, uidB3.String())
-	addFriend(ctx, logger, tx, uidB3, uidB1.String())
+	if _, err := addFriend(ctx, logger, tx, uid, uidB1.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidB1, uid.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidB1, uidB2.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidB2, uidB1.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidB1, uidB3.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidB3, uidB1.String(), ""); err != nil {
+		t.Fatal(err)
+	}
 
-	addFriend(ctx, logger, tx, uid, uidB3.String())
-	addFriend(ctx, logger, tx, uidB3, uid.String())
+	if _, err := addFriend(ctx, logger, tx, uid, uidB3.String(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := addFriend(ctx, logger, tx, uidB3, uid.String(), ""); err != nil {
+		t.Fatal(err)
+	}
 
 	if err = tx.Commit(); err != nil {
 		t.Fatal(err)

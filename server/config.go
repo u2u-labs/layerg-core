@@ -548,6 +548,7 @@ func (c *config) Clone() (Config, error) {
 		IAP:              c.IAP.Clone(),
 		Storage:          c.Storage.Clone(),
 		MFA:              c.MFA.Clone(),
+		LayerGCore:       c.LayerGCore.Clone(),
 		// 		RedisDb:          &configRedisDb,
 		Cluster: c.Cluster.Clone(),
 		Mqtt:    &configMqtt,
@@ -691,6 +692,7 @@ func (c *config) GetRuntimeConfig() (runtime.Config, error) {
 	var soc runtime.SocketConfig = clone.GetSocket()
 	var rc runtime.RuntimeConfig = clone.GetRuntime()
 	var iap runtime.IAPConfig = clone.GetIAP()
+	var lgc runtime.LayerGModuleConfig = clone.GetLayerGCoreConfig()
 
 	cn := &RuntimeConfigClone{
 		Name:          clone.GetName(),
@@ -700,6 +702,7 @@ func (c *config) GetRuntimeConfig() (runtime.Config, error) {
 		Socket:        soc,
 		Runtime:       rc,
 		Iap:           iap,
+		LayerGConfig:  lgc,
 	}
 
 	return cn, nil
@@ -1491,16 +1494,12 @@ func (cfg *GoogleAuthConfig) GetCredentialsJSON() string {
 }
 
 type LayerGCoreConfig struct {
-	ApiKey              string `yaml:"api_key" json:"api_key" usage:"api key to communicate with core server"`
-	ApiKeyID            string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
-	PortalURL           string `yaml:"portal_url" json:"portal_url" usage:"url of core server"`
+	HubApiKey           string `yaml:"hub_api_key" json:"hub_api_key" usage:"api key to communicate with core server"`
+	HubApiKeyID         string `yaml:"hub_api_key_id" json:"hub_api_key_id" usage:"api key id to communicate with core server"`
+	HubURL              string `yaml:"hub_url" json:"hub_url" usage:"url of core server"`
 	UniversalAccountURL string `yaml:"ua_url" json:"ua_url" usage:"ua_url of core server"`
-	MasterDB            string `yaml:"masterdb_url" json:"masterdb_url" usage:"masterdb_url of core server"`
-	MasterPvk           string `yaml:"master_pvk" json:"master_pvk" usage:"master wallet private key for admin onchain operaton"`
 	UAApiKey            string `yaml:"ua_api_key" json:"ua_api_key" usage:"ua api key for core server"`
-	UAPublicApiKey      string `yaml:"ua_public_api_key" json:"ua_public_api_key" usage:"ua public api key for core server"`
-	UAPrivateApiKey     string `yaml:"ua_private_api_key" json:"ua_private_api_key" usage:"ua private api key for core server"`
-	UADomain            string `yaml:"ua_domain" json:"ua_domain" usage:"ua domain for core server"`
+	UASecret            string `yaml:"ua_secret_api_key" json:"ua_secret_api_key" usage:"ua private api key for core server"`
 }
 
 type RedisConfig struct {
@@ -1557,18 +1556,43 @@ func NewMFAConfig() *MFAConfig {
 
 func NewLayerGCore() *LayerGCoreConfig {
 	return &LayerGCoreConfig{
-		ApiKey:              "v13lx3ykszi3gi7j000oa2",
-		ApiKeyID:            "d3e94d1b-3959-498b-9971-b5df93adfd28",
-		PortalURL:           "http://localhost:3000",
+		HubApiKey:           "v13lx3ykszi3gi7j000oa2",
+		HubApiKeyID:         "d3e94d1b-3959-498b-9971-b5df93adfd28",
+		HubURL:              "http://localhost:3000",
 		UniversalAccountURL: "https://bundler-dev.layerg.xyz",
-		MasterDB:            "https://crawler-db-dev.layerg.xyz",
-		MasterPvk:           "27f13e9f9e69f7cfa365e2316b272a943e162c769ae57826ebe373f73d0323d9",
 		UAApiKey:            "sys-dev-api-key",
-		UAPublicApiKey:      "7c581609293E503dE149d93f34767DFF33d32C16",
-		UAPrivateApiKey:     "c194c2a77814de98c486836da3ae6747769ed6e6064186f2943b33f25dba284c",
-		UADomain:            "http://localhost:7350",
+		UASecret:            "7c581609293E503dE149d93f34767DFF33d32C16",
 	}
 }
+
+func (lgc LayerGCoreConfig) GetHubAPIKey() string {
+	return lgc.HubApiKey
+}
+func (lgc LayerGCoreConfig) GetHubAPIKeyID() string {
+	return lgc.HubApiKeyID
+}
+func (lgc LayerGCoreConfig) GetPortalUrl() string {
+	return lgc.HubURL
+}
+func (lgc LayerGCoreConfig) GetUniversalAccountUrl() string {
+	return lgc.UniversalAccountURL
+}
+func (lgc LayerGCoreConfig) GetUAAPIKey() string {
+	return lgc.UAApiKey
+}
+func (lgc LayerGCoreConfig) GetUASecret() string {
+	return lgc.UASecret
+}
+
+func (cfg *LayerGCoreConfig) Clone() *LayerGCoreConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+	return &cfgCopy
+}
+
 func NewRedisDb() *RedisConfig {
 	return &RedisConfig{
 		Url:      "localhost:6379",

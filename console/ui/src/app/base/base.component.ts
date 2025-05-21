@@ -96,13 +96,13 @@ export class BaseComponent implements OnInit, OnDestroy {
     this.consoleService.getConfig('').pipe(
       tap((configRes: any) => {
         const parsed = JSON.parse(configRes?.config || '{}');
-        const host = parsed?.layerg_core?.portal_url;
+        const host = parsed?.layerg_core?.hub_url;
         this.layergPortalService.layerg = {
           host,
           timeoutMs: 5000,
         }; // Dynamically update the host
-        const apiKey = parsed?.layerg_core?.api_key;
-        const apiKeyID = parsed?.layerg_core?.api_key_id;
+        const apiKey = parsed?.layerg_core?.hub_api_key;
+        const apiKeyID = parsed?.layerg_core?.hub_api_key_id;
         const params = {
           apiKey,
           apiKeyID,
@@ -164,7 +164,7 @@ export class PageviewGuard implements CanActivate, CanActivateChild {
     this.consoleService.getConfig('').pipe(
       tap((configRes: any) => {
         const parsed = JSON.parse(configRes?.config || '{}');
-        const host = parsed?.layerg_core?.portal_url;
+        const host = parsed?.layerg_core?.hub_url;
         this.layergPortalService.layerg = {
           host,
           timeoutMs: 5000,
@@ -184,7 +184,7 @@ export class PageviewGuard implements CanActivate, CanActivateChild {
     this.consoleService.getConfig('').pipe(
       tap((configRes: any) => {
         const parsed = JSON.parse(configRes?.config || '{}');
-        const host = parsed?.layerg_core?.portal_url;
+        const host = parsed?.layerg_core?.hub_url;
         this.layergPortalService.layerg = {
           host,
           timeoutMs: 5000,
