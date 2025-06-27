@@ -35,6 +35,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     {navItem: 'users', routerLink: ['/users'], label: 'User Management', minRole: UserRole.USER_ROLE_ADMIN, icon: 'user-management'},
     {navItem: 'config', routerLink: ['/config'], label: 'Configuration', minRole: UserRole.USER_ROLE_DEVELOPER, icon: 'configuration'},
     {navItem: 'collections', routerLink: ['/collections'], label: 'Collections', minRole: UserRole.USER_ROLE_DEVELOPER, icon: 'runtime-modules'},
+    {navItem: 'contractdeployment', routerLink: ['/contract-deployment'], label: 'Contract Deployment', minRole: UserRole.USER_ROLE_DEVELOPER, icon: 'runtime-modules'},
     {navItem: 'modules', routerLink: ['/modules'], label: 'Runtime Modules', minRole: UserRole.USER_ROLE_DEVELOPER, separator: true, icon: 'runtime-modules'},
     {navItem: 'accounts', routerLink: ['/accounts'], label: 'Accounts', minRole: UserRole.USER_ROLE_READONLY, icon: 'accounts'},
     {navItem: 'groups', routerLink: ['/groups'], label: 'Groups', minRole: UserRole.USER_ROLE_READONLY, icon: 'groups'},

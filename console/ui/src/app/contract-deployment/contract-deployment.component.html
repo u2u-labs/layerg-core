@@ -1,0 +1,36 @@
+<h2 class="pb-1">Deploy a new Contract</h2>
+<!--<div class="d-flex justify-content-between align-items-center">-->
+<!--  <button type="button" [disabled]="" class="btn btn-lg btn-primary" [routerLink]="['create']">Deploy Contract</button>-->
+<!--</div>-->
+
+<ngb-alert [dismissible]="false" type="danger" class="mb-3" *ngIf="error">
+  <img src="/static/svg/red-triangle.svg" alt="" width="16" height="" class="mr-2">
+  <h6 class="mr-2 d-inline font-weight-bold">Error when querying contract deployment: {{error}}</h6>
+</ngb-alert>
+
+<form [formGroup]="contractForm" (ngSubmit)="handleSubmit()" class="">
+  <div class="row">
+    <div class="col-md-6 d-flex justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline" for="name">Name</label>
+      </div>
+      <input type="text" id="name" class="form-control form-control-sm my-2" placeholder="Name" required formControlName="name" [ngClass]="{'is-invalid': f.name.dirty && f.name.errors}">
+      <div class="invalid-tooltip" [hidden]="f.name.disabled || f.name.valid || f.name.pristine">Name is required</div>
+    </div>
+  </div>
+  <div class="row mb-3">
+    <div class="col-md-6 d-flex justify-content-start align-items-baseline">
+      <div class="col-3 pl-0">
+        <label class="d-inline" for="description">Description</label>
+      </div>
+      <textarea id="description" class="form-control form-control-sm my-2" placeholder="Description" formControlName="description" [ngClass]="{'is-invalid': f.description.dirty && f.description.errors}"></textarea>
+      <div class="invalid-tooltip" [hidden]="f.description.disabled || f.description.valid || f.description.pristine">Description max 255</div>
+    </div>
+  </div>
+
+  <div class="d-flex align-items-center">
+    <button type="submit" class="btn btn-primary mr-2" [disabled]="false">Deploy Contract</button>
+  </div>
+</form>
+
+

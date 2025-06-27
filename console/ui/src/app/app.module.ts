@@ -59,6 +59,7 @@ import {ModalCreateNftComponent} from './components/collection/modalCreateNft/mo
 import {ModalUpdateNftComponent} from './components/collection/modalUpdateNft/modal-update-nft.component';
 import {ModalLinkContractComponent} from './components/collection/modalLinkContract/modal-link-contract.component';
 import {LAYERG_CONFIG} from './config.tokens';
+import {ContractDeploymentComponent} from './contract-deployment/contract-deployment.component';
 
 
 export function initApp(consoleService: ConsoleService): () => Promise<void> {
@@ -121,6 +122,7 @@ export function initApp(consoleService: ConsoleService): () => Promise<void> {
     ModalCreateNftComponent,
     ModalUpdateNftComponent,
     ModalLinkContractComponent,
+    ContractDeploymentComponent,
   ],
   imports: [
     NgxFileDropModule,

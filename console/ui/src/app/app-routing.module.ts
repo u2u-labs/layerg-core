@@ -36,6 +36,10 @@ import {CreateCollectionComponent, CreateCollectionResolver} from './collections
 import {CollectionDetailComponent} from './collections/detail/collectionDetail.component';
 import {CollectionComponent, CollectionResolver} from './collection/collection.component';
 import {CollectionDetail1Component} from './collection/detail/collectionDetail.component';
+import {
+  ContractDeploymentComponent,
+  ContractDeploymentResolver
+} from './contract-deployment/contract-deployment.component';
 
 const routes: Routes = [
   {
@@ -95,6 +99,7 @@ const routes: Routes = [
       {path: 'chat', component: ChatListComponent, resolve: [ChatSearchResolver]},
       {path: 'purchases', component: PurchasesListComponent, resolve: [PurchasesResolver]},
       {path: 'subscriptions', component: SubscriptionsListComponent, resolve: [SubscriptionsResolver]},
+      {path: 'contract-deployment', component: ContractDeploymentComponent, resolve: [ContractDeploymentResolver]},
     ]},
   {path: 'login', component: LoginComponent, canActivate: [LoginGuard]},
 
