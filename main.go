@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"net/http"
@@ -16,18 +15,16 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/jackc/pgx/v5/stdlib" // Blank import to register SQL driver
-	"github.com/redis/go-redis/v9"
 	"github.com/u2u-labs/layerg-core/console"
 	"github.com/u2u-labs/layerg-core/migrate"
 	"github.com/u2u-labs/layerg-core/se"
 	"github.com/u2u-labs/layerg-core/server"
-	"github.com/u2u-labs/layerg-core/server/crawler"
-	"github.com/u2u-labs/layerg-core/server/crawler/utils"
+
+	// "github.com/u2u-labs/layerg-core/server/crawler"
+	// "github.com/u2u-labs/layerg-core/server/crawler/utils"
 	"github.com/u2u-labs/layerg-core/social"
-	"github.com/unicornultrafoundation/go-u2u/accounts/abi"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -327,61 +324,61 @@ func newOrLoadCookie(enabled bool, config server.Config) string {
 // 	}
 // }
 
-func startCrawlerProcess(ctx context.Context, logger *zap.Logger, db *sql.DB, config server.Config) {
-	logger.Info("Initializing crawler")
+// func startCrawlerProcess(ctx context.Context, logger *zap.Logger, db *sql.DB, config server.Config) {
+// 	logger.Info("Initializing crawler")
 
-	// Initialize Redis client using the existing config structure
-	redisConfig := config.GetRedisDbConfig()
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     redisConfig.Url,
-		Password: redisConfig.Password,
-		DB:       redisConfig.Db,
-	})
-	logger.Info("hello: %v", zap.String("redis url: ", redisConfig.Url))
-	queueClient := asynq.NewClient(asynq.RedisClientOpt{Addr: redisConfig.Url})
+// 	// Initialize Redis client using the existing config structure
+// 	redisConfig := config.GetRedisDbConfig()
+// 	rdb := redis.NewClient(&redis.Options{
+// 		Addr:     redisConfig.Url,
+// 		Password: redisConfig.Password,
+// 		DB:       redisConfig.Db,
+// 	})
+// 	logger.Info("hello: %v", zap.String("redis url: ", redisConfig.Url))
+// 	queueClient := asynq.NewClient(asynq.RedisClientOpt{Addr: redisConfig.Url})
 
-	// Initialize ABIs
-	initializeABI := func(abiStr string, abiRef *abi.ABI, name string) error {
-		parsedABI, err := abi.JSON(strings.NewReader(abiStr))
-		if err != nil {
-			logger.Fatal("Failed to initialize "+name+" ABI", zap.Error(err))
-			return err
-		}
-		*abiRef = parsedABI
-		return nil
-	}
+// 	// Initialize ABIs
+// 	initializeABI := func(abiStr string, abiRef *abi.ABI, name string) error {
+// 		parsedABI, err := abi.JSON(strings.NewReader(abiStr))
+// 		if err != nil {
+// 			logger.Fatal("Failed to initialize "+name+" ABI", zap.Error(err))
+// 			return err
+// 		}
+// 		*abiRef = parsedABI
+// 		return nil
+// 	}
 
-	if err := initializeABI(utils.ERC20ABIStr, &utils.ERC20ABI, "ERC20"); err != nil {
-		return
-	}
-	if err := initializeABI(utils.ERC721ABIStr, &utils.ERC721ABI, "ERC721"); err != nil {
-		return
-	}
-	if err := initializeABI(utils.ERC1155ABIStr, &utils.ERC1155ABI, "ERC1155"); err != nil {
-		return
-	}
+// 	if err := initializeABI(utils.ERC20ABIStr, &utils.ERC20ABI, "ERC20"); err != nil {
+// 		return
+// 	}
+// 	if err := initializeABI(utils.ERC721ABIStr, &utils.ERC721ABI, "ERC721"); err != nil {
+// 		return
+// 	}
+// 	if err := initializeABI(utils.ERC1155ABIStr, &utils.ERC1155ABI, "ERC1155"); err != nil {
+// 		return
+// 	}
 
-	// Start initial crawl of supported chains
-	if err := crawler.CrawlSupportedChains(ctx, logger, db, rdb); err != nil {
-		logger.Error("Error initializing supported chains", zap.Error(err))
-		return
-	}
+// 	// Start initial crawl of supported chains
+// 	if err := crawler.CrawlSupportedChains(ctx, logger, db, rdb); err != nil {
+// 		logger.Error("Error initializing supported chains", zap.Error(err))
+// 		return
+// 	}
 
-	// Process new chains
-	if err := crawler.ProcessNewChains(ctx, logger, rdb, db); err != nil {
-		logger.Error("Error in ProcessNewChains", zap.Error(err))
-	}
+// 	// Process new chains
+// 	if err := crawler.ProcessNewChains(ctx, logger, rdb, db); err != nil {
+// 		logger.Error("Error in ProcessNewChains", zap.Error(err))
+// 	}
 
-	// Process new chain assets
-	if err := crawler.ProcessNewChainAssets(ctx, logger, rdb); err != nil {
-		logger.Error("Error in ProcessNewChainAssets", zap.Error(err))
-	}
+// 	// Process new chain assets
+// 	if err := crawler.ProcessNewChainAssets(ctx, logger, rdb); err != nil {
+// 		logger.Error("Error in ProcessNewChainAssets", zap.Error(err))
+// 	}
 
-	if err := crawler.ProcessCrawlingBackfillCollection(ctx, logger, db, queueClient); err != nil {
-		logger.Error("Error in ProcesCrawlingBackfillCollection", zap.Error(err))
-	}
+// 	if err := crawler.ProcessCrawlingBackfillCollection(ctx, logger, db, queueClient); err != nil {
+// 		logger.Error("Error in ProcesCrawlingBackfillCollection", zap.Error(err))
+// 	}
 
-	crawler.StartWorker(db, rdb, queueClient, config)
+// 	crawler.StartWorker(db, rdb, queueClient, config)
 
-	logger.Info("Crawler process initialized successfully")
-}
+// 	logger.Info("Crawler process initialized successfully")
+// }

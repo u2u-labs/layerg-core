@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/u2u-labs/go-layerg-common/runtime"
 	"github.com/u2u-labs/layerg-core/flags"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -46,6 +47,7 @@ type Config interface {
 	GetRedisDbConfig() *RedisConfig
 	GetMqtt() *MQTTConfig
 	Clone() (Config, error)
+	GetRuntimeConfig() (runtime.Config, error)
 }
 
 func ParseArgs(logger *zap.Logger, args []string) Config {
@@ -522,46 +524,31 @@ func NewConfig(logger *zap.Logger) *config {
 }
 
 func (c *config) Clone() (Config, error) {
-	configLogger := *(c.Logger)
-	configMetrics := *(c.Metrics)
-	configSession := *(c.Session)
-	configSocket := *(c.Socket)
-	configDatabase := *(c.Database)
-	configSocial := *(c.Social)
-	configRuntime := *(c.Runtime)
-	configMatch := *(c.Match)
-	configTracker := *(c.Tracker)
-	configConsole := *(c.Console)
-	configLeaderboard := *(c.Leaderboard)
-	configMatchmaker := *(c.Matchmaker)
-	configIAP := *(c.IAP)
-	configSatori := *(c.Satori)
-	configStorage := *(c.Storage)
-	configLayerGCore := *(c.LayerGCore)
-	configGoogleAuth := *(c.GoogleAuth)
 	configMqtt := *(c.Mqtt)
+	configSocket, err := c.Socket.Clone()
+	if err != nil {
+		return nil, err
+	}
 	// 	configRedisDb := *(c.RedisDb)
 	nc := &config{
 		Name:             c.Name,
 		Datadir:          c.Datadir,
 		ShutdownGraceSec: c.ShutdownGraceSec,
-		Logger:           &configLogger,
-		Metrics:          &configMetrics,
-		Session:          &configSession,
-		Socket:           &configSocket,
-		Database:         &configDatabase,
-		Social:           &configSocial,
-		Runtime:          &configRuntime,
-		Match:            &configMatch,
-		Tracker:          &configTracker,
-		Console:          &configConsole,
-		Leaderboard:      &configLeaderboard,
-		Matchmaker:       &configMatchmaker,
-		IAP:              &configIAP,
-		Satori:           &configSatori,
-		GoogleAuth:       &configGoogleAuth,
-		Storage:          &configStorage,
-		LayerGCore:       &configLayerGCore,
+		Logger:           c.Logger.Clone(),
+		Metrics:          c.Metrics.Clone(),
+		Session:          c.Session.Clone(),
+		Socket:           configSocket,
+		Database:         c.Database.Clone(),
+		Runtime:          c.Runtime.Clone(),
+		Match:            c.Match.Clone(),
+		Tracker:          c.Tracker.Clone(),
+		Console:          c.Console.Clone(),
+		Leaderboard:      c.Leaderboard.Clone(),
+		Matchmaker:       c.Matchmaker.Clone(),
+		IAP:              c.IAP.Clone(),
+		Storage:          c.Storage.Clone(),
+		MFA:              c.MFA.Clone(),
+		LayerGCore:       c.LayerGCore.Clone(),
 		// 		RedisDb:          &configRedisDb,
 		Cluster: c.Cluster.Clone(),
 		Mqtt:    &configMqtt,
@@ -694,6 +681,33 @@ func (c *config) GetMqtt() *MQTTConfig {
 	return c.Mqtt
 }
 
+func (c *config) GetRuntimeConfig() (runtime.Config, error) {
+	clone, err := c.Clone()
+	if err != nil {
+		return nil, err
+	}
+
+	var lc runtime.LoggerConfig = clone.GetLogger()
+	var sc runtime.SessionConfig = clone.GetSession()
+	var soc runtime.SocketConfig = clone.GetSocket()
+	var rc runtime.RuntimeConfig = clone.GetRuntime()
+	var iap runtime.IAPConfig = clone.GetIAP()
+	var lgc runtime.LayerGModuleConfig = clone.GetLayerGCoreConfig()
+
+	cn := &RuntimeConfigClone{
+		Name:          clone.GetName(),
+		ShutdownGrace: clone.GetShutdownGraceSec(),
+		Logger:        lc,
+		Session:       sc,
+		Socket:        soc,
+		Runtime:       rc,
+		Iap:           iap,
+		LayerGConfig:  lgc,
+	}
+
+	return cn, nil
+}
+
 // LoggerConfig is configuration relevant to logging levels and output.
 type LoggerConfig struct {
 	Level    string `yaml:"level" json:"level" usage:"Log level to set. Valid values are 'debug', 'info', 'warn', 'error'. Default 'info'."`
@@ -707,6 +721,19 @@ type LoggerConfig struct {
 	LocalTime  bool   `yaml:"local_time" json:"local_time" usage:"This determines if the time used for formatting the timestamps in backup files is the computer's local time. The default is to use UTC time."`
 	Compress   bool   `yaml:"compress" json:"compress" usage:"This determines if the rotated log files should be compressed using gzip."`
 	Format     string `yaml:"format" json:"format" usage:"Set logging output format. Can either be 'JSON' or 'Stackdriver'. Default is 'JSON'."`
+}
+
+func (cfg *LoggerConfig) GetLevel() string {
+	return cfg.Level
+}
+
+func (cfg *LoggerConfig) Clone() *LoggerConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+	return &cfgCopy
 }
 
 func NewLoggerConfig() *LoggerConfig {
@@ -733,6 +760,15 @@ type MetricsConfig struct {
 	CustomPrefix     string `yaml:"custom_prefix" json:"custom_prefix" usage:"Prefix for custom runtime metric names. Default is 'custom', empty string '' disables the prefix."`
 }
 
+func (cfg *MetricsConfig) Clone() *MetricsConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+	return &cfgCopy
+}
+
 func NewMetricsConfig() *MetricsConfig {
 	return &MetricsConfig{
 		ReportingFreqSec: 60,
@@ -753,6 +789,47 @@ type SessionConfig struct {
 	SingleMatch           bool   `yaml:"single_match" json:"single_match" usage:"Only allow one match per user. Older matches receive a leave. Requires single socket to enable. Default false."`
 	SingleParty           bool   `yaml:"single_party" json:"single_party" usage:"Only allow one party per user. Older parties receive a leave. Requires single socket to enable. Default false."`
 	SingleSession         bool   `yaml:"single_session" json:"single_session" usage:"Only allow one session token per user. Older session tokens are invalidated in the session cache. Default false."`
+}
+
+func (cfg *SessionConfig) GetEncryptionKey() string {
+	return cfg.EncryptionKey
+}
+
+func (cfg *SessionConfig) GetTokenExpirySec() int64 {
+	return cfg.TokenExpirySec
+}
+
+func (cfg *SessionConfig) GetRefreshEncryptionKey() string {
+	return cfg.RefreshEncryptionKey
+}
+
+func (cfg *SessionConfig) GetRefreshTokenExpirySec() int64 {
+	return cfg.RefreshTokenExpirySec
+}
+
+func (cfg *SessionConfig) GetSingleSocket() bool {
+	return cfg.SingleSocket
+}
+
+func (cfg *SessionConfig) GetSingleMatch() bool {
+	return cfg.SingleMatch
+}
+
+func (cfg *SessionConfig) GetSingleParty() bool {
+	return cfg.SingleParty
+}
+
+func (cfg *SessionConfig) GetSingleSession() bool {
+	return cfg.SingleSession
+}
+
+func (cfg *SessionConfig) Clone() *SessionConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+	return &cfgCopy
 }
 
 func NewSessionConfig() *SessionConfig {
@@ -791,6 +868,58 @@ type SocketConfig struct {
 	TLSCert              []tls.Certificate `yaml:"-" json:"-"` // Created by processing CertPEMBlock and KeyPEMBlock, not set from input args directly.
 }
 
+func (cfg *SocketConfig) GetServerKey() string {
+	return cfg.ServerKey
+}
+
+func (cfg *SocketConfig) GetPort() int {
+	return cfg.Port
+}
+
+func (cfg *SocketConfig) GetAddress() string {
+	return cfg.Address
+}
+
+func (cfg *SocketConfig) GetProtocol() string {
+	return cfg.Protocol
+}
+
+func (cfg *SocketConfig) Clone() (*SocketConfig, error) {
+	if cfg == nil {
+		return nil, nil
+	}
+
+	cfgCopy := *cfg
+
+	if cfg.ResponseHeaders != nil {
+		cfgCopy.ResponseHeaders = make([]string, len(cfg.ResponseHeaders))
+		copy(cfgCopy.ResponseHeaders, cfg.ResponseHeaders)
+	}
+	if cfg.Headers != nil {
+		cfgCopy.Headers = make(map[string]string, len(cfg.Headers))
+		for k, v := range cfg.Headers {
+			cfgCopy.Headers[k] = v
+		}
+	}
+	if cfg.CertPEMBlock != nil {
+		cfgCopy.CertPEMBlock = make([]byte, len(cfg.CertPEMBlock))
+		copy(cfgCopy.CertPEMBlock, cfg.CertPEMBlock)
+	}
+	if cfg.KeyPEMBlock != nil {
+		cfgCopy.KeyPEMBlock = make([]byte, len(cfg.KeyPEMBlock))
+		copy(cfgCopy.KeyPEMBlock, cfg.KeyPEMBlock)
+	}
+	if len(cfg.TLSCert) != 0 {
+		cert, err := tls.X509KeyPair(cfg.CertPEMBlock, cfg.KeyPEMBlock)
+		if err != nil {
+			return nil, err
+		}
+		cfgCopy.TLSCert = []tls.Certificate{cert}
+	}
+
+	return &cfgCopy, nil
+}
+
 func NewSocketConfig() *SocketConfig {
 	return &SocketConfig{
 		ServerKey:            "defaultkey",
@@ -823,6 +952,21 @@ type DatabaseConfig struct {
 	DnsScanIntervalSec int      `yaml:"dns_scan_interval_sec" json:"dns_scan_interval_sec" usage:"Number of seconds between scans looking for DNS resolution changes for the database hostname. Default 60."`
 }
 
+func (cfg *DatabaseConfig) Clone() *DatabaseConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+
+	if cfg.Addresses != nil {
+		cfgCopy.Addresses = make([]string, len(cfg.Addresses))
+		copy(cfgCopy.Addresses, cfg.Addresses)
+	}
+
+	return &cfgCopy
+}
+
 func NewDatabaseConfig() *DatabaseConfig {
 	return &DatabaseConfig{
 		Addresses:          []string{"root@localhost:26257"},
@@ -847,9 +991,21 @@ type SocialConfigSteam struct {
 	AppID        int    `yaml:"app_id" json:"app_id" usage:"Steam App ID."`
 }
 
+func (s SocialConfigSteam) GetPublisherKey() string {
+	return s.PublisherKey
+}
+
+func (s SocialConfigSteam) GetAppID() int {
+	return s.AppID
+}
+
 // SocialConfigFacebookInstantGame is configuration relevant to Facebook Instant Games.
 type SocialConfigFacebookInstantGame struct {
 	AppSecret string `yaml:"app_secret" json:"app_secret" usage:"Facebook Instant App secret."`
+}
+
+func (s SocialConfigFacebookInstantGame) GetAppSecret() string {
+	return s.AppSecret
 }
 
 // SocialConfigFacebookLimitedLogin is configuration relevant to Facebook Limited Login.
@@ -857,9 +1013,17 @@ type SocialConfigFacebookLimitedLogin struct {
 	AppId string `yaml:"app_id" json:"app_id" usage:"Facebook Limited Login App ID."`
 }
 
+func (s SocialConfigFacebookLimitedLogin) GetAppId() string {
+	return s.AppId
+}
+
 // SocialConfigApple is configuration relevant to Apple Sign In.
 type SocialConfigApple struct {
 	BundleId string `yaml:"bundle_id" json:"bundle_id" usage:"Apple Sign In bundle ID."`
+}
+
+func (s SocialConfigApple) GetBundleId() string {
+	return s.BundleId
 }
 
 func NewSocialConfig() *SocialConfig {
@@ -905,6 +1069,35 @@ type RuntimeConfig struct {
 	JsEntrypoint       string            `yaml:"js_entrypoint" json:"js_entrypoint" usage:"Specifies the location of the bundled JavaScript runtime source code."`
 }
 
+func (r *RuntimeConfig) GetEnv() []string {
+	return r.Env
+}
+
+func (r *RuntimeConfig) GetHTTPKey() string {
+	return r.HTTPKey
+}
+
+func (r *RuntimeConfig) Clone() *RuntimeConfig {
+	if r == nil {
+		return nil
+	}
+
+	cfgCopy := *r
+
+	if r.Env != nil {
+		cfgCopy.Env = make([]string, len(r.Env))
+		copy(cfgCopy.Env, r.Env)
+	}
+	if r.Environment != nil {
+		cfgCopy.Environment = make(map[string]string, len(r.Environment))
+		for k, v := range r.Environment {
+			cfgCopy.Environment[k] = v
+		}
+	}
+
+	return &cfgCopy
+}
+
 // Function to allow backwards compatibility for MinCount config
 func (r *RuntimeConfig) GetLuaMinCount() int {
 	if r.MinCount != 0 {
@@ -947,7 +1140,7 @@ func (r *RuntimeConfig) GetLuaReadOnlyGlobals() bool {
 
 func NewRuntimeConfig() *RuntimeConfig {
 	return &RuntimeConfig{
-		Environment:        make(map[string]string, 0),
+		Environment:        make(map[string]string),
 		Env:                make([]string, 0),
 		Path:               "",
 		HTTPKey:            "defaulthttpkey",
@@ -978,6 +1171,15 @@ type MatchConfig struct {
 	LabelUpdateIntervalMs int `yaml:"label_update_interval_ms" json:"label_update_interval_ms" usage:"Time in milliseconds between match label update batch processes. Default 1000."`
 }
 
+func (cfg *MatchConfig) Clone() *MatchConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+	return &cfgCopy
+}
+
 func NewMatchConfig() *MatchConfig {
 	return &MatchConfig{
 		InputQueueSize:        128,
@@ -994,6 +1196,15 @@ func NewMatchConfig() *MatchConfig {
 // TrackerConfig is configuration relevant to the presence tracker.
 type TrackerConfig struct {
 	EventQueueSize int `yaml:"event_queue_size" json:"event_queue_size" usage:"Size of the tracker presence event buffer. Increase if the server is expected to generate a large number of presence events in a short time. Default 1024."`
+}
+
+func (cfg *TrackerConfig) Clone() *TrackerConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+	return &cfgCopy
 }
 
 func NewTrackerConfig() *TrackerConfig {
@@ -1016,6 +1227,21 @@ type ConsoleConfig struct {
 	SigningKey          string     `yaml:"signing_key" json:"signing_key" usage:"Key used to sign console session tokens."`
 	MFA                 *MFAConfig `yaml:"mfa" json:"mfa" usage:"MFA settings."`
 	PublicKey           string     `yaml:"ua_public_key" json:"ua_public_key" usage:"UA Public key."`
+}
+
+func (cfg *ConsoleConfig) Clone() *ConsoleConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+
+	if cfg.MFA != nil {
+		c := *(cfg.MFA)
+		cfgCopy.MFA = &c
+	}
+
+	return &cfgCopy
 }
 
 func NewConsoleConfig() *ConsoleConfig {
@@ -1042,6 +1268,21 @@ type LeaderboardConfig struct {
 	RankCacheWorkers     int      `yaml:"rank_cache_workers" json:"rank_cache_workers" usage:"The number of parallel workers to use while populating leaderboard rank cache from the database. Higher number of workers usually makes the process faster but at the cost of increased database load. Default 1."`
 }
 
+func (cfg *LeaderboardConfig) Clone() *LeaderboardConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+
+	if cfg.BlacklistRankCache != nil {
+		cfgCopy.BlacklistRankCache = make([]string, len(cfg.BlacklistRankCache))
+		copy(cfgCopy.BlacklistRankCache, cfg.BlacklistRankCache)
+	}
+
+	return &cfgCopy
+}
+
 func NewLeaderboardConfig() *LeaderboardConfig {
 	return &LeaderboardConfig{
 		BlacklistRankCache:   []string{},
@@ -1057,6 +1298,15 @@ type MatchmakerConfig struct {
 	MaxIntervals int  `yaml:"max_intervals" json:"max_intervals" usage:"How many intervals the matchmaker attempts to find matches at the max player count, before allowing min count. Default 2."`
 	RevPrecision bool `yaml:"rev_precision" json:"rev_precision" usage:"Reverse matching precision. Default false."`
 	RevThreshold int  `yaml:"rev_threshold" json:"rev_threshold" usage:"Reverse matching threshold. Default 1."`
+}
+
+func (cfg *MatchmakerConfig) Clone() *MatchmakerConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+	return &cfgCopy
 }
 
 func NewMatchmakerConfig() *MatchmakerConfig {
@@ -1076,6 +1326,49 @@ type IAPConfig struct {
 	FacebookInstant *IAPFacebookInstantConfig `yaml:"facebook_instant" json:"facebook_instant" usage:"Facebook Instant purchase validation configuration."`
 }
 
+func (cfg *IAPConfig) GetApple() runtime.IAPAppleConfig {
+	return cfg.Apple
+}
+
+func (cfg *IAPConfig) GetGoogle() runtime.IAPGoogleConfig {
+	return cfg.Google
+}
+
+func (cfg *IAPConfig) GetHuawei() runtime.IAPHuaweiConfig {
+	return cfg.Huawei
+}
+
+func (cfg *IAPConfig) GetFacebookInstant() runtime.IAPFacebookInstantConfig {
+	return cfg.FacebookInstant
+}
+
+func (cfg *IAPConfig) Clone() *IAPConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+
+	if cfg.Google != nil {
+		c := *(cfg.Google)
+		cfgCopy.Google = &c
+	}
+	if cfg.Apple != nil {
+		c := *(cfg.Apple)
+		cfgCopy.Apple = &c
+	}
+	if cfg.FacebookInstant != nil {
+		c := *(cfg.FacebookInstant)
+		cfgCopy.FacebookInstant = &c
+	}
+	if cfg.Huawei != nil {
+		c := *(cfg.Huawei)
+		cfgCopy.Huawei = &c
+	}
+
+	return &cfgCopy
+}
+
 func NewIAPConfig() *IAPConfig {
 	return &IAPConfig{
 		Apple:           &IAPAppleConfig{},
@@ -1090,12 +1383,40 @@ type IAPAppleConfig struct {
 	NotificationsEndpointId string `yaml:"notifications_endpoint_id" json:"notifications_endpoint_id" usage:"The callback endpoint identifier for Apple Store subscription notifications."`
 }
 
+func (iap IAPAppleConfig) GetSharedPassword() string {
+	return iap.SharedPassword
+}
+
+func (iap IAPAppleConfig) GetNotificationsEndpointId() string {
+	return iap.NotificationsEndpointId
+}
+
 type IAPGoogleConfig struct {
 	ClientEmail             string `yaml:"client_email" json:"client_email" usage:"Google Service Account client email."`
 	PrivateKey              string `yaml:"private_key" json:"private_key" usage:"Google Service Account private key."`
 	NotificationsEndpointId string `yaml:"notifications_endpoint_id" json:"notifications_endpoint_id" usage:"The callback endpoint identifier for Android subscription notifications."`
 	RefundCheckPeriodMin    int    `yaml:"refund_check_period_min" json:"refund_check_period_min" usage:"Defines the polling interval in minutes of the Google IAP refund API."`
 	PackageName             string `yaml:"package_name" json:"package_name" usage:"Google Play Store App Package Name."`
+}
+
+func (iapg *IAPGoogleConfig) GetClientEmail() string {
+	return iapg.ClientEmail
+}
+
+func (iapg *IAPGoogleConfig) GetPrivateKey() string {
+	return iapg.PrivateKey
+}
+
+func (iapg *IAPGoogleConfig) GetNotificationsEndpointId() string {
+	return iapg.NotificationsEndpointId
+}
+
+func (iapg *IAPGoogleConfig) GetRefundCheckPeriodMin() int {
+	return iapg.RefundCheckPeriodMin
+}
+
+func (iapg *IAPGoogleConfig) GetPackageName() string {
+	return iapg.PackageName
 }
 
 func (iapg *IAPGoogleConfig) Enabled() bool {
@@ -1143,8 +1464,24 @@ type IAPHuaweiConfig struct {
 	ClientSecret string `yaml:"client_secret" json:"client_secret" usage:"Huawei OAuth app client secret."`
 }
 
+func (i IAPHuaweiConfig) GetPublicKey() string {
+	return i.PublicKey
+}
+
+func (i IAPHuaweiConfig) GetClientID() string {
+	return i.ClientID
+}
+
+func (i IAPHuaweiConfig) GetClientSecret() string {
+	return i.ClientSecret
+}
+
 type IAPFacebookInstantConfig struct {
 	AppSecret string `yaml:"app_secret" json:"app_secret" usage:"Facebook Instant OAuth app client secret."`
+}
+
+func (i IAPFacebookInstantConfig) GetAppSecret() string {
+	return i.AppSecret
 }
 
 type GoogleAuthConfig struct {
@@ -1152,17 +1489,17 @@ type GoogleAuthConfig struct {
 	OAuthConfig     *oauth2.Config `yaml:"-" json:"-"`
 }
 
+func (cfg *GoogleAuthConfig) GetCredentialsJSON() string {
+	return cfg.CredentialsJSON
+}
+
 type LayerGCoreConfig struct {
-	ApiKey              string `yaml:"api_key" json:"api_key" usage:"api key to communicate with core server"`
-	ApiKeyID            string `yaml:"api_key_id" json:"api_key_id" usage:"api key id to communicate with core server"`
-	PortalURL           string `yaml:"portal_url" json:"portal_url" usage:"url of core server"`
+	HubApiKey           string `yaml:"hub_api_key" json:"hub_api_key" usage:"api key to communicate with core server"`
+	HubApiKeyID         string `yaml:"hub_api_key_id" json:"hub_api_key_id" usage:"api key id to communicate with core server"`
+	HubURL              string `yaml:"hub_url" json:"hub_url" usage:"url of core server"`
 	UniversalAccountURL string `yaml:"ua_url" json:"ua_url" usage:"ua_url of core server"`
-	MasterDB            string `yaml:"masterdb_url" json:"masterdb_url" usage:"masterdb_url of core server"`
-	MasterPvk           string `yaml:"master_pvk" json:"master_pvk" usage:"master wallet private key for admin onchain operaton"`
 	UAApiKey            string `yaml:"ua_api_key" json:"ua_api_key" usage:"ua api key for core server"`
-	UAPublicApiKey      string `yaml:"ua_public_api_key" json:"ua_public_api_key" usage:"ua public api key for core server"`
-	UAPrivateApiKey     string `yaml:"ua_private_api_key" json:"ua_private_api_key" usage:"ua private api key for core server"`
-	UADomain            string `yaml:"ua_domain" json:"ua_domain" usage:"ua domain for core server"`
+	UASecret            string `yaml:"ua_secret_api_key" json:"ua_secret_api_key" usage:"ua private api key for core server"`
 }
 
 type RedisConfig struct {
@@ -1183,6 +1520,15 @@ type StorageConfig struct {
 	DisableIndexOnly bool `yaml:"disable_index_only" json:"disable_index_only" usage:"Override and disable 'index_only' storage indices config and fallback to reading from the database."`
 }
 
+func (cfg *StorageConfig) Clone() *StorageConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+	return &cfgCopy
+}
+
 func NewStorageConfig() *StorageConfig {
 	return &StorageConfig{}
 }
@@ -1190,6 +1536,15 @@ func NewStorageConfig() *StorageConfig {
 type MFAConfig struct {
 	StorageEncryptionKey string `yaml:"storage_encryption_key" json:"storage_encryption_key" usage:"The encryption key to be used when persisting MFA related data. Has to be 32 bytes long."`
 	AdminAccountOn       bool   `yaml:"admin_account_enabled" json:"admin_account_enabled" usage:"Require MFA for the Console Admin account."`
+}
+
+func (cfg *MFAConfig) Clone() *MFAConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+	return &cfgCopy
 }
 
 func NewMFAConfig() *MFAConfig {
@@ -1201,18 +1556,43 @@ func NewMFAConfig() *MFAConfig {
 
 func NewLayerGCore() *LayerGCoreConfig {
 	return &LayerGCoreConfig{
-		ApiKey:              "v13lx3ykszi3gi7j000oa2",
-		ApiKeyID:            "d3e94d1b-3959-498b-9971-b5df93adfd28",
-		PortalURL:           "http://localhost:3000",
+		HubApiKey:           "v13lx3ykszi3gi7j000oa2",
+		HubApiKeyID:         "d3e94d1b-3959-498b-9971-b5df93adfd28",
+		HubURL:              "http://localhost:3000",
 		UniversalAccountURL: "https://bundler-dev.layerg.xyz",
-		MasterDB:            "https://crawler-db-dev.layerg.xyz",
-		MasterPvk:           "27f13e9f9e69f7cfa365e2316b272a943e162c769ae57826ebe373f73d0323d9",
 		UAApiKey:            "sys-dev-api-key",
-		UAPublicApiKey:      "7c581609293E503dE149d93f34767DFF33d32C16",
-		UAPrivateApiKey:     "c194c2a77814de98c486836da3ae6747769ed6e6064186f2943b33f25dba284c",
-		UADomain:            "http://localhost:7350",
+		UASecret:            "7c581609293E503dE149d93f34767DFF33d32C16",
 	}
 }
+
+func (lgc LayerGCoreConfig) GetHubAPIKey() string {
+	return lgc.HubApiKey
+}
+func (lgc LayerGCoreConfig) GetHubAPIKeyID() string {
+	return lgc.HubApiKeyID
+}
+func (lgc LayerGCoreConfig) GetPortalUrl() string {
+	return lgc.HubURL
+}
+func (lgc LayerGCoreConfig) GetUniversalAccountUrl() string {
+	return lgc.UniversalAccountURL
+}
+func (lgc LayerGCoreConfig) GetUAAPIKey() string {
+	return lgc.UAApiKey
+}
+func (lgc LayerGCoreConfig) GetUASecret() string {
+	return lgc.UASecret
+}
+
+func (cfg *LayerGCoreConfig) Clone() *LayerGCoreConfig {
+	if cfg == nil {
+		return nil
+	}
+
+	cfgCopy := *cfg
+	return &cfgCopy
+}
+
 func NewRedisDb() *RedisConfig {
 	return &RedisConfig{
 		Url:      "localhost:6379",

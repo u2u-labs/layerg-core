@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"strconv"
 	"time"
 
@@ -174,17 +173,14 @@ func RefreshUAToken(ctx context.Context, token string, config Config) (*runtime.
 }
 
 func GetUAAuthHeaders(config Config) (map[string]string, error) {
-	timestamp := time.Now().UnixMilli()
-	signature, err := CreateSignature(timestamp, config.GetLayerGCoreConfig().UADomain, config.GetLayerGCoreConfig().UAPublicApiKey, config.GetLayerGCoreConfig().UAPrivateApiKey)
-	if err != nil {
-		return nil, err
-	}
+	// timestamp := time.Now().UnixMilli()
+	// signature, err := CreateSignature(timestamp, config.GetLayerGCoreConfig().UniversalAccountURL, config.GetLayerGCoreConfig().UAApiKey, config.GetLayerGCoreConfig().UAPrivateApiKey)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	headers := map[string]string{
-		"x-signature": signature.Signature,
-		"x-timestamp": big.NewInt(signature.Timestamp).String(),
-		"origin":      signature.Domain,
-		"x-api-key":   config.GetLayerGCoreConfig().UAPublicApiKey,
+		"x-secret-key": config.GetLayerGCoreConfig().UASecret,
 	}
 	return headers, nil
 }

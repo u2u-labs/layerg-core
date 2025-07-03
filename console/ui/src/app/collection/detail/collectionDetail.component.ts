@@ -68,7 +68,7 @@ export class CollectionDetail1Component implements OnInit, AfterViewInit {
       d => {
         this.config = d[0][0];
         const parsed = JSON.parse(this.config?.config || '{}');
-        this.baseUriNft = `${parsed?.layerg_core?.portal_url}/assets/`;
+        this.baseUriNft = `${parsed?.layerg_core?.hub_url}/assets/`;
 
         this.collection = d[0][1];
         this.collectionForm.patchValue(this.collection);

@@ -6,15 +6,16 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/blugelabs/bluge"
 	"github.com/gofrs/uuid/v5"
-	jwt "github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/u2u-labs/go-layerg-common/api"
 	"github.com/u2u-labs/go-layerg-common/rtapi"
 	"github.com/u2u-labs/go-layerg-common/runtime"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type MatchmakerPresence struct {
@@ -295,7 +296,6 @@ func NewLocalMatchmaker(logger, startupLogger *zap.Logger, config Config, router
 
 	go func() {
 		ticker := time.NewTicker(time.Duration(config.GetMatchmaker().IntervalSec) * time.Second)
-		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():

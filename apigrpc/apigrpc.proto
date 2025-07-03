@@ -1,4 +1,4 @@
-// Copyright 2018 The LayerG Authors
+// Copyright 2025 The LayerG Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -296,17 +296,17 @@ service LayerG {
   rpc AuthenticateEvm (api.AuthenticateEvmRequest) returns (api.Session) {
       option (google.api.http) = {
         post: "/v2/account/authenticate/evm",
-        body: "account"
-      };
-      option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-        security: {
-          security_requirement: {
-            key: "BasicAuth";
-            value: {};
-          }
+      body: "account"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      security: {
+        security_requirement: {
+          key: "BasicAuth";
+          value: {};
         }
-      };
-    }
+      }
+    };
+  }
 
   // Authenticate a user with Steam against the server.
   rpc AuthenticateSteam (api.AuthenticateSteamRequest) returns (api.Session) {
@@ -475,14 +475,6 @@ service LayerG {
     };
   }
 
-  // Add an EVM to the social profiles on the current user's account.
-  rpc LinkEvm (api.AccountEvm) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v2/account/link/evm",
-      body: "*"
-    };
-  }
-
   // Add a custom ID to the social profiles on the current user's account.
   rpc LinkCustom (api.AccountCustom) returns (google.protobuf.Empty) {
     option (google.api.http) = {
@@ -577,7 +569,7 @@ service LayerG {
     option (google.api.http).get = "/v2/leaderboard/{leaderboard_id}";
   }
 
-  // List leaderboard records that belong to a user.
+  // List leaderboard records around the target ownerId.
   rpc ListLeaderboardRecordsAroundOwner (api.ListLeaderboardRecordsAroundOwnerRequest) returns (api.LeaderboardRecordList) {
     option (google.api.http).get = "/v2/leaderboard/{leaderboard_id}/owner/{owner_id}";
   }

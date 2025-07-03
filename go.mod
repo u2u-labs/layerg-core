@@ -8,11 +8,12 @@ require (
 	github.com/blugelabs/bluge v0.2.2
 	github.com/blugelabs/bluge_segment_api v0.2.0
 	github.com/blugelabs/query_string v0.3.0
+	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
 	github.com/dop251/goja v0.0.0-20240707163329-b1681fb2a2f5
 	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/gofrs/uuid/v5 v5.2.0
 	github.com/golang-jwt/jwt/v4 v4.5.1
-	github.com/google/uuid v1.6.0
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
@@ -22,7 +23,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/u2u-labs/go-layerg-common v0.1.1-0.20250428124626-d06d9de99399
+	github.com/u2u-labs/go-layerg-common v0.1.1-0.20250521044835-fc63d12b9db0
 	github.com/u2u-labs/layerg-kit v0.0.0-20241023235723-b6a14baaaa29
 	github.com/uber-go/tally/v4 v4.1.16
 	github.com/unicornultrafoundation/go-u2u v1.1.4
@@ -39,21 +40,14 @@ require (
 )
 
 require (
-	github.com/Masterminds/squirrel v1.5.4 // indirect
-	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
-	github.com/cakturk/go-netstat v0.0.0-20200220111822-e5b49efee7a5 // indirect
 	github.com/coreos/etcd v3.3.27+incompatible // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/coreos/pkg v0.0.0-20240122114842-bbd7aa9bf6fb // indirect
-	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
-	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c // indirect
@@ -65,21 +59,12 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.0 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/holiman/uint256 v1.3.1 // indirect
-	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
-	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/miekg/dns v1.1.26 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
-	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
-	github.com/spf13/cast v1.7.0 // indirect
-	github.com/tklauser/go-sysconf v0.3.12 // indirect
-	github.com/tklauser/numcpus v0.6.1 // indirect
 	go.etcd.io/etcd v3.3.27+incompatible // indirect
 	go.etcd.io/etcd/api/v3 v3.5.14 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.14 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.14 // indirect
-	golang.org/x/time v0.8.0 // indirect
-	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 )
 
 require (
@@ -106,7 +91,6 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
-	github.com/hibiken/asynq v0.25.1
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
@@ -119,7 +103,6 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/redis/go-redis/v9 v9.7.0
 	github.com/twmb/murmur3 v1.1.8 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.34.0 // indirect

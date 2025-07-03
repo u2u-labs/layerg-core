@@ -36,9 +36,9 @@ type Claims struct {
 }
 
 func LoginAndCacheToken(ctx context.Context, config Config, activeCache *TokenPairCache) error {
-	apiKey := config.GetLayerGCoreConfig().ApiKey
-	apiKeyID := config.GetLayerGCoreConfig().ApiKeyID
-	loginURL := config.GetLayerGCoreConfig().PortalURL
+	apiKey := config.GetLayerGCoreConfig().HubApiKey
+	apiKeyID := config.GetLayerGCoreConfig().HubApiKeyID
+	loginURL := config.GetLayerGCoreConfig().HubURL
 
 	// Create the login request
 	loginReq := LoginRequest{
@@ -107,7 +107,7 @@ func AssetCreate(ctx context.Context, tokenPairCache *TokenPairCache, config Con
 		return err
 	}
 
-	endpoint := config.GetLayerGCoreConfig().PortalURL + "/assets/create"
+	endpoint := config.GetLayerGCoreConfig().HubURL + "/assets/create"
 
 	if err != nil {
 		return fmt.Errorf("failed to marshal request body: %w", err)

@@ -25,7 +25,7 @@ import (
 
 var ErrPurchasesListInvalidCursor = errors.New("purchases list cursor invalid")
 
-var httpc = &http.Client{Timeout: 5 * time.Second}
+var httpc = &http.Client{Timeout: 20 * time.Second}
 
 func ValidatePurchasesApple(ctx context.Context, logger *zap.Logger, db *sql.DB, userID uuid.UUID, password, receipt string, persist bool) (*api.ValidatePurchaseResponse, error) {
 	validation, raw, err := iap.ValidateReceiptApple(ctx, httpc, receipt, password)
@@ -33,7 +33,7 @@ func ValidatePurchasesApple(ctx context.Context, logger *zap.Logger, db *sql.DB,
 		if err != context.Canceled {
 			var vErr *iap.ValidationError
 			if errors.As(err, &vErr) {
-				logger.Error("Error validating Apple receipt", zap.Error(vErr.Err), zap.Int("status_code", vErr.StatusCode), zap.String("payload", vErr.Payload))
+				logger.Debug("Error validating Apple receipt", zap.Error(vErr.Err), zap.Int("status_code", vErr.StatusCode), zap.String("payload", vErr.Payload))
 				return nil, vErr
 			} else {
 				logger.Error("Error validating Apple receipt", zap.Error(err))
@@ -166,7 +166,7 @@ func ValidatePurchaseGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB,
 		if err != context.Canceled {
 			var vErr *iap.ValidationError
 			if errors.As(err, &vErr) {
-				logger.Error("Error validating Google receipt", zap.Error(vErr.Err), zap.Int("status_code", vErr.StatusCode), zap.String("payload", vErr.Payload))
+				logger.Debug("Error validating Google receipt", zap.Error(vErr.Err), zap.Int("status_code", vErr.StatusCode), zap.String("payload", vErr.Payload))
 				return nil, vErr
 			} else {
 				logger.Error("Error validating Google receipt", zap.Error(err))
@@ -178,6 +178,11 @@ func ValidatePurchaseGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB,
 	purchaseEnv := api.StoreEnvironment_PRODUCTION
 	if gResponse.PurchaseType == 0 {
 		purchaseEnv = api.StoreEnvironment_SANDBOX
+	}
+
+	if gReceipt.PurchaseState != 0 {
+		// Do not accept cancelled or pending receipts.
+		return nil, status.Error(codes.FailedPrecondition, fmt.Sprintf("Invalid Receipt. State: %d", gReceipt.PurchaseState))
 	}
 
 	sPurchase := &storagePurchase{
@@ -245,7 +250,7 @@ func ValidatePurchaseHuawei(ctx context.Context, logger *zap.Logger, db *sql.DB,
 		if err != context.Canceled {
 			var vErr *iap.ValidationError
 			if errors.As(err, &vErr) {
-				logger.Error("Error validating Huawei receipt", zap.Error(vErr.Err), zap.Int("status_code", vErr.StatusCode), zap.String("payload", vErr.Payload))
+				logger.Debug("Error validating Huawei receipt", zap.Error(vErr.Err), zap.Int("status_code", vErr.StatusCode), zap.String("payload", vErr.Payload))
 				return nil, vErr
 			} else {
 				logger.Error("Error validating Huawei receipt", zap.Error(err))
@@ -518,7 +523,12 @@ LIMIT $4`
 		}
 		params = append(params, incomingCursor.PurchaseTime.AsTime(), incomingCursor.UserId, incomingCursor.TransactionId)
 	} else {
-		query += " ORDER BY purchase_time DESC, user_id DESC, transaction_id DESC LIMIT $1"
+		if userID == "" {
+			query += " ORDER BY purchase_time DESC, user_id DESC, transaction_id DESC LIMIT $1"
+		} else {
+			query += " WHERE user_id = $1 ORDER BY purchase_time DESC, user_id DESC, transaction_id DESC LIMIT $2"
+			params = append(params, userID)
+		}
 	}
 
 	if limit > 0 {

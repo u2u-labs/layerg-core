@@ -83,6 +83,14 @@ service Console {
     };
   }
 
+  // Change an account's MFA using a code, usually delivered over email.
+  rpc AuthenticateMFASetup (AuthenticateMFASetupRequest) returns (AuthenticateMFASetupResponse) {
+    option (google.api.http) = {
+      post: "/v2/console/authenticate/mfa",
+      body: "*"
+    };
+  }
+
   // Add a new console user.
   rpc AddUser (AddUserRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
@@ -180,6 +188,11 @@ service Console {
     option (google.api.http).delete = "/v2/console/leaderboard/{id}/owner/{owner_id}";
   }
 
+  // Delete notification
+  rpc DeleteNotification (DeleteNotificationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http).delete = "/v2/console/notification/{id}";
+  }
+
   // Delete console user.
   rpc DeleteUser (Username) returns (google.protobuf.Empty) {
     option (google.api.http).delete = "/v2/console/user";
@@ -270,6 +283,11 @@ service Console {
     option (google.api.http).get = "/v2/console/account/{account_id}/wallet";
   }
 
+  // Get a notification by id.
+  rpc GetNotification (GetNotificationRequest) returns (console.Notification) {
+    option (google.api.http).get = "/v2/console/notification/{id}";
+  }
+
   // Get purchase by transaction_id
   rpc GetPurchase (GetPurchaseRequest) returns (api.ValidatedPurchase) {
     option (google.api.http).get = "/v2/console/iap/purchase/{transaction_id}";
@@ -320,6 +338,11 @@ service Console {
     option (google.api.http).get = "/v2/console/group";
   }
 
+  // List notifications.
+  rpc ListNotifications (ListNotificationsRequest) returns (NotificationList) {
+    option (google.api.http).get = "/v2/console/notification";
+  }
+
   // List ongoing matches
   rpc ListMatches (ListMatchesRequest) returns (MatchList) {
     option (google.api.http).get = "/v2/console/match";
@@ -343,6 +366,19 @@ service Console {
   // Promote a user from a group.
   rpc PromoteGroupMember (UpdateGroupUserStateRequest) returns (google.protobuf.Empty) {
     option (google.api.http).post = "/v2/console/group/{group_id}/account/{id}/promote";
+  }
+
+  // Sets the user's MFA as required or not required.
+  rpc RequireUserMfa (RequireUserMfaRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/console/user/{username}/mfa/require",
+      body: "*"
+    };
+  }
+
+  // Reset a user's multi-factor authentication credentials.
+  rpc ResetUserMfa (ResetUserMfaRequest) returns (google.protobuf.Empty) {
+    option (google.api.http).post = "/v2/console/user/{username}/mfa/reset";
   }
 
   // Unban a user.
@@ -527,8 +563,10 @@ message AddUserRequest {
   string email = 3;
   // Role of this user;
   UserRole role = 4;
+  // Require MFA
+  bool mfa_required = 5;
   // Subscribe to newsletters
-  bool newsletter_subscription = 5;
+  bool newsletter_subscription = 6;
 }
 
 // Add/join users to a group.
@@ -553,6 +591,22 @@ message AuthenticateRequest {
   string username = 1;
   // The password of the user.
   string password = 2;
+  // Multi-factor authentication code.
+  string mfa = 3;
+}
+
+// Request to change MFA.
+message AuthenticateMFASetupRequest {
+  // MFA token.
+  string mfa = 1;
+  // MFA code.
+  string code = 2;
+}
+
+// Response to change MFA.
+message AuthenticateMFASetupResponse {
+  // An one-time code to configure the MFA mechanism
+  repeated string recovery_codes = 1;
 }
 
 // Log out a session and invalidate a session token.
@@ -597,6 +651,8 @@ message Config {
 message ConsoleSession {
   // A session token (JWT) for the console user.
   string token = 1;
+  // MFA code required to setup the MFA mechanism.
+  google.protobuf.StringValue  mfa_code = 2;
 }
 
 // Delete channel messages by timestamp or/and ids.
@@ -642,7 +698,21 @@ message AddNFTCollectionRequest {
   string collection_address = 1;
   string type = 2;
   uint64 initial_block = 3;
-  uint32 chain_id = 4;
+  uint64 chain_id = 4;
+}
+
+// Reset a user's mfa setup.
+message ResetUserMfaRequest {
+  // User username.
+  string username = 1;
+}
+
+// Make a user's mfa required or not.
+message RequireUserMfaRequest {
+  // User username.
+  string username = 1;
+  // Required.
+  bool required = 2;
 }
 
 // Remove a leaderboard record
@@ -651,6 +721,12 @@ message DeleteLeaderboardRecordRequest {
   string id = 1;
   // Record owner.
   string owner_id = 2;
+}
+
+// Delete notification
+message DeleteNotificationRequest {
+  // Notification ID.
+  string id = 1;
 }
 
 // Delete an individual storage object.
@@ -802,6 +878,16 @@ message ListMatchesRequest {
   google.protobuf.StringValue node = 8;
 }
 
+// List notifications.
+message ListNotificationsRequest {
+  // User ID to filter purchases for
+  string user_id = 1;
+  // The number of notifications to get.
+  uint32 limit = 2;
+  // A cursor to page through notifications.
+  string cursor = 3;
+}
+
 // List validated purchases.
 message ListPurchasesRequest {
   // User ID to filter purchases for
@@ -848,6 +934,34 @@ message MatchState {
 message MatchStateRequest {
   // Match ID
   string id = 1;
+}
+
+message Notification {
+  // ID of the Notification.
+  string id = 1;
+  // Subject of the notification.
+  string subject = 2;
+  // Content of the notification in JSON.
+  string content = 3;
+  // Category code for this notification.
+  int32 code = 4;
+  // ID of the sender, if a user. Otherwise 'null'.
+  string sender_id = 5;
+  // The UNIX time (for gRPC clients) or ISO string (for REST clients) when the notification was created.
+  google.protobuf.Timestamp create_time = 6;
+  // True if this notification was persisted to the database.
+  bool persistent = 7;
+  // User id.
+  string user_id = 8;
+}
+
+message NotificationList {
+  // List of notifications.
+  repeated Notification notifications = 1;
+  // Next page cursor if any.
+  string next_cursor = 2;
+  // Previous page cursor if any.
+  string prev_cursor = 3;
 }
 
 message DeleteChannelMessagesResponse {
@@ -944,6 +1058,10 @@ message UserList {
     string email = 2;
     // Role of the user;
     UserRole role = 3;
+    // Whether the user is required to setup MFA.
+    bool mfa_required = 4;
+    // Whether the user has MFA enabled.
+    bool mfa_enabled = 5;
   }
 
   // A list of users.
@@ -1089,6 +1207,11 @@ message GetWalletLedgerRequest {
   uint32 limit = 2;
   // Cursor to retrieve a page of records from
   string cursor = 3;
+}
+
+message GetNotificationRequest {
+  // Notification id.
+  string id = 1;
 }
 
 message GetPurchaseRequest {

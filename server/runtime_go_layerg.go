@@ -536,7 +536,8 @@ func (n *RuntimeGoLayerGModule) AuthenticateTokenGenerate(userID, username strin
 	}
 
 	tokenId := uuid.Must(uuid.NewV4()).String()
-	token, exp := generateTokenWithExpiry(n.config.GetSession().EncryptionKey, tokenId, userID, username, vars, exp)
+	tokenIssuedAt := time.Now().UTC().Unix()
+	token, exp := generateTokenWithExpiry(n.config.GetSession().EncryptionKey, tokenId, tokenIssuedAt, userID, username, vars, exp)
 	n.sessionCache.Add(uid, exp, tokenId, 0, "")
 	return token, exp, nil
 }
@@ -737,6 +738,31 @@ func (n *RuntimeGoLayerGModule) UsersGetUsername(ctx context.Context, usernames 
 	}
 
 	return users.Users, nil
+}
+
+// @group users
+// @summary Get user's friend status information for a list of target users.
+// @param ctx(type=context.Context) The context object represents information about the server and requester.
+// @param userID (type=string) The current user ID.
+// @param userIDs(type=[]string) An array of target user IDs.
+// @return friends([]*api.Friend) A list of user friends objects.
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) UsersGetFriendStatus(ctx context.Context, userID string, userIDs []string) ([]*api.Friend, error) {
+	uid, err := uuid.FromString(userID)
+	if err != nil {
+		return nil, errors.New("expects user ID to be a valid identifier")
+	}
+
+	fids := make([]uuid.UUID, 0, len(userIDs))
+	for _, id := range userIDs {
+		fid, err := uuid.FromString(id)
+		if err != nil {
+			return nil, errors.New("expects user ID to be a valid identifier")
+		}
+		fids = append(fids, fid)
+	}
+
+	return GetFriends(ctx, n.logger, n.db, n.statusRegistry, uid, fids)
 }
 
 // @group users
@@ -1909,6 +1935,31 @@ func (n *RuntimeGoLayerGModule) NotificationsDeleteId(ctx context.Context, userI
 	return NotificationsDeleteId(ctx, n.logger, n.db, userID, ids...)
 }
 
+// @group notifications
+// @summary Update notifications by their id.
+// @param ctx(type=context.Context) The context object represents information about the server and requester.
+// @param userID(type=[]runtime.NotificationUpdate)
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) NotificationsUpdate(ctx context.Context, updates ...runtime.NotificationUpdate) error {
+	nUpdates := make([]notificationUpdate, 0, len(updates))
+
+	for _, update := range updates {
+		uid, err := uuid.FromString(update.Id)
+		if err != nil {
+			return errors.New("expects id to be a valid UUID")
+		}
+
+		nUpdates = append(nUpdates, notificationUpdate{
+			Id:      uid,
+			Content: update.Content,
+			Subject: update.Subject,
+			Sender:  update.Sender,
+		})
+	}
+
+	return NotificationsUpdate(ctx, n.logger, n.db, nUpdates...)
+}
+
 // @group wallets
 // @summary Update a user's wallet with the given changeset.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
@@ -2041,6 +2092,64 @@ func (n *RuntimeGoLayerGModule) WalletLedgerList(ctx context.Context, userID str
 		runtimeItems[i] = runtime.WalletLedgerItem(item)
 	}
 	return runtimeItems, newCursor, nil
+}
+
+// @group status
+// @summary Follow a player's status changes on a given session.
+// @param sessionID(type=string) A valid session identifier.
+// @param userIDs(type=[]string) A list of userIDs to follow.
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) StatusFollow(sessionID string, userIDs []string) error {
+	suid, err := uuid.FromString(sessionID)
+	if err != nil {
+		return errors.New("expects a valid session id")
+	}
+
+	if len(userIDs) == 0 {
+		return nil
+	}
+
+	uids := make(map[uuid.UUID]struct{}, len(userIDs))
+	for _, id := range userIDs {
+		uid, err := uuid.FromString(id)
+		if err != nil {
+			return errors.New("expects a valid user id")
+		}
+		uids[uid] = struct{}{}
+	}
+
+	n.statusRegistry.Follow(suid, uids)
+
+	return nil
+}
+
+// @group status
+// @summary Unfollow a player's status changes on a given session.
+// @param sessionID(type=string) A valid session identifier.
+// @param userIDs(type=[]string) A list of userIDs to unfollow.
+// @return error(error) An optional error value if an error occurred.
+func (n *RuntimeGoLayerGModule) StatusUnfollow(sessionID string, userIDs []string) error {
+	suid, err := uuid.FromString(sessionID)
+	if err != nil {
+		return errors.New("expects a valid session id")
+	}
+
+	if len(userIDs) == 0 {
+		return nil
+	}
+
+	uids := make([]uuid.UUID, 0, len(userIDs))
+	for _, id := range userIDs {
+		uid, err := uuid.FromString(id)
+		if err != nil {
+			return errors.New("expects a valid user id")
+		}
+		uids = append(uids, uid)
+	}
+
+	n.statusRegistry.Unfollow(suid, uids)
+
+	return nil
 }
 
 // @group storage
@@ -2242,25 +2351,25 @@ func (n *RuntimeGoLayerGModule) StorageDelete(ctx context.Context, deletes []*ru
 // @param order(type=[]string, optional=true) The storage object fields to sort the query results by. The prefix '-' before a field name indicates descending order. All specified fields must be indexed and sortable.
 // @return objects(*api.StorageObjectList) A list of storage objects.
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) StorageIndexList(ctx context.Context, callerID, indexName, query string, limit int, order []string) (*api.StorageObjects, error) {
+func (n *RuntimeGoLayerGModule) StorageIndexList(ctx context.Context, callerID, indexName, query string, limit int, order []string, cursor string) (*api.StorageObjects, string, error) {
 	cid := uuid.Nil
 	if callerID != "" {
 		id, err := uuid.FromString(callerID)
 		if err != nil {
-			return nil, errors.New("expects caller id to be empty or a valid user id")
+			return nil, "", errors.New("expects caller id to be empty or a valid user id")
 		}
 		cid = id
 	}
 
 	if indexName == "" {
-		return nil, errors.New("expects a non-empty indexName")
+		return nil, "", errors.New("expects a non-empty indexName")
 	}
 
 	if limit < 1 || limit > 10_000 {
-		return nil, errors.New("limit must be 1-10000")
+		return nil, "", errors.New("limit must be 1-10000")
 	}
 
-	return n.storageIndex.List(ctx, cid, indexName, query, limit, order)
+	return n.storageIndex.List(ctx, cid, indexName, query, limit, order, cursor)
 }
 
 // @group users
@@ -3580,7 +3689,7 @@ func (n *RuntimeGoLayerGModule) GroupDelete(ctx context.Context, id string) erro
 		return errors.New("expects group ID to be a valid identifier")
 	}
 
-	return DeleteGroup(ctx, n.logger, n.db, groupID, uuid.Nil)
+	return DeleteGroup(ctx, n.logger, n.db, n.tracker, groupID, uuid.Nil)
 }
 
 // @group groups
@@ -4024,8 +4133,8 @@ func (n *RuntimeGoLayerGModule) FriendsList(ctx context.Context, userID string, 
 		return nil, "", errors.New("expects user ID to be a valid identifier")
 	}
 
-	if limit < 1 || limit > 100 {
-		return nil, "", errors.New("expects limit to be 1-100")
+	if limit < 1 || limit > 1000 {
+		return nil, "", errors.New("expects limit to be 1-1000")
 	}
 
 	var stateWrapper *wrapperspb.Int32Value
@@ -4080,7 +4189,7 @@ func (n *RuntimeGoLayerGModule) FriendsOfFriendsList(ctx context.Context, userID
 // @param ids(type=[]string) The IDs of the users you want to add as friends.
 // @param usernames(type=[]string) The usernames of the users you want to add as friends.
 // @return error(error) An optional error value if an error occurred.
-func (n *RuntimeGoLayerGModule) FriendsAdd(ctx context.Context, userID string, username string, ids []string, usernames []string) error {
+func (n *RuntimeGoLayerGModule) FriendsAdd(ctx context.Context, userID string, username string, ids []string, usernames []string, metadata map[string]any) error {
 	userUUID, err := uuid.FromString(userID)
 	if err != nil {
 		return errors.New("expects user ID to be a valid identifier")
@@ -4122,7 +4231,17 @@ func (n *RuntimeGoLayerGModule) FriendsAdd(ctx context.Context, userID string, u
 	allIDs = append(allIDs, ids...)
 	allIDs = append(allIDs, fetchIDs...)
 
-	err = AddFriends(ctx, n.logger, n.db, n.tracker, n.router, userUUID, username, allIDs)
+	var metadataStr string
+	if metadata != nil {
+		bytes, err := json.Marshal(metadata)
+		if err != nil {
+			n.logger.Error("Could not marshal metadata", zap.Error(err))
+			return fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		metadataStr = string(bytes)
+	}
+
+	err = AddFriends(ctx, n.logger, n.db, n.tracker, n.router, userUUID, username, allIDs, metadataStr)
 	if err != nil {
 		return err
 	}
