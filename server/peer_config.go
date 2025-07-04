@@ -17,8 +17,8 @@ import (
 
 type (
 	PeerConfig struct {
-		Addr                string                  `yaml:"gossip_bindaddr" json:"gossip_bindaddr" usage:"Interface address to bind LayerG to for discovery. By default listening on all interfaces."`
-		Port                int                     `yaml:"gossip_bindport" json:"gossip_bindport" usage:"Port number to bind LayerG to for discovery. Default value is 7352."`
+		Addr                string                  `yaml:"gossip_bindaddr" json:"gossip_bindaddr" usage:"Interface address to bind Nakama to for discovery. By default listening on all interfaces."`
+		Port                int                     `yaml:"gossip_bindport" json:"gossip_bindport" usage:"Port number to bind Nakama to for discovery. Default value is 7352."`
 		PushPullInterval    int                     `yaml:"push_pull_interval" json:"push_pull_interval" usage:"push_pull_interval is the interval between complete state syncs, Default value is 60 Second"`
 		GossipInterval      int                     `yaml:"gossip_interval" json:"gossip_interval" usage:"gossip_interval is the interval after which a node has died that, Default value is 200 Millisecond"`
 		TCPTimeout          int                     `yaml:"tcp_timeout" json:"tcp_timeout" usage:"tcp_timeout is the timeout for establishing a stream connection with a remote node for a full state sync, and for stream read and writeoperations, Default value is 10 Second"`
@@ -33,6 +33,7 @@ type (
 		Weight              int32                   `yaml:"weight" json:"weight" usage:"weight"`
 		Balancer            int32                   `yaml:"balancer" json:"balancer" usage:"balancer"`
 		Grpc                *kit.GrpcConfig         `yaml:"grpc" json:"grpc" usage:"grpc client setting"`
+		LeaderElection      bool                    `yaml:"leader_election" json:"leader_election" usage:"leader_election participates in the Leader election, default is True."`
 	}
 )
 
@@ -59,6 +60,7 @@ func (c *PeerConfig) Clone() *PeerConfig {
 		BroadcastQueueSize:  c.BroadcastQueueSize,
 		Members:             make([]string, len(c.Members)),
 		SecretKey:           c.SecretKey,
+		LeaderElection:      c.LeaderElection,
 	}
 
 	copy(newConfig.Members, c.Members)
@@ -113,7 +115,7 @@ func toMemberlistConfig(s Peer, name string, c *PeerConfig) *memberlist.Config {
 		cfg.SecretKey = []byte(c.SecretKey)
 	}
 
-	cfg.Logger = log.New(os.Stdout, "peer", 0)
+	cfg.Logger = log.New(os.Stdout, "", 0)
 	cfg.Name = name
 	cfg.Ping = s
 	cfg.Delegate = s
@@ -127,26 +129,10 @@ func toMemberlistConfig(s Peer, name string, c *PeerConfig) *memberlist.Config {
 func NewPeerConfig() *PeerConfig {
 	return &PeerConfig{
 		Addr:               "0.0.0.0",
-		Port:               7352,
+		Port:               0,
 		BroadcastQueueSize: 128,
 		Members:            make([]string, 0),
 		Grpc:               kit.NewGrpcConfig(),
+		LeaderElection:     true,
 	}
-	// return &PeerConfig{
-	// 	Addr:                "0.0.0.0",
-	// 	Port:                7352,
-	// 	PushPullInterval:    60,
-	// 	GossipInterval:      200,
-	// 	TCPTimeout:          10,
-	// 	ProbeTimeout:        500,
-	// 	ProbeInterval:       1,
-	// 	RetransmitMult:      2,
-	// 	MaxGossipPacketSize: 1400,
-	// 	BroadcastQueueSize:  128,
-	// 	Members:             []string{"layerg:7352"},
-	// 	SecretKey:           "exampleSecretKey",
-	// 	Weight:              100,
-	// 	Balancer:            0,
-	// 	Grpc:                kit.NewGrpcConfig(),
-	// }
 }

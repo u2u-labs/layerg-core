@@ -6,6 +6,7 @@
 package server
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -20,26 +21,35 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *LocalPeer) handler(client kit.Client, msg *pb.ResponseWriter) {
+func (s *LocalPeer) handlerByPeerResponseWriter(client kit.Client, msg *pb.Peer_ResponseWriter) {
 	if client != nil {
 		s.logger.Debug("recv info", zap.String("name", client.Name()), zap.String("Role", client.Name()))
 	} else {
 		s.logger.Debug("recv info")
 	}
 
-	switch msg.Payload.(type) {
-	case *pb.ResponseWriter_Envelope:
-		s.toClient(msg)
-	default:
+	if msg.Context == nil {
+		msg.Context = make(map[string]string)
 	}
+
+	anyResponseWriter, ns := toAnyResponseWriter(msg)
+	if ns != nil {
+		_ = sendAnyResponseWriter(context.Background(), s.logger, s.db, s.tracker, s.messageRouter, "", nil, ns, msg.GetRecipient())
+		return
+	}
+	_ = sendAnyResponseWriter(context.Background(), s.logger, s.db, s.tracker, s.messageRouter, msg.Context["client_cid"], anyResponseWriter, nil, msg.GetRecipient())
 }
 
-func (s *LocalPeer) toClient(w *pb.ResponseWriter) {
-	recipients := w.GetRecipient()
+func (s *LocalPeer) ToClient(envelope *rtapi.Envelope, recipients []*pb.Recipienter) {
+	if envelope == nil {
+		s.logger.Warn("toClient: envelope is nil")
+		return
+	}
+
 	size := len(recipients)
 	if size < 1 {
 		s.sessionRegistry.Range(func(session Session) bool {
-			_ = session.Send(w.GetEnvelope(), true)
+			_ = session.Send(envelope, true)
 			return true
 		})
 		return
@@ -49,19 +59,19 @@ func (s *LocalPeer) toClient(w *pb.ResponseWriter) {
 		switch recipient.Action {
 		case pb.Recipienter_USERID:
 			presenceIDs := s.tracker.ListLocalPresenceIDByStream(PresenceStream{Mode: StreamModeNotifications, Subject: uuid.FromStringOrNil(recipient.GetToken())})
-			s.messageRouter.SendToPresenceIDs(s.logger, presenceIDs, w.GetEnvelope(), true)
+			s.messageRouter.SendToPresenceIDs(s.logger, presenceIDs, envelope, true)
 
 		case pb.Recipienter_SESSIONID:
 			session := s.sessionRegistry.Get(uuid.FromStringOrNil(recipient.GetToken()))
 			if session != nil {
-				_ = session.Send(w.GetEnvelope(), true)
+				_ = session.Send(envelope, true)
 			}
 
 		case pb.Recipienter_CHANNEL:
 			fallthrough
 		case pb.Recipienter_STREAM:
 			presenceIDs := s.tracker.ListLocalPresenceIDByStream(pb2PresenceStream(recipient.GetStream()))
-			s.messageRouter.SendToPresenceIDs(s.logger, presenceIDs, w.GetEnvelope(), true)
+			s.messageRouter.SendToPresenceIDs(s.logger, presenceIDs, envelope, true)
 
 		default:
 		}
@@ -126,7 +136,7 @@ func (s *LocalPeer) disconnect(w *pb.Disconnect) {
 	}
 }
 
-func newEnvelopeError(err error) *rtapi.Envelope {
+func newEnvelopeError(err error) *pb.Peer_Envelope_Error {
 	errMessage := &rtapi.Error{
 		Code:    int32(codes.Unknown),
 		Message: err.Error(),
@@ -136,5 +146,5 @@ func newEnvelopeError(err error) *rtapi.Envelope {
 		errMessage.Code = int32(code.Code())
 		errMessage.Message = code.Message()
 	}
-	return &rtapi.Envelope{Message: &rtapi.Envelope_Error{Error: errMessage}}
+	return &pb.Peer_Envelope_Error{Error: errMessage}
 }

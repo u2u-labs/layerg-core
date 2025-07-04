@@ -9573,3 +9573,176 @@ func exportToSlice[S ~[]E, E any](v goja.Value) (S, error) {
 
 	return results, nil
 }
+
+func (n *runtimeJavascriptLayerGModule) invokeMS(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		req := &api.AnyRequest{
+			Cid:     getJsString(r, f.Argument(0)),
+			Name:    getJsString(r, f.Argument(1)),
+			Header:  getJsStringMap(r, f.Argument(2)),
+			Query:   make(map[string]*api.AnyQuery),
+			Context: getJsStringMap(r, f.Argument(4)),
+			Body: &api.AnyRequest_StringContent{
+				StringContent: getJsString(r, f.Argument(5)),
+			},
+		}
+
+		m, ok := f.Argument(3).Export().(map[string]interface{})
+		if !ok {
+			panic(r.NewTypeError("expects object with string keys and values"))
+		}
+
+		for k, v := range m {
+			if s, ok := v.([]interface{}); ok {
+				req.Query[k] = &api.AnyQuery{Value: make([]string, 0, len(s))}
+				for _, vv := range s {
+					req.Query[k].Value = append(req.Query[k].Value, toString(vv))
+				}
+			}
+		}
+
+		peer, ok := n.router.GetPeer()
+		if !ok {
+			panic(r.NewTypeError("Service Unavailable"))
+		}
+
+		resp, err := peer.InvokeMS(context.Background(), req)
+		if err != nil {
+			panic(r.NewGoError(fmt.Errorf("Failed to invoke the remote service interface. Please check the network connection or service status. %s", err.Error())))
+		}
+
+		result := make(map[string]interface{}, 2)
+		result["header"] = resp.GetHeader()
+		result["body"] = resp.GetStringContent()
+		return r.ToValue(result)
+	}
+}
+
+func (n *runtimeJavascriptLayerGModule) sendMS(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		req := &api.AnyRequest{
+			Cid:     getJsString(r, f.Argument(0)),
+			Name:    getJsString(r, f.Argument(1)),
+			Header:  getJsStringMap(r, f.Argument(2)),
+			Query:   make(map[string]*api.AnyQuery),
+			Context: getJsStringMap(r, f.Argument(4)),
+			Body: &api.AnyRequest_StringContent{
+				StringContent: getJsString(r, f.Argument(5)),
+			},
+		}
+
+		m, ok := f.Argument(3).Export().(map[string]interface{})
+		if !ok {
+			panic(r.NewTypeError("expects object with string keys and values"))
+		}
+
+		for k, v := range m {
+			if s, ok := v.([]interface{}); ok {
+				req.Query[k] = &api.AnyQuery{Value: make([]string, 0, len(s))}
+				for _, vv := range s {
+					req.Query[k].Value = append(req.Query[k].Value, toString(vv))
+				}
+			}
+		}
+
+		peer, ok := n.router.GetPeer()
+		if !ok {
+			panic(r.NewTypeError("Service Unavailable"))
+		}
+
+		err := peer.SendMS(context.Background(), req)
+		if err != nil {
+			panic(r.NewGoError(fmt.Errorf("Failed to invoke the remote service interface. Please check the network connection or service status. %s", err.Error())))
+		}
+		return r.ToValue(true)
+	}
+}
+
+func (n *runtimeJavascriptLayerGModule) eventPeer(r *goja.Runtime) func(goja.FunctionCall) goja.Value {
+	return func(f goja.FunctionCall) goja.Value {
+		req := &api.AnyRequest{
+			Cid:     getJsString(r, f.Argument(0)),
+			Name:    getJsString(r, f.Argument(1)),
+			Header:  getJsStringMap(r, f.Argument(2)),
+			Query:   make(map[string]*api.AnyQuery),
+			Context: getJsStringMap(r, f.Argument(4)),
+			Body: &api.AnyRequest_StringContent{
+				StringContent: getJsString(r, f.Argument(5)),
+			},
+		}
+
+		m, ok := f.Argument(3).Export().(map[string]interface{})
+		if !ok {
+			panic(r.NewTypeError("expects object with string keys and values"))
+		}
+
+		for k, v := range m {
+			if s, ok := v.([]interface{}); ok {
+				req.Query[k] = &api.AnyQuery{Value: make([]string, 0, len(s))}
+				for _, vv := range s {
+					req.Query[k].Value = append(req.Query[k].Value, toString(vv))
+				}
+			}
+		}
+
+		names := make([]string, 0)
+		nameValues, ok := f.Argument(6).Export().([]interface{})
+		if ok {
+			for _, v := range nameValues {
+				names = append(names, toString(v))
+			}
+		}
+
+		peer, ok := n.router.GetPeer()
+		if !ok {
+			panic(r.NewTypeError("Service Unavailable"))
+		}
+
+		err := peer.Event(context.Background(), req, names...)
+		if err != nil {
+			panic(r.NewGoError(fmt.Errorf("Failed to invoke the remote service interface. Please check the network connection or service status. %s", err.Error())))
+		}
+		return r.ToValue(true)
+	}
+}
+
+func toString(value interface{}) string {
+	switch v := value.(type) {
+	case int:
+		return strconv.Itoa(v)
+	case int8:
+		return strconv.Itoa(int(v))
+	case int32:
+		return strconv.FormatInt(int64(v), 10)
+	case int64:
+		return strconv.FormatInt(v, 10)
+	case uint:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint8:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint64:
+		return strconv.FormatUint(v, 10)
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', 4, 32)
+	case float64:
+		return strconv.FormatFloat(float64(v), 'f', 4, 64)
+	case string:
+		return v
+	case []byte:
+		return string(v)
+	}
+	return ""
+}
+
+func anyRequestToJsObject(in *api.AnyRequest) map[string]interface{} {
+	anyRequest := make(map[string]interface{}, 6)
+	anyRequest["cid"] = in.GetCid()
+	anyRequest["name"] = in.GetName()
+	anyRequest["header"] = in.GetHeader()
+	anyRequest["query"] = in.GetQuery()
+	anyRequest["context"] = in.GetContext()
+	anyRequest["body"] = in.GetStringContent()
+	return anyRequest
+}

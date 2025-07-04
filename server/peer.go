@@ -7,15 +7,19 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"math"
 	coreruntime "runtime"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"maps"
+
 	"github.com/gofrs/uuid/v5"
 	"github.com/hashicorp/memberlist"
+	"github.com/u2u-labs/go-layerg-common/api"
+	"github.com/u2u-labs/go-layerg-common/rtapi"
 	"github.com/u2u-labs/go-layerg-common/runtime"
 	"github.com/u2u-labs/layerg-core/internal/worker"
 	"github.com/u2u-labs/layerg-kit/kit"
@@ -49,12 +53,11 @@ type (
 		NumMembers() int
 		Member(name string) (Endpoint, bool)
 		Members() []Endpoint
-		Broadcast(msg *pb.Request, reliable bool)
-		BroadcastBinaryLog(b *pb.BinaryLog, toQueue bool)
-		Send(endpoint Endpoint, msg *pb.Request, reliable bool) error
-		Request(ctx context.Context, endpoint Endpoint, msg *pb.Request) (*pb.ResponseWriter, error)
+		Broadcast(msg *pb.Peer_Envelope, reliable bool)
+		BinaryLogBroadcast(b *pb.BinaryLog, toQueue bool)
+		Send(endpoint Endpoint, msg *pb.Peer_Envelope, reliable bool) error
+		Request(ctx context.Context, endpoint Endpoint, msg *pb.Peer_Envelope) (*pb.Peer_Envelope, error)
 		GetServiceRegistry() kit.ServiceRegistry
-		Version() (map[string][2]uint64, int)
 		MatchmakerAdd(extract *pb.MatchmakerExtract)
 		MatchmakerRemoveSession(sessionID, ticket string)
 		MatchmakerRemoveSessionAll(sessionID string)
@@ -62,6 +65,12 @@ type (
 		MatchmakerRemovePartyAll(partyID string)
 		MatchmakerRemoveAll(node string)
 		MatchmakerRemove(tickets []string)
+		ToClient(envelope *rtapi.Envelope, recipients []*pb.Recipienter)
+		InvokeMS(ctx context.Context, in *api.AnyRequest) (*api.AnyResponseWriter, error)
+		SendMS(ctx context.Context, in *api.AnyRequest) error
+		Event(ctx context.Context, in *api.AnyRequest, names ...string) error
+		Leader() bool
+		AllowLeader() bool
 	}
 
 	peerMsg struct {
@@ -74,12 +83,15 @@ type (
 		ctxCancelFn          context.CancelFunc
 		logger               *zap.Logger
 		config               *PeerConfig
+		runtimeConfig        *RuntimeConfig
 		memberlist           *memberlist.Memberlist
 		transmitLimitedQueue *memberlist.TransmitLimitedQueue
 		members              *MapOf[string, Endpoint]
 		endpoint             Endpoint
 		serviceRegistry      kit.ServiceRegistry
 		etcdClient           *kit.EtcdClientV3
+		leader               *PeerLeader
+		runtime              *Runtime
 		metrics              Metrics
 		sessionRegistry      SessionRegistry
 		messageRouter        MessageRouter
@@ -93,23 +105,25 @@ type (
 		wk                   *worker.WorkerPool
 		protojsonMarshaler   *protojson.MarshalOptions
 		protojsonUnmarshaler *protojson.UnmarshalOptions
+		db                   *sql.DB
 
 		once sync.Once
 		sync.Mutex
 	}
 )
 
-func NewLocalPeer(logger *zap.Logger, name string, metadata map[string]string, metrics Metrics, sessionRegistry SessionRegistry, tracker Tracker, messageRouter MessageRouter, matchRegistry MatchRegistry, matchmaker Matchmaker, partyRegistry PartyRegistry, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, c *PeerConfig) Peer {
+func NewLocalPeer(db *sql.DB, logger *zap.Logger, name string, metadata map[string]string, runtime *Runtime, metrics Metrics, sessionRegistry SessionRegistry, tracker Tracker, messageRouter MessageRouter, matchRegistry MatchRegistry, matchmaker Matchmaker, partyRegistry PartyRegistry, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config) Peer {
 	ctx, ctxCancelFn := context.WithCancel(context.Background())
 	if metadata == nil {
 		metadata = make(map[string]string)
 	}
-
-	endpoint := NewPeerEndpont(name, metadata, int32(pb.NodeMeta_OK), c.Weight, c.Balancer, protojsonMarshaler)
+	c := config.GetCluster()
+	endpoint := NewPeerEndpont(name, metadata, int32(pb.NodeMeta_OK), c.Weight, c.Balancer, false, protojsonMarshaler)
 	s := &LocalPeer{
 		ctx:                  ctx,
 		ctxCancelFn:          ctxCancelFn,
 		config:               c,
+		runtimeConfig:        config.GetRuntime(),
 		logger:               logger,
 		members:              &MapOf[string, Endpoint]{},
 		endpoint:             endpoint,
@@ -126,6 +140,8 @@ func NewLocalPeer(logger *zap.Logger, name string, metadata map[string]string, m
 		messageRouter:        messageRouter,
 		protojsonMarshaler:   protojsonMarshaler,
 		protojsonUnmarshaler: protojsonUnmarshaler,
+		db:                   db,
+		runtime:              runtime,
 	}
 
 	cfg := toMemberlistConfig(s, name, c)
@@ -136,9 +152,7 @@ func NewLocalPeer(logger *zap.Logger, name string, metadata map[string]string, m
 
 	s.endpoint.BindMemberlistNode(m.LocalNode())
 	s.memberlist = m
-	s.binaryLog = NewLocalBinaryLog(ctx, logger, name, func() int {
-		return m.NumMembers()
-	})
+	s.binaryLog = NewLocalBinaryLog(logger, name)
 
 	s.transmitLimitedQueue = &memberlist.TransmitLimitedQueue{
 		NumNodes: func() int {
@@ -154,10 +168,6 @@ func NewLocalPeer(logger *zap.Logger, name string, metadata map[string]string, m
 	// Process incoming
 	go s.processIncoming()
 	return s
-}
-
-func (s *LocalPeer) Version() (map[string][2]uint64, int) {
-	return s.binaryLog.GetBinaryLogVersions(), s.binaryLog.Len()
 }
 
 // when broadcasting an alive message. It's length is limited to
@@ -210,20 +220,21 @@ func (s *LocalPeer) GetBroadcasts(overhead, limit int) [][]byte {
 // boolean indicates this is for a join instead of a push/pull.
 func (s *LocalPeer) LocalState(join bool) []byte {
 	state := &pb.State{
-		Node:       s.endpoint.Name(),
-		BinaryLog:  s.binaryLog.GetBroadcasts(10240),
-		Presences:  make([]*pb.Presence, 0),
-		CheckPoint: s.binaryLog.GetCheckPoint(),
-		Version:    s.binaryLog.CurrentID(),
-		Matchmaker: make([]*pb.MatchmakerExtract, 0),
+		Node:  s.endpoint.Name(),
+		Nodes: make([]*pb.StateNode, 0),
 	}
+
+	nodesMap := make(map[string]int)
+	state.Nodes = append(state.Nodes, &pb.StateNode{
+		Node:       s.endpoint.Name(),
+		Version:    s.binaryLog.GetVersion(),
+		Presences:  make([]*pb.Presence, 0),
+		Matchmaker: make([]*pb.MatchmakerExtract, 0),
+	})
+	nodesMap[s.endpoint.Name()] = 0
 	presencesMap := make(map[uuid.UUID]int)
 	s.tracker.Range(func(sessionID uuid.UUID, presences []*Presence) bool {
 		for _, presence := range presences {
-			if !join && presence.GetNodeId() != s.endpoint.Name() {
-				continue
-			}
-
 			presenceStream := &pb.PresenceStream{
 				Mode:       uint32(presence.Stream.Mode),
 				Subject:    presence.Stream.Subject.String(),
@@ -240,10 +251,22 @@ func (s *LocalPeer) LocalState(join bool) []byte {
 				Reason:        atomic.LoadUint32(&presence.Meta.Reason),
 			}
 
+			nodeIdx, ok := nodesMap[presence.GetNodeId()]
+			if !ok {
+				state.Nodes = append(state.Nodes, &pb.StateNode{
+					Node:       presence.GetNodeId(),
+					Version:    s.binaryLog.GetVersionByNode(presence.GetNodeId()),
+					Presences:  make([]*pb.Presence, 0),
+					Matchmaker: make([]*pb.MatchmakerExtract, 0),
+				})
+				nodeIdx = len(state.Nodes) - 1
+				nodesMap[presence.GetNodeId()] = nodeIdx
+			}
+
 			idx, ok := presencesMap[presence.ID.SessionID]
 			if ok {
-				state.Presences[idx].Stream = append(state.Presences[idx].Stream, presenceStream)
-				state.Presences[idx].Meta = append(state.Presences[idx].Meta, presenceMeta)
+				state.Nodes[nodeIdx].Presences[idx].Stream = append(state.Nodes[nodeIdx].Presences[idx].Stream, presenceStream)
+				state.Nodes[nodeIdx].Presences[idx].Meta = append(state.Nodes[nodeIdx].Presences[idx].Meta, presenceMeta)
 				continue
 			}
 
@@ -254,14 +277,14 @@ func (s *LocalPeer) LocalState(join bool) []byte {
 				Meta:      []*pb.PresenceMeta{presenceMeta},
 				Node:      presence.GetNodeId(),
 			}
-			state.Presences = append(state.Presences, p)
-			presencesMap[presence.ID.SessionID] = len(state.Presences) - 1
+			state.Nodes[nodeIdx].Presences = append(state.Nodes[nodeIdx].Presences, p)
+			presencesMap[presence.ID.SessionID] = len(state.Nodes[nodeIdx].Presences) - 1
 		}
 		return true
 	})
 
 	for _, extract := range s.matchmaker.Extract() {
-		state.Matchmaker = append(state.Matchmaker, matchmakerExtract2pb(extract))
+		state.Nodes[0].Matchmaker = append(state.Nodes[0].Matchmaker, matchmakerExtract2pb(extract))
 	}
 
 	bytes, err := proto.Marshal(state)
@@ -269,8 +292,6 @@ func (s *LocalPeer) LocalState(join bool) []byte {
 		s.logger.Warn("failed to marshal LocalState", zap.Error(err))
 		return nil
 	}
-
-	//s.metrics.PeerSent(int64(len(bytes)))
 	return bytes
 }
 
@@ -308,15 +329,11 @@ func (s *LocalPeer) AckPayload() []byte {
 		AvgOutputKbs:   math.Floor(s.metrics.SnapshotSentKbSec()*100) / 100,
 	}
 	bytes, _ := proto.Marshal(status)
-
-	//s.metrics.PeerSent(int64(len(bytes)))
 	return bytes
 }
 
 // NotifyPing is invoked when an ack for a ping is received
 func (s *LocalPeer) NotifyPingComplete(other *memberlist.Node, rtt time.Duration, payload []byte) {
-	//s.metrics.PeerRecv(int64(len(payload)))
-
 	endpoint, ok := s.members.Load(other.Name)
 	if !ok || endpoint == nil || other.Name == s.endpoint.Name() {
 		return
@@ -352,13 +369,8 @@ func (s *LocalPeer) NotifyJoin(node *memberlist.Node) {
 		return
 	}
 
-	s.members.Store(node.Name, NewPeerEndpont(md.GetName(), md.GetVars(), int32(md.GetStatus()), md.GetWeight(), int32(md.GetBalancer()), s.protojsonMarshaler, node))
+	s.members.Store(node.Name, NewPeerEndpont(md.GetName(), md.GetVars(), int32(md.GetStatus()), md.GetWeight(), int32(md.GetBalancer()), md.GetLeader(), s.protojsonMarshaler, node))
 	s.logger.Debug("NotifyJoin", zap.String("name", md.GetName()))
-	// if !s.wk.Stopped() {
-	// 	s.wk.Submit(func() {
-	// 		s.metrics.GaugePeers(float64(s.NumMembers()))
-	// 	})
-	// }
 }
 
 // NotifyLeave is invoked when a node is detected to have left.
@@ -371,8 +383,7 @@ func (s *LocalPeer) NotifyLeave(node *memberlist.Node) {
 	s.members.Delete(node.Name)
 	if !s.wk.Stopped() {
 		s.wk.Submit(func() {
-			s.binaryLog.ClearBinaryLogByNode(node.Name)
-			s.tracker.ClearTrackByNode(node.Name)
+			s.tracker.ClearTrackByNode(map[string]bool{node.Name: true})
 			s.logger.Debug("NotifyLeave", zap.String("name", node.Name))
 			//s.metrics.GaugePeers(float64(s.NumMembers()))
 		})
@@ -389,7 +400,7 @@ func (s *LocalPeer) NotifyUpdate(node *memberlist.Node) {
 		return
 	}
 
-	s.members.Store(node.Name, NewPeerEndpont(md.GetName(), md.GetVars(), int32(md.GetStatus()), md.GetWeight(), int32(md.GetBalancer()), s.protojsonMarshaler, node))
+	s.members.Store(node.Name, NewPeerEndpont(md.GetName(), md.GetVars(), int32(md.GetStatus()), md.GetWeight(), int32(md.GetBalancer()), md.GetLeader(), s.protojsonMarshaler, node))
 	s.logger.Debug("NotifyUpdate", zap.String("name", md.GetName()))
 }
 
@@ -422,6 +433,10 @@ func (s *LocalPeer) Shutdown() {
 			s.logger.Info("Peer shutdown complete", zap.String("node", s.endpoint.Name()), zap.Int("numMembers", s.memberlist.NumMembers()))
 		}()
 
+		if s.leader != nil {
+			s.leader.Stop()
+		}
+
 		if s.etcdClient != nil {
 			if err := s.etcdClient.Deregister(s.endpoint.Name()); err != nil {
 				s.logger.Warn("failed to shutdown Deregister", zap.Error(err))
@@ -453,6 +468,15 @@ func (s *LocalPeer) Join(members ...string) (int, error) {
 			s.logger.Fatal("Failed to register service", zap.Error(err))
 		}
 
+		if s.config.LeaderElection {
+			leader, err := NewPeerLeader(s.ctx, s.logger, s.etcdClient)
+			if err != nil {
+				s.logger.Fatal("Failed to create PeerLeader", zap.Error(err))
+			}
+			leader.Run(s.endpoint, s.memberlist)
+			s.leader = leader
+		}
+
 		s.onServiceUpdate()
 		m, ok := s.serviceRegistry.Get(kit.SERVICE_NAME)
 		if ok {
@@ -461,7 +485,6 @@ func (s *LocalPeer) Join(members ...string) (int, error) {
 				members = append(members, v.Addr())
 			}
 		}
-
 		go s.processWatch()
 	}
 
@@ -471,6 +494,14 @@ func (s *LocalPeer) Join(members ...string) (int, error) {
 	}
 
 	return n, nil
+}
+
+func (s *LocalPeer) Leader() bool {
+	return s.endpoint.Leader()
+}
+
+func (s *LocalPeer) AllowLeader() bool {
+	return s.leader != nil
 }
 
 func (s *LocalPeer) Local() Endpoint {
@@ -499,14 +530,17 @@ func (s *LocalPeer) GetServiceRegistry() kit.ServiceRegistry {
 	return s.serviceRegistry
 }
 
-func (s *LocalPeer) Broadcast(msg *pb.Request, reliable bool) {
+func (s *LocalPeer) Broadcast(msg *pb.Peer_Envelope, reliable bool) {
 	request := &pb.Frame{
 		Id:        uuid.Must(uuid.NewV4()).String(),
 		Node:      s.endpoint.Name(),
 		Timestamp: timestamppb.New(time.Now().UTC()),
-		Payload:   &pb.Frame_Request{Request: msg},
+		Payload:   &pb.Frame_Envelope{Envelope: msg},
 	}
 
+	if msg.Cid == "" {
+		msg.Cid = "REQ"
+	}
 	b, _ := proto.Marshal(request)
 	//s.metrics.PeerSent(int64(len(b)))
 
@@ -529,12 +563,12 @@ func (s *LocalPeer) Broadcast(msg *pb.Request, reliable bool) {
 	})
 }
 
-func (s *LocalPeer) Send(endpoint Endpoint, msg *pb.Request, reliable bool) error {
+func (s *LocalPeer) Send(endpoint Endpoint, msg *pb.Peer_Envelope, reliable bool) error {
 	request := &pb.Frame{
 		Id:        uuid.Must(uuid.NewV4()).String(),
 		Node:      s.endpoint.Name(),
 		Timestamp: timestamppb.New(time.Now().UTC()),
-		Payload:   &pb.Frame_Request{Request: msg},
+		Payload:   &pb.Frame_Envelope{Envelope: msg},
 	}
 
 	b, err := proto.Marshal(request)
@@ -550,7 +584,7 @@ func (s *LocalPeer) Send(endpoint Endpoint, msg *pb.Request, reliable bool) erro
 	return s.memberlist.SendReliable(endpoint.MemberlistNode(), b)
 }
 
-func (s *LocalPeer) Request(ctx context.Context, endpoint Endpoint, msg *pb.Request) (*pb.ResponseWriter, error) {
+func (s *LocalPeer) Request(ctx context.Context, endpoint Endpoint, msg *pb.Peer_Envelope) (*pb.Peer_Envelope, error) {
 	if endpoint == nil {
 		return nil, status.Error(codes.NotFound, "endpoint is not found")
 	}
@@ -567,21 +601,20 @@ func (s *LocalPeer) Request(ctx context.Context, endpoint Endpoint, msg *pb.Requ
 		}
 	}
 
+	msg.Cid = "REQ"
 	inbox := uuid.Must(uuid.NewV4())
 	request := &pb.Frame{
 		Id:        uuid.Must(uuid.NewV4()).String(),
 		Inbox:     inbox.String(),
 		Node:      s.endpoint.Name(),
 		Timestamp: timestamppb.New(time.Now().UTC()),
-		Payload:   &pb.Frame_Request{Request: msg},
+		Payload:   &pb.Frame_Envelope{Envelope: msg},
 	}
 
 	b, err := proto.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
-	//s.metrics.PeerSent(int64(len(b)))
-
 	replyChan := make(chan *pb.Frame, 1)
 	s.inbox.Register(request.Inbox, replyChan)
 	defer func() {
@@ -599,12 +632,17 @@ func (s *LocalPeer) Request(ctx context.Context, endpoint Endpoint, msg *pb.Requ
 			return nil, status.Error(codes.DeadlineExceeded, "DeadlineExceeded")
 		}
 
-		writer := m.GetResponseWriter()
-		switch writer.Payload.(type) {
-		case *pb.ResponseWriter_Envelope:
-			if err := writer.GetEnvelope().GetError(); err != nil {
+		writer := m.GetEnvelope()
+		if writer == nil {
+			return nil, status.Error(codes.InvalidArgument, "InvalidArgument")
+		}
+
+		switch v := writer.Payload.(type) {
+		case *pb.Peer_Envelope_Error:
+			if err := v.Error; err != nil {
 				return nil, status.Error(codes.Code(err.Code), err.Message)
 			}
+
 		default:
 		}
 		return writer, nil
@@ -615,23 +653,21 @@ func (s *LocalPeer) Request(ctx context.Context, endpoint Endpoint, msg *pb.Requ
 	return nil, status.Error(codes.DeadlineExceeded, "DeadlineExceeded")
 }
 
-func (s *LocalPeer) BroadcastBinaryLog(b *pb.BinaryLog, toQueue bool) {
+func (s *LocalPeer) BinaryLogBroadcast(b *pb.BinaryLog, toQueue bool) {
 	if b == nil {
 		return
 	}
 
-	b.Id = s.binaryLog.NextID()
 	b.Node = s.endpoint.Name()
-	b.Timestamp = timestamppb.New(time.Now().UTC())
-	bytes, _ := proto.Marshal(&pb.Frame{
+	b.Version = s.binaryLog.RefreshVersion()
+	frame := &pb.Frame{
 		Id:        uuid.Must(uuid.NewV4()).String(),
 		Inbox:     "",
 		Node:      b.Node,
-		Timestamp: b.Timestamp,
+		Timestamp: timestamppb.New(time.Now().UTC()),
 		Payload:   &pb.Frame_BinaryLog{BinaryLog: b},
-	})
-
-	s.binaryLog.Push(b)
+	}
+	bytes, _ := proto.Marshal(frame)
 
 	// 如果不加入队列
 	// 那么就直接实时发出去
@@ -648,13 +684,147 @@ func (s *LocalPeer) BroadcastBinaryLog(b *pb.BinaryLog, toQueue bool) {
 		})
 		return
 	}
+
 	s.transmitLimitedQueue.QueueBroadcast(&PeerBroadcast{
-		name:     strconv.FormatUint(b.Id, 10),
+		name:     frame.Id,
 		msg:      bytes,
 		finished: nil,
 	})
+}
 
-	// s.metrics.PeerSent(int64(len(bytes)))
+func (s *LocalPeer) Event(ctx context.Context, in *api.AnyRequest, names ...string) error {
+	request := &pb.Frame{
+		Id:        uuid.Must(uuid.NewV4()).String(),
+		Node:      s.endpoint.Name(),
+		Timestamp: timestamppb.New(time.Now().UTC()),
+		Payload:   &pb.Frame_Event{Event: in},
+	}
+
+	b, err := proto.Marshal(request)
+	if err != nil {
+		return err
+	}
+
+	req := toPeerRequest(in)
+	if len(names) < 1 {
+		s.members.Range(func(key string, value Endpoint) bool {
+			if err := s.memberlist.SendReliable(value.MemberlistNode(), b); err != nil {
+				s.logger.Error("Failed to send broadcast", zap.String("name", key), zap.Error(err))
+			}
+			return true
+		})
+
+		s.GetServiceRegistry().Range(func(key string, value kit.Service) bool {
+			if key == "nakama" {
+				return true
+			}
+
+			for _, client := range value.GetClients() {
+				if !client.AllowStream() {
+					s.wk.Submit(func(evtCtx context.Context, logger *zap.Logger, c kit.Client, r *pb.Peer_Request) func() {
+						return func() {
+							if _, err := c.Do(ctx, r); err != nil {
+								logger.Error("Failed to broadcast event within the cluster.", zap.Error(err), zap.String("role", c.Role()), zap.String("name", c.Name()))
+							}
+						}
+					}(ctx, s.logger, client, req))
+				} else {
+					s.wk.Submit(func(logger *zap.Logger, c kit.Client, r *pb.Peer_Request) func() {
+						return func() {
+							if err := c.Send(r); err != nil {
+								logger.Error("Failed to broadcast event within the cluster.", zap.Error(err), zap.String("role", c.Role()), zap.String("name", c.Name()))
+							}
+						}
+					}(s.logger, client, req))
+				}
+			}
+			return true
+		})
+		return nil
+	}
+
+	for _, name := range names {
+		if name == "nakama" {
+			s.members.Range(func(key string, value Endpoint) bool {
+				if err := s.memberlist.SendReliable(value.MemberlistNode(), b); err != nil {
+					s.logger.Error("Failed to send broadcast", zap.String("name", key), zap.Error(err))
+				}
+				return true
+			})
+
+			continue
+		}
+
+		clients, ok := s.GetServiceRegistry().Get(name)
+		if !ok {
+			continue
+		}
+
+		for _, client := range clients.GetClients() {
+			if !client.AllowStream() {
+				s.wk.Submit(func(evtCtx context.Context, logger *zap.Logger, c kit.Client, r *pb.Peer_Request) func() {
+					return func() {
+						if _, err := c.Do(ctx, r); err != nil {
+							logger.Error("Failed to broadcast event within the cluster.", zap.Error(err), zap.String("role", c.Role()), zap.String("name", c.Name()))
+						}
+					}
+				}(ctx, s.logger, client, req))
+			} else {
+				s.wk.Submit(func(logger *zap.Logger, c kit.Client, r *pb.Peer_Request) func() {
+					return func() {
+						if err := c.Send(r); err != nil {
+							logger.Error("Failed to broadcast event within the cluster.", zap.Error(err), zap.String("role", c.Role()), zap.String("name", c.Name()))
+						}
+					}
+				}(s.logger, client, req))
+			}
+		}
+	}
+	return nil
+}
+
+func (s *LocalPeer) InvokeMS(ctx context.Context, in *api.AnyRequest) (*api.AnyResponseWriter, error) {
+	if in.Name == "" {
+		return nil, status.Error(codes.InvalidArgument, "Invalid Argument")
+	}
+
+	request := toPeerRequest(in)
+	maps.Copy(request.Context, s.runtimeConfig.Environment)
+	maps.Copy(request.Context, in.GetContext())
+	endpoint, ok := s.GetServiceRegistry().Get(in.Name)
+	if !ok {
+		return nil, status.Error(codes.Unavailable, "Service Unavailable")
+	}
+
+	resp, err := endpoint.Do(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp == nil {
+		return &api.AnyResponseWriter{}, nil
+	}
+
+	w, ns := toAnyResponseWriter(resp)
+	if ns != nil {
+		_ = sendAnyResponseWriter(context.Background(), s.logger, s.db, s.tracker, s.messageRouter, "", nil, ns, resp.GetRecipient())
+	}
+	return w, nil
+}
+
+func (s *LocalPeer) SendMS(ctx context.Context, in *api.AnyRequest) error {
+	if in.Name == "" {
+		return status.Error(codes.InvalidArgument, "Invalid Argument")
+	}
+
+	request := toPeerRequest(in)
+	maps.Copy(request.Context, s.runtimeConfig.Environment)
+	maps.Copy(request.Context, in.GetContext())
+	endpoint, ok := s.GetServiceRegistry().Get(in.Name)
+	if !ok {
+		return status.Error(codes.Unavailable, "Service Unavailable")
+	}
+	return endpoint.Send(request)
 }
 
 func (s *LocalPeer) processIncoming() {
@@ -735,7 +905,7 @@ func (s *LocalPeer) onServiceUpdate() {
 			nodes[md.Role][md.Name] = true
 		}
 
-		client, err := s.serviceRegistry.Register(&md, s.handler)
+		client, err := s.serviceRegistry.Register(&md, s.handlerByPeerResponseWriter)
 		if err != nil {
 			s.logger.Error("failed to register service", zap.Error(err), zap.String("md", v))
 			continue
@@ -788,7 +958,7 @@ func (s *LocalPeer) onServiceUpdate() {
 		}
 		return true
 	})
-	s.logger.Info("updated service", zap.Strings("nodes", nodesname), zap.Strings("removed", nodesremoved))
+	s.logger.Info("updated services", zap.Strings("nodes", nodesname), zap.Strings("removed", nodesremoved))
 }
 
 func (s *LocalPeer) onNotifyMsg(msg []byte) {
@@ -798,15 +968,33 @@ func (s *LocalPeer) onNotifyMsg(msg []byte) {
 		return
 	}
 
-	switch frame.Payload.(type) {
+	switch v := frame.Payload.(type) {
 	case *pb.Frame_BinaryLog:
-		s.onBinaryLog(frame.GetBinaryLog())
+		s.handleBinaryLog(frame.GetBinaryLog())
 
-	case *pb.Frame_Request:
-		s.onRequest(&frame)
+	case *pb.Frame_Status:
+	case *pb.Frame_Envelope:
+		if v.Envelope == nil {
+			return
+		}
 
-	case *pb.Frame_ResponseWriter:
-		s.onResponseWriter(&frame)
+		cid := v.Envelope.GetCid()
+		switch cid {
+		case "REQ", "":
+			s.onRequest(&frame)
+
+		case "RESP":
+			s.onResponseWriter(&frame)
+
+		default:
+			s.logger.Error("", zap.String("No corresponding CID found.", cid))
+		}
+
+	case *pb.Frame_Event:
+		if fn := s.runtime.EventPeer(); fn != nil {
+			evtCtx := NewRuntimeGoContext(s.ctx, s.Local().Name(), "", s.runtimeConfig.Environment, RuntimeExecutionModePeerEvent, nil, nil, 0, "", "", nil, "", "", "", "")
+			fn(evtCtx, NewRuntimeGoLogger(s.logger), v.Event)
+		}
 	}
 }
 
@@ -817,18 +1005,29 @@ func (s *LocalPeer) onMergeRemoteState(buf []byte, join bool) {
 		return
 	}
 
-	for _, v := range state.GetBinaryLog() {
-		s.onBinaryLog(v)
+	nodeNames := make(map[string]bool)
+	nodeMap := make(map[string]*pb.StateNode)
+	currentNode := s.endpoint.Name()
+	for _, stateNode := range state.GetNodes() {
+		if stateNode.Node == currentNode {
+			continue
+		}
+
+		if stateNode.Version <= s.binaryLog.GetVersionByNode(stateNode.Node) {
+			continue
+		}
+		nodeNames[stateNode.Node] = true
+		nodeMap[stateNode.Node] = stateNode
 	}
 
-	s.tracker.MergeRemoteState(state.GetNode(), state.GetPresences(), join)
-	s.binaryLog.MergeCheckPoint(state.CheckPoint, join)
-	s.binaryLog.SetLocalCheckPoint(state.GetNode(), state.GetVersion())
+	s.tracker.ClearTrackByNode(nodeNames)
+	s.matchmaker.RemoveAll(nodeNames)
+	for node, stateNode := range nodeMap {
+		s.binaryLog.SetVersionByNode(node, stateNode.Version)
+		s.tracker.MergeRemoteState(node, stateNode.GetPresences())
 
-	s.matchmaker.RemoveAll(state.Node)
-	if matchmakerExtractSize := len(state.GetMatchmaker()); matchmakerExtractSize > 0 {
-		matchmakerExtracts := make([]*MatchmakerExtract, matchmakerExtractSize)
-		for k, v := range state.GetMatchmaker() {
+		matchmakerExtracts := make([]*MatchmakerExtract, len(stateNode.GetMatchmaker()))
+		for k, v := range stateNode.GetMatchmaker() {
 			matchmakerExtracts[k] = pb2MatchmakerExtract(v)
 		}
 		s.matchmaker.Insert(matchmakerExtracts)

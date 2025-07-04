@@ -31,13 +31,7 @@ func (t *LocalTracker) Range(fn func(sessionID uuid.UUID, presences []*Presence)
 	t.RUnlock()
 }
 
-func (t *LocalTracker) MergeRemoteState(fromNode string, presences []*pb.Presence, join bool) {
-	if join {
-		t.ClearRemoteTrack()
-	} else {
-		t.ClearTrackByNode(fromNode)
-	}
-
+func (t *LocalTracker) MergeRemoteState(fromNode string, presences []*pb.Presence) {
 	t.Lock()
 	for _, presence := range presences {
 		sessionID := uuid.FromStringOrNil(presence.GetSessionID())
@@ -120,12 +114,12 @@ func (t *LocalTracker) ClearRemoteTrack() {
 	t.Unlock()
 }
 
-func (t *LocalTracker) ClearTrackByNode(node string) {
+func (t *LocalTracker) ClearTrackByNode(nodes map[string]bool) {
 	t.Lock()
 	for sessionID, bySession := range t.presencesBySession {
 		deleted := false
 		for pc := range bySession {
-			if pc.ID.Node != node {
+			if !nodes[pc.ID.Node] {
 				break
 			}
 
@@ -175,10 +169,10 @@ func (t *LocalTracker) TrackPeer(sessionID uuid.UUID, userID uuid.UUID, ops []*T
 		presence.Meta[k] = presenceMeta2PB(v.Meta)
 	}
 
-	t.peer.BroadcastBinaryLog(&pb.BinaryLog{
+	t.peer.BinaryLogBroadcast(&pb.BinaryLog{
 		Node:    t.name,
 		Payload: &pb.BinaryLog_Track{Track: presence},
-	}, false)
+	}, true)
 }
 
 func (t *LocalTracker) UntrackPeer(sessionID uuid.UUID, userID uuid.UUID, streams []*PresenceStream, modes []uint32, reason runtime.PresenceReason, skipStream *PresenceStream) {
@@ -200,10 +194,10 @@ func (t *LocalTracker) UntrackPeer(sessionID uuid.UUID, userID uuid.UUID, stream
 		untrack.Stream[k] = presenceStream2PB(*v)
 	}
 
-	t.peer.BroadcastBinaryLog(&pb.BinaryLog{
+	t.peer.BinaryLogBroadcast(&pb.BinaryLog{
 		Node:    t.name,
 		Payload: &pb.BinaryLog_Untrack{Untrack: untrack},
-	}, false)
+	}, true)
 }
 
 func (t *LocalTracker) UpdateTrackPeer(sessionID uuid.UUID, userID uuid.UUID, ops []*TrackerOp) {
@@ -220,10 +214,10 @@ func (t *LocalTracker) UpdateTrackPeer(sessionID uuid.UUID, userID uuid.UUID, op
 		presence.Meta[k] = presenceMeta2PB(v.Meta)
 	}
 
-	t.peer.BroadcastBinaryLog(&pb.BinaryLog{
+	t.peer.BinaryLogBroadcast(&pb.BinaryLog{
 		Node:    t.name,
 		Payload: &pb.BinaryLog_UpdateTrack{UpdateTrack: presence},
-	}, false)
+	}, true)
 }
 
 func (t *LocalTracker) UntrackByModes(sessionID uuid.UUID, modes map[uint8]struct{}, skipStream PresenceStream) {

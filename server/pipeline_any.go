@@ -1,17 +1,17 @@
 package server
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/u2u-labs/go-layerg-common/rtapi"
-	"github.com/u2u-labs/layerg-kit/pb"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func (p *Pipeline) any(logger *zap.Logger, session Session, envelope *rtapi.Envelope) (bool, *rtapi.Envelope) {
-	req := envelope.GetRequest()
+	req := envelope.GetAnyRequest()
 	if req.Name == "" {
 		_ = session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
 			Code:    int32(rtapi.Error_BAD_INPUT),
@@ -20,33 +20,18 @@ func (p *Pipeline) any(logger *zap.Logger, session Session, envelope *rtapi.Enve
 		return false, nil
 	}
 
-	in := &pb.Request{
-		Context: make(map[string]string),
-		Payload: &pb.Request_In{In: req},
-	}
-
-	for k, v := range p.config.GetRuntime().Environment {
-		in.Context[k] = v
-	}
-	in.Context["client_ip"] = session.ClientIP()
-	in.Context["client_port"] = session.ClientPort()
-	in.Context["userId"] = session.UserID().String()
-	in.Context["username"] = session.Username()
-	in.Context["expiry"] = strconv.FormatInt(session.Expiry(), 10)
+	req.Context = make(map[string]string)
+	req.Context["client_ip"] = session.ClientIP()
+	req.Context["client_port"] = session.ClientPort()
+	req.Context["client_cid"] = envelope.Cid
+	req.Context["userId"] = session.UserID().String()
+	req.Context["username"] = session.Username()
+	req.Context["expiry"] = strconv.FormatInt(session.Expiry(), 10)
 	for k, v := range session.Vars() {
-		in.Context["vars_"+k] = v
+		req.Context["vars_"+k] = v
 	}
 
-	peer := p.runtime.GetPeer()
-	if peer == nil {
-		_ = session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
-			Code:    int32(codes.Unavailable),
-			Message: "Service Unavailable",
-		}}}, true)
-		return false, nil
-	}
-
-	endpoint, ok := peer.GetServiceRegistry().Get(req.Name)
+	peer, ok := p.runtime.GetPeer()
 	if !ok {
 		_ = session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
 			Code:    int32(codes.Unavailable),
@@ -55,7 +40,7 @@ func (p *Pipeline) any(logger *zap.Logger, session Session, envelope *rtapi.Enve
 		return false, nil
 	}
 
-	if err := endpoint.Send(in); err != nil {
+	if err := peer.SendMS(context.Background(), req); err != nil {
 		code, ok := status.FromError(err)
 		if !ok {
 			code = status.New(codes.Internal, err.Error())

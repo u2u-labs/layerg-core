@@ -4595,3 +4595,11 @@ func (n *RuntimeGoLayerGModule) EventQuery(ctx context.Context, query runtime.Ev
 func (n *RuntimeGoLayerGModule) DecodeContractEvent(contractABI string, receiptJSON string, eventName string, output interface{}) error {
 	return DecodeContractEvent(contractABI, receiptJSON, eventName, output)
 }
+
+func (n *RuntimeGoLayerGModule) GetPeer() (runtime.Peer, bool) {
+	peer, ok := n.router.GetPeer()
+	if !ok {
+		return nil, false
+	}
+	return peer.(runtime.Peer), true
+}

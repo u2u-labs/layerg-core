@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -234,7 +235,17 @@ type (
 	RuntimeEventSessionStartFunction func(userID, username string, vars map[string]string, expiry int64, sessionID, clientIP, clientPort, lang string, evtTimeSec int64)
 	RuntimeEventSessionEndFunction   func(userID, username string, vars map[string]string, expiry int64, sessionID, clientIP, clientPort, lang string, evtTimeSec int64, reason string)
 	RuntimeShutdownFunction          func(ctx context.Context)
+
+	RuntimeBeforeAnyFunction func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AnyRequest) (*api.AnyRequest, error, codes.Code)
+	RuntimeAfterAnyFunction  func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.AnyResponseWriter, in *api.AnyRequest) error
+	RuntimeEventPeerFunction func(ctx context.Context, logger runtime.Logger, evt *api.AnyRequest)
 )
+
+type RuntimeHttpHandler struct {
+	PathPattern string
+	Handler     func(http.ResponseWriter, *http.Request)
+	Methods     []string
+}
 
 type RuntimeExecutionMode int
 
@@ -257,6 +268,7 @@ const (
 	RuntimeExecutionModeSubscriptionNotificationGoogle
 	RuntimeExecutionModeStorageIndexFilter
 	RuntimeExecutionModeShutdown
+	RuntimeExecutionModePeerEvent
 )
 
 func (e RuntimeExecutionMode) String() string {
@@ -323,6 +335,7 @@ type RuntimeEventFunctions struct {
 	sessionStartFunction RuntimeEventSessionStartFunction
 	sessionEndFunction   RuntimeEventSessionEndFunction
 	eventFunction        RuntimeEventCustomFunction
+	eventPeerFunction    RuntimeEventPeerFunction
 }
 
 type moduleInfo struct {
@@ -426,6 +439,7 @@ type RuntimeBeforeReqFunctions struct {
 	beforeListSubscriptionsFunction                 RuntimeBeforeListSubscriptionsFunction
 	beforeGetSubscriptionFunction                   RuntimeBeforeGetSubscriptionFunction
 	beforeGetMatchmakerStatsFunction                RuntimeBeforeGetMatchmakerStatsFunction
+	beforeAnyFunction                               RuntimeBeforeAnyFunction
 }
 
 type RuntimeAfterReqFunctions struct {
@@ -515,6 +529,7 @@ type RuntimeAfterReqFunctions struct {
 	afterListSubscriptionsFunction                 RuntimeAfterListSubscriptionsFunction
 	afterGetSubscriptionFunction                   RuntimeAfterGetSubscriptionFunction
 	afterGetMatchmakerStatsFunction                RuntimeAfterGetMatchmakerStatsFunction
+	afterAnyFunction                               RuntimeAfterAnyFunction
 }
 
 type Runtime struct {
@@ -548,7 +563,7 @@ type Runtime struct {
 
 	fleetManager runtime.FleetManager
 
-	peer Peer
+	peer *atomic.Value
 
 	webhookRegistry *WebhookRegistry
 	mqttRegistry    *MQTTRegistry
@@ -687,10 +702,16 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 	// 	return nil, nil, err
 	// }
 
-	jsModules, jsRPCFns, jsBeforeRtFns, jsAfterRtFns, jsBeforeReqFns, jsAfterReqFns, jsMatchmakerMatchedFn, jsTournamentEndFn, jsTournamentResetFn, jsLeaderboardResetFn, jsShutdownFn, jsPurchaseNotificationAppleFn, jsSubscriptionNotificationAppleFn, jsPurchaseNotificationGoogleFn, jsSubscriptionNotificationGoogleFn, jsIndexFilterFns, err := NewRuntimeProviderJS(ctx, logger, startupLogger, db, protojsonMarshaler, protojsonUnmarshaler, config, version, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, allEventFns.eventFunction, runtimeConfig.Path, runtimeConfig.JsEntrypoint, matchProvider, storageIndex, activeCache)
+	jsModules, jsRPCFns, jsBeforeRtFns, jsAfterRtFns, jsBeforeReqFns, jsAfterReqFns, jsMatchmakerMatchedFn, jsTournamentEndFn, jsTournamentResetFn, jsLeaderboardResetFn, jsShutdownFn, jsPurchaseNotificationAppleFn, jsSubscriptionNotificationAppleFn, jsPurchaseNotificationGoogleFn, jsSubscriptionNotificationGoogleFn, jsIndexFilterFns, eventPeerFunction, err := NewRuntimeProviderJS(ctx, logger, startupLogger, db, protojsonMarshaler, protojsonUnmarshaler, config, version, socialClient, leaderboardCache, leaderboardRankCache, leaderboardScheduler, sessionRegistry, sessionCache, statusRegistry, matchRegistry, tracker, metrics, streamManager, router, allEventFns.eventFunction, runtimeConfig.Path, runtimeConfig.JsEntrypoint, matchProvider, storageIndex, activeCache)
 	if err != nil {
 		startupLogger.Error("Error initialising JavaScript runtime provider", zap.Error(err))
 		return nil, nil, err
+	}
+
+	if eventPeerFunction != nil {
+		allEventFns.eventPeerFunction = func(ctx context.Context, logger runtime.Logger, evt *api.AnyRequest) {
+			eventQueue.Queue(func() { eventPeerFunction(ctx, logger, evt) })
+		}
 	}
 
 	allModules := make([]string, 0, len(jsModules)+len(goModules))
@@ -2779,6 +2800,8 @@ func NewRuntime(ctx context.Context, logger, startupLogger *zap.Logger, db *sql.
 
 		eventFunctions: allEventFns,
 
+		peer: &atomic.Value{},
+
 		webhookRegistry: webhookRegistry,
 		mqttRegistry:    mqttRegistry,
 	}, rInfo, nil
@@ -3604,10 +3627,26 @@ func (r *Runtime) EventSessionEnd() RuntimeEventSessionEndFunction {
 	return r.eventFunctions.sessionEndFunction
 }
 
-func (r *Runtime) SetPeer(peer Peer) {
-	r.peer = peer
+func (r *Runtime) EventPeer() RuntimeEventPeerFunction {
+	return r.eventFunctions.eventPeerFunction
 }
 
-func (r *Runtime) GetPeer() Peer {
-	return r.peer
+func (r *Runtime) SetPeer(peer Peer) {
+	r.peer.Store(peer)
+}
+
+func (r *Runtime) GetPeer() (Peer, bool) {
+	peer := r.peer.Load()
+	if peer == nil {
+		return nil, false
+	}
+	return peer.(Peer), true
+}
+
+func (r *Runtime) BeforeAny() RuntimeBeforeAnyFunction {
+	return r.beforeReqFunctions.beforeAnyFunction
+}
+
+func (r *Runtime) AfterAny() RuntimeAfterAnyFunction {
+	return r.afterReqFunctions.afterAnyFunction
 }
