@@ -80,8 +80,8 @@ func (p *Pipeline) matchmakerAdd(logger *zap.Logger, session Session, envelope *
 		return false, nil
 	}
 
-	peer := p.runtime.GetPeer()
-	if peer != nil {
+	peer, ok := p.runtime.GetPeer()
+	if ok {
 		peer.MatchmakerAdd(matchmakerExtract2pb(&MatchmakerExtract{
 			Presences:         presences,
 			SessionID:         session.ID().String(),
@@ -134,8 +134,8 @@ func (p *Pipeline) matchmakerRemove(logger *zap.Logger, session Session, envelop
 		return false, nil
 	}
 
-	peer := p.runtime.GetPeer()
-	if peer != nil {
+	peer, ok := p.runtime.GetPeer()
+	if ok {
 		peer.MatchmakerRemoveSession(session.ID().String(), incoming.Ticket)
 	}
 

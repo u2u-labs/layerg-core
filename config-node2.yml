@@ -1,4 +1,4 @@
-data_dir: "./data"
+data_dir: "./data-node2"
 logger:
   level: "debug"
   stdout: true
@@ -9,8 +9,8 @@ database:
   database: "layerg"
 cluster:
   gossip_bindaddr: "0.0.0.0"
-  gossip_bindport: 8353
-  # members: ["127.0.0.1:8354"]
+  gossip_bindport: 8354
+  members: ["127.0.0.1:8353"]
   push_pull_interval: 60
   gossip_interval: 200
   tcp_timeout: 10
@@ -22,9 +22,9 @@ cluster:
   secret_key: "layerg-secret-key-32-bytes-long!"
   leader_election: true
 socket:
-  port: 7350
+  port: 8352
 console:
-  port: 7351
+  port: 8351
 layerg_core:
   url: "https://agg-dev.layerg.xyz"
   hub_api_key: "syip1g6wd29f4tn8p78yc"
@@ -32,4 +32,4 @@ layerg_core:
   hub_url: "https://agg-dev.layerg.xyz/api"
   event_catcher_url: "https://event-gateway-dev.layerg.xyz"
 redis_db:
-  url: "localhost:6379"
+  url: "localhost:6379" 

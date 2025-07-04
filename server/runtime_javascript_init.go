@@ -60,6 +60,7 @@ type RuntimeJavascriptCallbacks struct {
 	SubscriptionNotificationApple  string
 	PurchaseNotificationGoogle     string
 	SubscriptionNotificationGoogle string
+	EventPeer                      string
 }
 
 type RuntimeJavascriptInitModule struct {

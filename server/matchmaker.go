@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/blugelabs/bluge"
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v5"
@@ -16,6 +14,7 @@ import (
 	"github.com/u2u-labs/go-layerg-common/runtime"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type MatchmakerPresence struct {
@@ -169,7 +168,7 @@ type Matchmaker interface {
 	RemoveSessionAll(sessionID string) error
 	RemoveParty(partyID, ticket string) error
 	RemovePartyAll(partyID string) error
-	RemoveAll(node string)
+	RemoveAll(nodes map[string]bool)
 	Remove(tickets []string)
 	GetStats() *api.MatchmakerStats
 	SetStats(*api.MatchmakerStats)
@@ -296,6 +295,7 @@ func NewLocalMatchmaker(logger, startupLogger *zap.Logger, config Config, router
 
 	go func() {
 		ticker := time.NewTicker(time.Duration(config.GetMatchmaker().IntervalSec) * time.Second)
+		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
@@ -331,6 +331,14 @@ func (m *LocalMatchmaker) OnStatsUpdate(fn func(*api.MatchmakerStats)) {
 }
 
 func (m *LocalMatchmaker) Process() {
+	if peer, ok := m.router.GetPeer(); ok {
+		if num := peer.NumMembers(); num > 1 {
+			if !peer.AllowLeader() || !peer.Leader() {
+				return
+			}
+		}
+	}
+
 	startTime := time.Now()
 	var activeIndexCount, indexCount int
 	defer func() {
@@ -1007,14 +1015,14 @@ func (m *LocalMatchmaker) RemovePartyAll(partyID string) error {
 	return nil
 }
 
-func (m *LocalMatchmaker) RemoveAll(node string) {
+func (m *LocalMatchmaker) RemoveAll(nodes map[string]bool) {
 	batch := bluge.NewBatch()
 
 	m.Lock()
 
 	var removedCount uint32
 	for ticket, index := range m.indexes {
-		if index.Node != node {
+		if !nodes[index.Node] {
 			continue
 		}
 

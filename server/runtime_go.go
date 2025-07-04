@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
 	"path/filepath"
 	"plugin"
 	"strings"
@@ -60,8 +61,11 @@ type RuntimeGoInitializer struct {
 	match     map[string]func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule) (runtime.Match, error)
 	matchLock *sync.RWMutex
 
-	fmCallbackHandler runtime.FmCallbackHandler
-	config            Config
+	fmCallbackHandler  runtime.FmCallbackHandler
+	config             Config
+	eventPeerFunctions []RuntimeEventPeerFunction
+
+	httpHandlers []*RuntimeHttpHandler
 }
 
 func (ri *RuntimeGoInitializer) GetConfig() (runtime.Config, error) {
@@ -2822,6 +2826,52 @@ func (ri *RuntimeGoInitializer) RegisterShutdown(fn func(ctx context.Context, lo
 	return nil
 }
 
+func (ri *RuntimeGoInitializer) RegisterHttp(pathPattern string, handler func(http.ResponseWriter, *http.Request), methods ...string) error {
+	ri.httpHandlers = append(ri.httpHandlers, &RuntimeHttpHandler{
+		PathPattern: pathPattern,
+		Handler:     handler,
+		Methods:     methods,
+	})
+
+	return nil
+}
+
+func (ri *RuntimeGoInitializer) RegisterBeforeAny(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, in *api.AnyRequest) (*api.AnyRequest, error)) error {
+	ri.beforeReq.beforeAnyFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, in *api.AnyRequest) (*api.AnyRequest, error, codes.Code) {
+		ctx = NewRuntimeGoContext(ctx, ri.node, ri.version, ri.env, RuntimeExecutionModeBefore, nil, nil, expiry, userID, username, vars, "", clientIP, clientPort, "")
+		loggerFields := map[string]interface{}{"api_id": "any", "mode": RuntimeExecutionModeBefore.String(), "cid": in.GetCid(), "name": in.GetName()}
+		result, fnErr := fn(ctx, ri.logger.WithFields(loggerFields), ri.db, ri.nk, in)
+		if fnErr != nil {
+			var runtimeErr *runtime.Error
+			if errors.As(fnErr, &runtimeErr) {
+				if runtimeErr.Code <= 0 || runtimeErr.Code >= 17 {
+					// If error is present but code is invalid then default to 13 (Internal) as the error code.
+					return result, runtimeErr, codes.Internal
+				}
+				return result, runtimeErr, codes.Code(runtimeErr.Code)
+			}
+			// Not a runtime error that contains a code.
+			return result, fnErr, codes.Internal
+		}
+		return result, nil, codes.OK
+	}
+	return nil
+}
+
+func (ri *RuntimeGoInitializer) RegisterAfterAny(fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule, out *api.AnyResponseWriter, in *api.AnyRequest) error) error {
+	ri.afterReq.afterAnyFunction = func(ctx context.Context, logger *zap.Logger, userID, username string, vars map[string]string, expiry int64, clientIP, clientPort string, out *api.AnyResponseWriter, in *api.AnyRequest) error {
+		ctx = NewRuntimeGoContext(ctx, ri.node, ri.version, ri.env, RuntimeExecutionModeAfter, nil, nil, expiry, userID, username, vars, "", clientIP, clientPort, "")
+		loggerFields := map[string]interface{}{"api_id": "any", "mode": RuntimeExecutionModeAfter.String(), "cid": in.GetCid(), "name": in.GetName()}
+		return fn(ctx, ri.logger.WithFields(loggerFields), ri.db, ri.nk, out, in)
+	}
+	return nil
+}
+
+func (ri *RuntimeGoInitializer) RegisterEventPeer(fn func(ctx context.Context, logger runtime.Logger, evt *api.AnyRequest)) error {
+	ri.eventPeerFunctions = append(ri.eventPeerFunctions, fn)
+	return nil
+}
+
 func (ri *RuntimeGoInitializer) RegisterMatch(name string, fn func(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.LayerGModule) (runtime.Match, error)) error {
 	ri.matchLock.Lock()
 	ri.match[name] = fn
@@ -2897,7 +2947,10 @@ func NewRuntimeProviderGo(ctx context.Context, logger, startupLogger *zap.Logger
 		match:     match,
 		matchLock: matchLock,
 
-		fmCallbackHandler: fmCallbackHandler,
+		fmCallbackHandler:  fmCallbackHandler,
+		eventPeerFunctions: make([]RuntimeEventPeerFunction, 0),
+
+		httpHandlers: make([]*RuntimeHttpHandler, 0),
 	}
 
 	// The baseline context that will be passed to all InitModule calls.
